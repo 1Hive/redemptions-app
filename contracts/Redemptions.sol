@@ -22,7 +22,9 @@ contract Redemptions is AragonApp {
 
     /// ACL
     bytes32 constant public ADD_MEMBER_ROLE = keccak256("ADD_MEMBER_ROLE");
-    // bytes32 constant public REDEME_ROLE = keccak256("REDEME_ROLE");
+    bytes32 constant public REDEME_ROLE = keccak256("REDEME_ROLE");
+
+    string private constant ERROR_VAULT_NOT_CONTRACT = "ERROR_VAULT_NOT_CONTRACT";
 
     /**
     * @notice Initialize
@@ -34,14 +36,34 @@ contract Redemptions is AragonApp {
 
         require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
         vault = _vault;
-
         token = _token;
 
     }
 
-    function addParticipant(uint256 step) external auth(ADD_MEMBER_ROLE) {
+    //WE ARE NOT SURE IF THIS IS NEEDED
+    function addParticipant(address _member) external auth(ADD_MEMBER_ROLE) {
+        memberList.push(_member) - 1;
+        members[_member] = true;
+        return true;
+    }
 
-        //
+    function redeem(address _member, uint256 _amount) external auth(REDEME_ROLE) {
+        if (_amount == 0) {
+            return true;
+        }
+        require ((address(_member) != this) && (addres(_member) != address(vault)) && (address(_member) != address(token));
+        // If the amount being transfered is more than the balance of the
+        //  account the transfer returns false
+        var previousBalanceMember = token.balanceOfAt(_member, block.number);
+        if (previousBalanceMember < _amount) {
+            return false;
+        }
+        //USE SAFEMATH HERE
+        var redemptionAmount = (vault.balance(0)/token.totalSupply) * _amount;
+        require(token.destroyTokens(_member,_amount));
+
+        //SOMEHOW SEND THE MONEY TO MEMBER
+
     }
 
     // Redem token
