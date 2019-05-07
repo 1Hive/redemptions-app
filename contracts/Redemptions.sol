@@ -11,20 +11,15 @@ import "@aragon/apps-vault/contracts/Vault.sol";
 contract Redemptions is AragonApp {
     using SafeMath for uint256;
 
-    /// Events
+    bytes32 constant public REDEEM_ROLE = keccak256("REDEEM_ROLE");
 
-    /// State
-    mapping (address => bool) public members;
-    address[] public memberList;
+    string private constant ERROR_CAN_NOT_REDEEM = "CAN_NOT_REDEEM";
+    string private constant ERROR_VAULT_NOT_CONTRACT= "ERROR_VAULT_NOT_CONTRACT";
 
     MiniMeToken public token;
     Vault public vault;
 
-    /// ACL
-    bytes32 constant public ADD_MEMBER_ROLE = keccak256("ADD_MEMBER_ROLE");
-    bytes32 constant public REDEME_ROLE = keccak256("REDEME_ROLE");
-
-    string private constant ERROR_VAULT_NOT_CONTRACT = "ERROR_VAULT_NOT_CONTRACT";
+    event ExecuteRedeem(address indexed reciver, uint256 amount);
 
     /**
     * @notice Initialize
@@ -40,37 +35,36 @@ contract Redemptions is AragonApp {
 
     }
 
-    //WE ARE NOT SURE IF THIS IS NEEDED
-    function addParticipant(address _member) external auth(ADD_MEMBER_ROLE) {
-        memberList.push(_member) - 1;
-        members[_member] = true;
-        return true;
-    }
-
-    function redeem(address _member, uint256 _amount) external auth(REDEME_ROLE) {
+    function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
         if (_amount == 0) {
             return true;
         }
-        require ((address(_member) != this) && (addres(_member) != address(vault)) && (address(_member) != address(token));
+        require(canRedeem(msg.sender), ERROR_CAN_NOT_REDEEM);
+        require ((msg.sender != this) && (msg.sender != address(vault)) && (msg.sender != address(token));
+        _redeem(msg.sender, _amount);
+    }
+
+    function canRedeem(address _sender) public view returns (bool) {
+        return token.balanceOfAt(_sender) > 0;
+    }
+
+    // Internal functions
+    function _redeem(address _receiver, uint256 _amount) internal {
         // If the amount being transfered is more than the balance of the
         //  account the transfer returns false
-        var previousBalanceMember = token.balanceOfAt(_member, block.number);
+        uint256 previousBalanceMember = token.balanceOfAt(_receiver, block.number);
         if (previousBalanceMember < _amount) {
             return false;
         }
         //USE SAFEMATH HERE
-        var redemptionAmount = (vault.balance(0)/token.totalSupply) * _amount;
-        require(token.destroyTokens(_member,_amount));
+        uint256 redemptionAmount = (vault.balance(address(0))/token.totalSupply) * _amount;
 
-        //SOMEHOW SEND THE MONEY TO MEMBER
+        require(token.destroyTokens(_receiver,_amount));
 
+        // We use ETH as first use-case
+        vault.transfer(address(0), _receiver, _amount);
+
+        emit ExecuteRedeem(_receiver, _amount)
     }
-
-    // Redem token
-        // Get total supply
-        // Get vault amount
-        // Calculate how much to redem
-        // Burn tokens (we have to do this first to prevent reentry issue)
-        // Send vault amount to member
 
 }
