@@ -77,7 +77,8 @@ contract Redemptions is AragonApp {
     // Internal functions
     function _redeem(address _receiver, uint256 _amount) internal {
 
-        uint256[] storage amounts;
+        // review syntax
+        uint256[] memory amounts = new uint256[](vaultTokens.length);
         uint256 redemptionAmount;
 
         for (uint i = 0; i < vaultTokens.length; i++) {
