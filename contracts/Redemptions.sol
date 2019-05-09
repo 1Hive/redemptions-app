@@ -2,38 +2,43 @@ pragma solidity ^0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
-
 import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
-
 import "@aragon/apps-vault/contracts/Vault.sol";
-
+import "./ArrayUtils.sol";
 
 contract Redemptions is AragonApp {
     using SafeMath for uint256;
+    using ArrayUtils for address[];
 
     bytes32 constant public REDEEM_ROLE = keccak256("REDEEM_ROLE");
     bytes32 constant public ADD_TOKEN_ROLE = keccak256("ADD_TOKEN_ROLE");
     bytes32 constant public REMOVE_TOKEN_ROLE = keccak256("REMOVE_TOKEN_ROLE");
 
-    // Add more error messages
-    string private constant ERROR_VAULT_NOT_CONTRACT="ERROR_VAULT_NOT_CONTRACT";
-    string private constant ERROR_CAN_NOT_REDEEM = "CAN_NOT_REDEEM";
+    string private constant ERROR_VAULT_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
+    string private constant ERROR_REDEEMABLE_TOKEN = "REDEMPTIONS_REDEEMABLE_TOKEN";
+    string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
+    string private constant ERROR_NOT_VAULT_TOKEN = "REDEMPTIONS_NOT_VAULT_TOKEN";
+    string private constant ERROR_CANNOT_REDEEM_ZERO = "REDEMPTIONS_CANNOT_REDEEM_ZERO";
+    string private constant ERROR_INSUFFICIENT_BALANCE = "REDEMPTIONS_INSUFFICIENT_BALANCE";
+    string private constant ERROR_THIS_CONTRACT_CANNOT_REDEEM = "REDEMPTIONS_THIS_CONTRACT_CANNOT_REDEEM";
+    string private constant ERROR_VAULT_CANNOT_REDEEM = "REDEMPTIONS_VAULT_CANNOT_REDEEM";
+    string private constant ERROR_TOKEN_CANNOT_REDEEM = "REDEMPTIONS_TOKEN_CANNOT_REDEEM";
+    string private constant ERROR_CANNOT_DESTROY_TOKENS= "REDEMPTIONS_CANNOT_DESTROY_TOKENS";
 
-    mapping (address => bool) public tokens;
+    mapping(address => bool) public tokens;
     address[] public vaultTokens;
 
     MiniMeToken public redeemableToken;
     Vault public vault;
 
-    event ExecuteRedeem(address indexed reciver, uint256 amount);
+    event Redeem(address indexed receiver, uint256 amount);
 
     /**
     * @notice Initialize
     * @param _vault Address of the vault
     * @param _redeemableToken MiniMeToken address
     */
-    function initialize(Vault _vault, MiniMeToken _redeemableToken, address[] _tokens) external onlyInit {
-
+    function initialize(Vault _vault, MiniMeToken _redeemableToken, address[] memory _vaultTokens) external onlyInit {
         initialized();
 
         require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
@@ -41,56 +46,43 @@ contract Redemptions is AragonApp {
         vault = _vault;
         redeemableToken = _redeemableToken;
 
-        for (uint i = 0; i < _tokens.length; i++) {
-            tokens[_tokens[i]] = true;
-            vaultTokens.push(_tokens[i]);
+        for (uint i = 0; i < _vaultTokens.length; i++) {
+            tokens[_vaultTokens[i]] = true;
+            vaultTokens.push(_vaultTokens[i]);  // TODO: Can just do 'vaultTokens = _vaultTokens;' but not if we expect vault tokens to be populated before init
         }
-
     }
 
-    function addValutToken(address _token) external auth(ADD_TOKEN_ROLE) {
-        require(_token != address(redeemableToken));
-        require(!tokens[_token]);
+    function addVaultToken(address _token) external auth(ADD_TOKEN_ROLE) {
+        require(_token != address(redeemableToken), ERROR_REDEEMABLE_TOKEN);
+        require(!tokens[_token], ERROR_TOKEN_ALREADY_ADDED);
+
         tokens[_token] = true;
         vaultTokens.push(_token);
     }
 
     function removeVaultToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
-        require(tokens[_token]);
-        // Delete token
-    }
+        require(tokens[_token], ERROR_NOT_VAULT_TOKEN);
 
+        vaultTokens.deleteItem(_token);
+    }
 
     function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
-        if (_amount == 0) {
-            return true;
-        }
-        require(canRedeem(msg.sender, _amount), ERROR_CAN_NOT_REDEEM);
-        require ((msg.sender != this) && (msg.sender != address(vault)) && (msg.sender != address(redeemableToken));
-        _redeem(msg.sender, _amount);
-    }
+        require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
+        require(redeemableToken.balanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
+        require(msg.sender != this, ERROR_THIS_CONTRACT_CANNOT_REDEEM);
+        require(msg.sender != address(vault), ERROR_VAULT_CANNOT_REDEEM);
+        require(msg.sender != address(redeemableToken), ERROR_TOKEN_CANNOT_REDEEM);
 
-    function canRedeem(address _sender) public view returns (bool) {
-        return redeemableToken.balanceOfAt(_sender) > 0 && redeemableToken.balanceOfAt(_sender) >= _amount;
-    }
-
-    // Internal functions
-    function _redeem(address _receiver, uint256 _amount) internal {
-
-        // review syntax
-        uint256[] memory amounts = new uint256[](vaultTokens.length);
         uint256 redemptionAmount;
 
-        for (uint i = 0; i < vaultTokens.length; i++) {
-            redemptionAmount = (_amount / redeemableToken.totalSupply) * vault.balance(vaultTokens[i]);
-            amounts.push(redemptionAmount);
+        for (uint256 i = 0; i < vaultTokens.length; i++) {
+            redemptionAmount = _amount.mul(vault.balance(vaultTokens[i])).div(redeemableToken.totalSupply);
+            vault.transfer(vaultTokens[i], _receiver, redemptionAmount);
+        }
 
-        require(redeemableToken.destroyTokens(_receiver, _amount));
+        require(redeemableToken.destroyTokens(_receiver, _amount), ERROR_CANNOT_DESTROY_TOKENS);
 
-        for (uint i = 0; i < amounts.length; i++) {
-            vault.transfer(vaultTokens[i], _receiver, amounts[i]);
-
-        emit ExecuteRedeem(_receiver, _amount)
+        emit Redeem(_receiver, _amount);
     }
 
 }
