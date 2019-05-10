@@ -25,11 +25,11 @@ contract Redemptions is AragonApp {
     string private constant ERROR_TOKEN_CANNOT_REDEEM = "REDEMPTIONS_TOKEN_CANNOT_REDEEM";
     string private constant ERROR_CANNOT_DESTROY_TOKENS= "REDEMPTIONS_CANNOT_DESTROY_TOKENS";
 
-    mapping(address => bool) public tokens;
-    address[] public vaultTokens;
-
-    MiniMeToken public redeemableToken;
     Vault public vault;
+    MiniMeToken public redeemableToken;
+
+    mapping(address => bool) public tokenAdded;
+    address[] public vaultTokens;
 
     event Redeem(address indexed receiver, uint256 amount);
 
@@ -48,22 +48,22 @@ contract Redemptions is AragonApp {
         vaultTokens = _vaultTokens;
 
         for (uint i = 0; i < _vaultTokens.length; i++) {
-            tokens[_vaultTokens[i]] = true;
+            tokenAdded[_vaultTokens[i]] = true;
         }
     }
 
     function addVaultToken(address _token) external auth(ADD_TOKEN_ROLE) {
         require(_token != address(redeemableToken), ERROR_REDEEMABLE_TOKEN);
-        require(!tokens[_token], ERROR_TOKEN_ALREADY_ADDED);
+        require(!tokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
 
-        tokens[_token] = true;
+        tokenAdded[_token] = true;
         vaultTokens.push(_token);
     }
 
     function removeVaultToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
-        require(tokens[_token], ERROR_NOT_VAULT_TOKEN);
+        require(tokenAdded[_token], ERROR_NOT_VAULT_TOKEN);
 
-        tokens[_token] = false;
+        tokenAdded[_token] = false;
         vaultTokens.deleteItem(_token);
     }
 

@@ -1,11 +1,10 @@
 const Redemptions = artifacts.require('Redemptions')
-const Vault = artifacts.require('@aragon/apps-vault/contracts/vault')
-const MiniMeToken = artifacts.require('@aragon/apps-shared-minime/contracts/MiniMeToken')
+const Vault = artifacts.require('Vault')
 const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
-const DAOFactory = artifacts.require('@aragon/os/contracts/factory/DAOFactory')
-const EVMScriptRegistryFactory = artifacts.require('@aragon/os/contracts/factory/EVMScriptRegistryFactory')
-const ACL = artifacts.require('@aragon/os/contracts/acl/ACL')
-const Kernel = artifacts.require('@aragon/os/contracts/kernel/Kernel')
+const MiniMeToken = artifacts.require('MiniMeToken')
+const Erc20 = artifacts.require('BasicErc20')
+
+const getContract = name => artifacts.require(name)
 
 const {assertRevert} = require('@aragon/test-helpers/assertThrow')
 
@@ -26,10 +25,11 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
     let daoFactory, vaultBase, vault, redeemableToken, redemptionsBase, redemptions
 
     before(async () => {
-        const kernelBase = await Kernel.new(true) // petrify immediately
-        const aclBase = await ACL.new()
-        const evmScriptRegistryFactory = await EVMScriptRegistryFactory.new()
-        daoFactory = await DAOFactory.new(kernelBase.address, aclBase.address, evmScriptRegistryFactory.address)
+        const kernelBase = await getContract('Kernel').new(true) // petrify immediately
+        const aclBase = await getContract('ACL').new()
+        const evmScriptRegistryFactory = await getContract('EVMScriptRegistryFactory').new()
+        daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, evmScriptRegistryFactory.address)
+
         vaultBase = await Vault.new()
         redemptionsBase = await Redemptions.new()
 
@@ -41,8 +41,8 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
 
     beforeEach(async () => {
         const daoReceipt = await daoFactory.newDAO(rootAccount)
-        const dao = await Kernel.at(getLog(daoReceipt, 'DeployDAO', 'dao'))
-        const acl = await ACL.at(await dao.acl())
+        const dao = await getContract('Kernel').at(getLog(daoReceipt, 'DeployDAO', 'dao'))
+        const acl = await getContract('ACL').at(await dao.acl())
         await acl.createPermission(rootAccount, dao.address, APP_MANAGER_ROLE, rootAccount, {from: rootAccount})
 
         const newVaultAppReceipt = await dao.newAppInstance('0x5678', vaultBase.address, '0x', false, {from: rootAccount})
@@ -56,24 +56,41 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await acl.createPermission(ANY_ADDRESS, redemptions.address, REMOVE_TOKEN_ROLE, rootAccount, {from: rootAccount})
 
         const miniMeTokenFactory = await MiniMeTokenFactory.new()
-        console.log("CREATED FACTORY")
         redeemableToken = await MiniMeToken.new(miniMeTokenFactory.address, ZERO_ADDRESS, 0, 'RedeemableToken', 18, 'RDT', true)
-        console.log("CREATED TOKEN")
     })
 
-    it('initial vault token addresses should be set correctly', async () => {
-        const expectedTokenAddresses = [accounts[0], accounts[1]]
+    context('initialize(Vault _vault, MiniMeToken _redeemableToken, address[] _vaultTokens)', ()=> {
 
-        await redemptions.initialize(vault.address, redeemableToken.address, expectedTokenAddresses)
+        let token0, token1
+        let expectedTokenAddresses
 
-        const actualTokenAddresses = await redemptions.getVaultTokens()
-        assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
+        beforeEach(async () => {
+            token0 = await Erc20.new()
+            token1 = await Erc20.new()
+            expectedTokenAddresses = [token0.address, token1.address]
+            await redemptions.initialize(vault.address, redeemableToken.address, expectedTokenAddresses)
+        })
+
+        it('should set initial values correctly', async () => {
+            const actualVaultAddress = await redemptions.vault()
+            const actualRedeemableToken = await redemptions.redeemableToken()
+            const actualTokenAddedToken0 = await redemptions.tokenAdded(token0.address)
+            const actualTokenAddedToken1 = await redemptions.tokenAdded(token1.address)
+            const actualTokenAddresses = await redemptions.getVaultTokens()
+            assert.strictEqual(actualVaultAddress, vault.address)
+            assert.strictEqual(actualRedeemableToken, redeemableToken.address)
+            assert.isTrue(actualTokenAddedToken0)
+            assert.isTrue(actualTokenAddedToken1)
+            assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
+        })
+
+        // it('should not be decremented if already 0', async () => {
+        //     redemptions.initialize()
+        //     return assertRevert(async () => {
+        //         return redemptions.decrement(1)
+        //     })
+        // })
+
+
     })
-
-    // it('should not be decremented if already 0', async () => {
-    //     redemptions.initialize()
-    //     return assertRevert(async () => {
-    //         return redemptions.decrement(1)
-    //     })
-    // })
 })
