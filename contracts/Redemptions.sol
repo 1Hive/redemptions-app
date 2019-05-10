@@ -17,6 +17,7 @@ contract Redemptions is AragonApp {
     string private constant ERROR_VAULT_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
     string private constant ERROR_REDEEMABLE_TOKEN = "REDEMPTIONS_REDEEMABLE_TOKEN";
     string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
+    string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
     string private constant ERROR_NOT_VAULT_TOKEN = "REDEMPTIONS_NOT_VAULT_TOKEN";
     string private constant ERROR_CANNOT_REDEEM_ZERO = "REDEMPTIONS_CANNOT_REDEEM_ZERO";
     string private constant ERROR_INSUFFICIENT_BALANCE = "REDEMPTIONS_INSUFFICIENT_BALANCE";
@@ -55,6 +56,7 @@ contract Redemptions is AragonApp {
     function addVaultToken(address _token) external auth(ADD_TOKEN_ROLE) {
         require(_token != address(redeemableToken), ERROR_REDEEMABLE_TOKEN);
         require(!tokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
+        require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
 
         tokenAdded[_token] = true;
         vaultTokens.push(_token);

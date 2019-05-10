@@ -6,18 +6,10 @@ const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('BasicErc20')
 
-const {assertRevert} = require('@aragon/test-helpers/assertThrow')
+const {assertRevert, getLog, deployedContract} = require('./helpers/helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
-const getLog = (receipt, logName, argName) => {
-    const log = receipt.logs.find(({event}) => event === logName)
-    return log ? log.args[argName] : null
-}
-
-const deployedContract = (receipt) =>
-    getLog(receipt, 'NewAppProxy', 'proxy')
 
 contract('Redemptions', ([rootAccount, ...accounts]) => {
 
@@ -79,13 +71,40 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
             assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
         })
 
-        // it('should not be decremented if already 0', async () => {
-        //     redemptions.initialize()
-        //     return assertRevert(async () => {
-        //         return redemptions.decrement(1)
-        //     })
-        // })
+        context('addVaultToken(address _token)', () => {
 
+            it('should add an address to the vault tokens', async () => {
+                const token2 = await Erc20.new()
+                expectedTokenAddresses.push(token2.address)
+
+                await redemptions.addVaultToken(token2.address)
+
+                const actualTokenAddresses = await redemptions.getVaultTokens()
+                const actualTokenAddedToken2 = await redemptions.tokenAdded(token2.address)
+                assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
+                assert.isTrue(actualTokenAddedToken2)
+            })
+
+            it('reverts if adding redeemable token', async () => {
+                await assertRevert(redemptions.addVaultToken(redeemableToken.address), 'REDEMPTIONS_REDEEMABLE_TOKEN')
+            })
+
+            it('reverts if adding already added token', async () => {
+                await assertRevert(redemptions.addVaultToken(token0.address), 'REDEMPTIONS_TOKEN_ALREADY_ADDED')
+            })
+
+            it('reverts if adding non-contract address', async () => {
+                await assertRevert(redemptions.addVaultToken(accounts[0]), 'REDEMPTIONS_TOKEN_NOT_CONTRACT')
+            })
+        })
+
+        context('removeVaultToken(address _token)', () => {
+
+        })
+
+        context('redeem(uint256 _amount)', () => {
+
+        })
 
     })
 })
