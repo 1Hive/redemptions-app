@@ -1,10 +1,10 @@
+import DaoDeployment from "./helpers/DaoDeployment";
+
 const Redemptions = artifacts.require('Redemptions')
 const Vault = artifacts.require('Vault')
 const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('BasicErc20')
-
-const getContract = name => artifacts.require(name)
 
 const {assertRevert} = require('@aragon/test-helpers/assertThrow')
 
@@ -21,39 +21,34 @@ const deployedContract = (receipt) =>
 
 contract('Redemptions', ([rootAccount, ...accounts]) => {
 
+    let daoDeployment = new DaoDeployment()
     let APP_MANAGER_ROLE, REDEEM_ROLE, ADD_TOKEN_ROLE, REMOVE_TOKEN_ROLE
-    let daoFactory, vaultBase, vault, redeemableToken, redemptionsBase, redemptions
+    let vaultBase, vault, redeemableToken, redemptionsBase, redemptions
 
     before(async () => {
-        const kernelBase = await getContract('Kernel').new(true) // petrify immediately
-        const aclBase = await getContract('ACL').new()
-        const evmScriptRegistryFactory = await getContract('EVMScriptRegistryFactory').new()
-        daoFactory = await getContract('DAOFactory').new(kernelBase.address, aclBase.address, evmScriptRegistryFactory.address)
+        await daoDeployment.deployBefore()
 
         vaultBase = await Vault.new()
         redemptionsBase = await Redemptions.new()
 
-        APP_MANAGER_ROLE = await kernelBase.APP_MANAGER_ROLE()
+        APP_MANAGER_ROLE = await daoDeployment.kernelBase.APP_MANAGER_ROLE()
         REDEEM_ROLE = await redemptionsBase.REDEEM_ROLE()
         ADD_TOKEN_ROLE = await redemptionsBase.ADD_TOKEN_ROLE()
         REMOVE_TOKEN_ROLE = await redemptionsBase.REMOVE_TOKEN_ROLE()
     })
 
     beforeEach(async () => {
-        const daoReceipt = await daoFactory.newDAO(rootAccount)
-        const dao = await getContract('Kernel').at(getLog(daoReceipt, 'DeployDAO', 'dao'))
-        const acl = await getContract('ACL').at(await dao.acl())
-        await acl.createPermission(rootAccount, dao.address, APP_MANAGER_ROLE, rootAccount, {from: rootAccount})
+        await daoDeployment.deployBeforeEach(rootAccount)
 
-        const newVaultAppReceipt = await dao.newAppInstance('0x5678', vaultBase.address, '0x', false, {from: rootAccount})
+        const newVaultAppReceipt = await daoDeployment.kernel.newAppInstance('0x5678', vaultBase.address, '0x', false, {from: rootAccount})
         vault = await Redemptions.at(deployedContract(newVaultAppReceipt))
 
-        const newRedemptionsAppReceipt = await dao.newAppInstance('0x1234', redemptionsBase.address, '0x', false, {from: rootAccount})
+        const newRedemptionsAppReceipt = await daoDeployment.kernel.newAppInstance('0x1234', redemptionsBase.address, '0x', false, {from: rootAccount})
         redemptions = await Redemptions.at(deployedContract(newRedemptionsAppReceipt))
 
-        await acl.createPermission(ANY_ADDRESS, redemptions.address, REDEEM_ROLE, rootAccount, {from: rootAccount})
-        await acl.createPermission(ANY_ADDRESS, redemptions.address, ADD_TOKEN_ROLE, rootAccount, {from: rootAccount})
-        await acl.createPermission(ANY_ADDRESS, redemptions.address, REMOVE_TOKEN_ROLE, rootAccount, {from: rootAccount})
+        await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REDEEM_ROLE, rootAccount, {from: rootAccount})
+        await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, ADD_TOKEN_ROLE, rootAccount, {from: rootAccount})
+        await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REMOVE_TOKEN_ROLE, rootAccount, {from: rootAccount})
 
         const miniMeTokenFactory = await MiniMeTokenFactory.new()
         redeemableToken = await MiniMeToken.new(miniMeTokenFactory.address, ZERO_ADDRESS, 0, 'RedeemableToken', 18, 'RDT', true)
