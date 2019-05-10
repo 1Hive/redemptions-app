@@ -38,17 +38,17 @@ contract Redemptions is AragonApp {
     * @param _vault Address of the vault
     * @param _redeemableToken MiniMeToken address
     */
-    function initialize(Vault _vault, MiniMeToken _redeemableToken, address[] memory _vaultTokens) external onlyInit {
+    function initialize(Vault _vault, MiniMeToken _redeemableToken, address[] _vaultTokens) external onlyInit {
         initialized();
 
         require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
 
         vault = _vault;
         redeemableToken = _redeemableToken;
+        vaultTokens = _vaultTokens;
 
         for (uint i = 0; i < _vaultTokens.length; i++) {
             tokens[_vaultTokens[i]] = true;
-            vaultTokens.push(_vaultTokens[i]);  // TODO: Can just do 'vaultTokens = _vaultTokens;' but not if we expect vault tokens to be populated before init
         }
     }
 
@@ -63,26 +63,31 @@ contract Redemptions is AragonApp {
     function removeVaultToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
         require(tokens[_token], ERROR_NOT_VAULT_TOKEN);
 
+        tokens[_token] = false;
         vaultTokens.deleteItem(_token);
     }
 
     function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
         require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
         require(redeemableToken.balanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
-        require(msg.sender != this, ERROR_THIS_CONTRACT_CANNOT_REDEEM);
+        require(msg.sender != address(this), ERROR_THIS_CONTRACT_CANNOT_REDEEM);
         require(msg.sender != address(vault), ERROR_VAULT_CANNOT_REDEEM);
         require(msg.sender != address(redeemableToken), ERROR_TOKEN_CANNOT_REDEEM);
 
         uint256 redemptionAmount;
 
         for (uint256 i = 0; i < vaultTokens.length; i++) {
-            redemptionAmount = _amount.mul(vault.balance(vaultTokens[i])).div(redeemableToken.totalSupply);
-            vault.transfer(vaultTokens[i], _receiver, redemptionAmount);
+            redemptionAmount = _amount.mul(vault.balance(vaultTokens[i])).div(redeemableToken.totalSupply());
+            vault.transfer(vaultTokens[i], msg.sender, redemptionAmount);
         }
 
-        require(redeemableToken.destroyTokens(_receiver, _amount), ERROR_CANNOT_DESTROY_TOKENS);
+        require(redeemableToken.destroyTokens(msg.sender, _amount), ERROR_CANNOT_DESTROY_TOKENS);
 
-        emit Redeem(_receiver, _amount);
+        emit Redeem(msg.sender, _amount);
+    }
+
+    function getVaultTokens() public view returns (address[]) {
+        return vaultTokens;
     }
 
 }
