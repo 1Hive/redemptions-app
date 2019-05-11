@@ -14,7 +14,7 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 contract('Redemptions', ([rootAccount, ...accounts]) => {
 
     let daoDeployment = new DaoDeployment()
-    let APP_MANAGER_ROLE, REDEEM_ROLE, ADD_TOKEN_ROLE, REMOVE_TOKEN_ROLE
+    let APP_MANAGER_ROLE, REDEEM_ROLE, ADD_TOKEN_ROLE, REMOVE_TOKEN_ROLE, TRANSFER_ROLE
     let vaultBase, vault, redeemableToken, redemptionsBase, redemptions
 
     before(async () => {
@@ -27,13 +27,15 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         REDEEM_ROLE = await redemptionsBase.REDEEM_ROLE()
         ADD_TOKEN_ROLE = await redemptionsBase.ADD_TOKEN_ROLE()
         REMOVE_TOKEN_ROLE = await redemptionsBase.REMOVE_TOKEN_ROLE()
+
+        TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
     })
 
     beforeEach(async () => {
         await daoDeployment.deployBeforeEach(rootAccount)
 
         const newVaultAppReceipt = await daoDeployment.kernel.newAppInstance('0x5678', vaultBase.address, '0x', false, {from: rootAccount})
-        vault = await Redemptions.at(deployedContract(newVaultAppReceipt))
+        vault = await Vault.at(deployedContract(newVaultAppReceipt))
 
         const newRedemptionsAppReceipt = await daoDeployment.kernel.newAppInstance('0x1234', redemptionsBase.address, '0x', false, {from: rootAccount})
         redemptions = await Redemptions.at(deployedContract(newRedemptionsAppReceipt))
@@ -41,6 +43,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REDEEM_ROLE, rootAccount, {from: rootAccount})
         await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, ADD_TOKEN_ROLE, rootAccount, {from: rootAccount})
         await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REMOVE_TOKEN_ROLE, rootAccount, {from: rootAccount})
+        await daoDeployment.acl.createPermission(redemptions.address, vault.address, TRANSFER_ROLE, rootAccount, {from: rootAccount})
 
         const miniMeTokenFactory = await MiniMeTokenFactory.new()
         redeemableToken = await MiniMeToken.new(miniMeTokenFactory.address, ZERO_ADDRESS, 0, 'RedeemableToken', 18, 'RDT', true)
@@ -72,7 +75,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         })
 
         context('addVaultToken(address _token)', () => {
-
+            
             it('should add an address to the vault tokens', async () => {
                 const token2 = await Erc20.new()
                 expectedTokenAddresses.push(token2.address)
@@ -99,11 +102,49 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         })
 
         context('removeVaultToken(address _token)', () => {
+           
+            it('Should remove token address', async () =>  {
+                expectedTokenAddresses = expectedTokenAddresses.slice(1)
+                await redemptions.removeVaultToken(token0.address)
 
+                const actualTokenAddresses = await redemptions.getVaultTokens()
+                
+                const actualTokenAddedToken0 = await redemptions.tokenAdded(token0.address)
+                assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
+                assert.isFalse(actualTokenAddedToken0)
+            })
+
+            it('reverts if removing token not present', async () => {
+                await assertRevert(redemptions.removeVaultToken(accounts[0]),'REDEMPTIONS_NOT_VAULT_TOKEN')
+            })
         })
 
         context('redeem(uint256 _amount)', () => {
 
+            let redemptionAmount = 20000
+            let vaultToken0 = 1e4
+            let vaultToken1 = 45000
+            let expectedRedeemAmountToken0
+            let expectedRedeemAmountToken1
+
+            before( async () => {
+             
+            })
+
+            it('Should redeem tokens as expected', async () => {
+                await token0.transfer(vault.address,vaultToken0)
+                await token1.transfer(vault.address,vaultToken1)
+                await redeemableToken.generateTokens(rootAccount,redemptionAmount)
+                await redeemableToken.generateTokens(accounts[0],80000)
+                console.log(await redeemableToken.balanceOf(rootAccount))
+                const redeemableTotalSupply = await redeemableToken.totalSupply()
+                expectedRedeemAmountToken0 = redemptionAmount * vaultToken0 / redeemableTotalSupply 
+                expectedRedeemAmountToken1 = redemptionAmount * vaultToken1 / redeemableTotalSupply 
+                await redemptions.redeem(redemptionAmount, { from:rootAccount })
+
+                assert.equal(await token0.balanceOf(rootAccount), expectedRedeemAmountToken0)
+                assert.equal(await token1.balanceOf(rootAccount), expectedRedeemAmountToken1)
+            })
         })
 
     })
