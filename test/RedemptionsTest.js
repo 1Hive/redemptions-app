@@ -43,10 +43,13 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REDEEM_ROLE, rootAccount, {from: rootAccount})
         await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, ADD_TOKEN_ROLE, rootAccount, {from: rootAccount})
         await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REMOVE_TOKEN_ROLE, rootAccount, {from: rootAccount})
+
         await daoDeployment.acl.createPermission(redemptions.address, vault.address, TRANSFER_ROLE, rootAccount, {from: rootAccount})
+        await vault.initialize()
 
         const miniMeTokenFactory = await MiniMeTokenFactory.new()
         redeemableToken = await MiniMeToken.new(miniMeTokenFactory.address, ZERO_ADDRESS, 0, 'RedeemableToken', 18, 'RDT', true)
+
     })
 
     context('initialize(Vault _vault, MiniMeToken _redeemableToken, address[] _vaultTokens)', ()=> {
@@ -121,29 +124,46 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
 
         context('redeem(uint256 _amount)', () => {
 
-            let redemptionAmount = 20000
-            let vaultToken0 = 1e4
-            let vaultToken1 = 45000
-            let expectedRedeemAmountToken0
-            let expectedRedeemAmountToken1
+            const redemptionAmount = 20000
+            const vaultToken0Ammount = 45231
+            const vaultToken1Ammount = 20001
+            const redeemer = accounts[0]
+        
+            beforeEach( async () => {
+                //transfer tokens to vault
+                await token0.transfer(vault.address,vaultToken0Ammount)
+                await token1.transfer(vault.address,vaultToken1Ammount)
 
-            before( async () => {
-             
+                //mint redeemableTokens to first two accounts
+                await redeemableToken.generateTokens(redeemer,redemptionAmount)
+                await redeemableToken.generateTokens(rootAccount,80000)
+
+                //change MiniMe controller so it can destroy tokens (maybe have a token manager inside redemptions?)
+                await redeemableToken.changeController(redemptions.address)
+
             })
 
             it('Should redeem tokens as expected', async () => {
-                await token0.transfer(vault.address,vaultToken0)
-                await token1.transfer(vault.address,vaultToken1)
-                await redeemableToken.generateTokens(rootAccount,redemptionAmount)
-                await redeemableToken.generateTokens(accounts[0],80000)
-                console.log(await redeemableToken.balanceOf(rootAccount))
-                const redeemableTotalSupply = await redeemableToken.totalSupply()
-                expectedRedeemAmountToken0 = redemptionAmount * vaultToken0 / redeemableTotalSupply 
-                expectedRedeemAmountToken1 = redemptionAmount * vaultToken1 / redeemableTotalSupply 
-                await redemptions.redeem(redemptionAmount, { from:rootAccount })
+ 
+                const redeemableTokenTotalSupply = await redeemableToken.totalSupply()
+                const expectedRedeemAmountToken0 = parseInt(redemptionAmount * vaultToken0Ammount / redeemableTokenTotalSupply) 
+                const expectedRedeemAmountToken1 = parseInt(redemptionAmount * vaultToken1Ammount / redeemableTokenTotalSupply) 
 
-                assert.equal(await token0.balanceOf(rootAccount), expectedRedeemAmountToken0)
-                assert.equal(await token1.balanceOf(rootAccount), expectedRedeemAmountToken1)
+                await redemptions.redeem(redemptionAmount, { from:redeemer })
+
+                const token0Balance = await token0.balanceOf(redeemer)
+                const token1Balance = await token1.balanceOf(redeemer)
+
+                assert.equal(token0Balance.toNumber(), expectedRedeemAmountToken0)
+                assert.equal(token1Balance.toNumber(), expectedRedeemAmountToken1)
+            })
+
+            it('reverts if amount to redeem is zero', async () => {
+                await assertRevert(redemptions.redeem(0, { from:redeemer }),'REDEMPTIONS_CANNOT_REDEEM_ZERO')
+            })
+
+            it('reverts if amount to redeem exceeds account\'s balance', async () => {
+                await assertRevert(redemptions.redeem(redemptionAmount + 1, { from:redeemer }),'REDEMPTIONS_INSUFFICIENT_BALANCE')
             })
         })
 
