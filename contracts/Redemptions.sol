@@ -82,8 +82,8 @@ contract Redemptions is AragonApp {
             redemptionAmount = _amount.mul(vault.balance(vaultTokens[i])).div(redeemableToken.totalSupply());
             vault.transfer(vaultTokens[i], msg.sender, redemptionAmount);
         }
-
-        require(redeemableToken.destroyTokens(msg.sender, _amount), ERROR_CANNOT_DESTROY_TOKENS);
+        // minime.destroyTokens() never returns false, only reverts on failure
+        redeemableToken.destroyTokens(msg.sender, _amount);
 
         emit Redeem(msg.sender, _amount);
     }
