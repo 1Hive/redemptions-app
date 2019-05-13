@@ -125,18 +125,19 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         context('redeem(uint256 _amount)', () => {
 
             const redemptionAmount = 20000
-            const vaultToken0Ammount = 45231
-            const vaultToken1Ammount = 20001
+            const rootAccountRedeemableTokenAmount = 80000
+            const vaultToken0Amount = 45231
+            const vaultToken1Amount = 20001
             const redeemer = accounts[0]
         
             beforeEach( async () => {
                 //transfer tokens to vault
-                await token0.transfer(vault.address,vaultToken0Ammount)
-                await token1.transfer(vault.address,vaultToken1Ammount)
+                await token0.transfer(vault.address,vaultToken0Amount)
+                await token1.transfer(vault.address,vaultToken1Amount)
 
                 //mint redeemableTokens to first two accounts
                 await redeemableToken.generateTokens(redeemer,redemptionAmount)
-                await redeemableToken.generateTokens(rootAccount,80000)
+                await redeemableToken.generateTokens(rootAccount, rootAccountRedeemableTokenAmount)
 
                 //change MiniMe controller so it can destroy tokens (maybe have a token manager inside redemptions?)
                 await redeemableToken.changeController(redemptions.address)
@@ -146,8 +147,8 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
             it('Should redeem tokens as expected', async () => {
  
                 const redeemableTokenTotalSupply = await redeemableToken.totalSupply()
-                const expectedRedeemAmountToken0 = parseInt(redemptionAmount * vaultToken0Ammount / redeemableTokenTotalSupply) 
-                const expectedRedeemAmountToken1 = parseInt(redemptionAmount * vaultToken1Ammount / redeemableTokenTotalSupply) 
+                const expectedRedeemAmountToken0 = parseInt(redemptionAmount * vaultToken0Amount / redeemableTokenTotalSupply) 
+                const expectedRedeemAmountToken1 = parseInt(redemptionAmount * vaultToken1Amount / redeemableTokenTotalSupply) 
 
                 await redemptions.redeem(redemptionAmount, { from:redeemer })
 
@@ -164,6 +165,10 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
 
             it('reverts if amount to redeem exceeds account\'s balance', async () => {
                 await assertRevert(redemptions.redeem(redemptionAmount + 1, { from:redeemer }),'REDEMPTIONS_INSUFFICIENT_BALANCE')
+            })
+
+            it('reverts if amount to redeem exceeds account\'s balance', async () => {
+                await assertRevert(redemptions.redeem(redemptionAmount, { from:redemptions.address }),'REDEMPTIONS_INSUFFICIENT_BALANCE')
             })
         })
 

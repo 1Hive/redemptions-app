@@ -24,7 +24,6 @@ contract Redemptions is AragonApp {
     string private constant ERROR_THIS_CONTRACT_CANNOT_REDEEM = "REDEMPTIONS_THIS_CONTRACT_CANNOT_REDEEM";
     string private constant ERROR_VAULT_CANNOT_REDEEM = "REDEMPTIONS_VAULT_CANNOT_REDEEM";
     string private constant ERROR_TOKEN_CANNOT_REDEEM = "REDEMPTIONS_TOKEN_CANNOT_REDEEM";
-    string private constant ERROR_CANNOT_DESTROY_TOKENS= "REDEMPTIONS_CANNOT_DESTROY_TOKENS";
 
     Vault public vault;
     MiniMeToken public redeemableToken;
