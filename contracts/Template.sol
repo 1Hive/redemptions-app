@@ -17,10 +17,11 @@ import "@aragon/os/contracts/lib/ens/PublicResolver.sol";
 import "@aragon/os/contracts/apm/APMNamehash.sol";
 
 import "@aragon/apps-voting/contracts/Voting.sol";
+import "@aragon/apps-vault/contracts/Vault.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
-// import "./CounterApp.sol";
+ import "./Redemptions.sol";
 
 
 contract TemplateBase is APMNamehash {
@@ -67,30 +68,38 @@ contract Template is TemplateBase {
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         address root = msg.sender;
-        // bytes32 appId = apmNamehash("redemptions");
+        bytes32 appId = apmNamehash("redemptions");
         bytes32 votingAppId = apmNamehash("voting");
         bytes32 tokenManagerAppId = apmNamehash("token-manager");
+        bytes32 vaultAppId = apmNamehash("vault");
 
-        // CounterApp app = CounterApp(dao.newAppInstance(appId, latestVersionAppBase(appId)));
+
+        Vault vault = Vault(dao.newAppInstance(vaultAppId, latestVersionAppBase(vaultAppId)));
+        Redemptions app = Redemptions(dao.newAppInstance(appId, latestVersionAppBase(appId)));
         Voting voting = Voting(dao.newAppInstance(votingAppId, latestVersionAppBase(votingAppId)));
         TokenManager tokenManager = TokenManager(dao.newAppInstance(tokenManagerAppId, latestVersionAppBase(tokenManagerAppId)));
 
         MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "App token", 0, "APP", true);
         token.changeController(tokenManager);
-
-        // app.initialize();
-        tokenManager.initialize(token, true, 0);
+    
         // Initialize apps
+        vault.initialize();
+        tokenManager.initialize(token, true, 0);
+        app.initialize(vault, tokenManager, new address[](0));
         voting.initialize(token, 50 * PCT, 20 * PCT, 1 days);
 
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
         tokenManager.mint(root, 1); // Give one token to root
 
-        acl.createPermission(ANY_ENTITY, voting, voting.CREATE_VOTES_ROLE(), root);
+        acl.createPermission(tokenManager, voting, voting.CREATE_VOTES_ROLE(), root);
 
-        // acl.createPermission(voting, app, app.INCREMENT_ROLE(), voting);
-        // acl.createPermission(ANY_ENTITY, app, app.DECREMENT_ROLE(), root);
-        // acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
+        acl.createPermission(app, vault, vault.TRANSFER_ROLE(), root);
+
+        acl.createPermission(tokenManager, app, app.REDEEM_ROLE(), root);
+        acl.createPermission(voting, app, app.ADD_TOKEN_ROLE(), root);
+        acl.createPermission(voting, app, app.REMOVE_TOKEN_ROLE(), root);
+
+        acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
 
         // Clean up permissions
         acl.grantPermission(root, dao, dao.APP_MANAGER_ROLE());

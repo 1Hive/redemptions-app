@@ -1,8 +1,18 @@
 {
   "roles": [
     {
-      "name": "Add member to the list of members",
-      "id": "ADD_MEMBER_ROLE",
+      "name": "Redeem tokens",
+      "id": "REDEEM_ROLE",
+      "params": []
+    },
+    {
+      "name": "Add member to the vault list",
+      "id": "ADD_TOKEN_ROLE",
+      "params": []
+    },
+    {
+      "name": "Remove token from vault list",
+      "id": "REMOVE_TOKEN_ROLE",
       "params": []
     }
   ],
