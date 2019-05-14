@@ -7,7 +7,7 @@ const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('BasicErc20')
 
-const {assertRevert, getLog, deployedContract} = require('./helpers/helpers')
+const {assertRevert, deployedContract} = require('./helpers/helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -52,7 +52,6 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, ADD_TOKEN_ROLE, rootAccount, {from: rootAccount})
         await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REMOVE_TOKEN_ROLE, rootAccount, {from:rootAccount})
 
- 
         const miniMeTokenFactory = await MiniMeTokenFactory.new()
         redeemableToken = await MiniMeToken.new(miniMeTokenFactory.address, ZERO_ADDRESS, 0, 'RedeemableToken', 18, 'RDT', true)
 
@@ -63,7 +62,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
 
     })
 
-    context('initialize(Vault _vault, MiniMeToken _redeemableToken, address[] _vaultTokens)', ()=> {
+    context('initialize(Vault _vault, TokenManager _tokenManager, address[] _vaultTokens)', ()=> {
 
         let token0, token1
         let expectedTokenAddresses

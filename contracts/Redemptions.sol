@@ -15,6 +15,7 @@ contract Redemptions is AragonApp {
     bytes32 constant public REMOVE_TOKEN_ROLE = keccak256("REMOVE_TOKEN_ROLE");
 
     string private constant ERROR_VAULT_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
+    string private constant ERROR_TOKEN_MANAGER_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
     string private constant ERROR_TOKEN_MANAGER = "REDEMPTIONS_TOKEN_MANAGER";
     string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
@@ -33,15 +34,16 @@ contract Redemptions is AragonApp {
     event Redeem(address indexed receiver, uint256 amount);
 
     /**
-    * @notice Initialize
+    * @notice Initialize Redemptions app contract
     * @param _vault Address of the vault
     * @param _tokenManager TokenManager address
     * @param _vaultTokens token addreses
     */
-    function initialize(Vault _vault, TokenManager _tokenManager, address[] memory _vaultTokens) external onlyInit {
+    function initialize(Vault _vault, TokenManager _tokenManager, address[] _vaultTokens) external onlyInit {
         initialized();
 
         require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
+        require(isContract(_tokenManager), ERROR_TOKEN_MANAGER_NOT_CONTRACT);
 
         vault = _vault;
         tokenManager = _tokenManager;
@@ -53,7 +55,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Add token to vault
+    * @notice Add token `_token` to vault
     * @param _token token address
     */
     function addVaultToken(address _token) external auth(ADD_TOKEN_ROLE) {
@@ -66,7 +68,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Remove token from vault
+    * @notice Remove token `_token` from vault
     * @param _token token address
     */
     function removeVaultToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
@@ -77,9 +79,9 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Redeem tokens from vault
+    * @notice Redeem `_amount` tokens from vault
     * @param _amount amount of tokens
-[]    */
+    */
     function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
         require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
         require(tokenManager.spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
