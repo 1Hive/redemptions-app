@@ -85,9 +85,7 @@ contract Redemptions is AragonApp {
     function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
         require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
         require(tokenManager.spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
-        require(msg.sender != address(vault), ERROR_VAULT_CANNOT_REDEEM);
-        require(msg.sender != address(tokenManager), ERROR_TOKEN_MANAGER_CANNOT_REDEEM);
-
+        
         uint256 redemptionAmount;
 
         for (uint256 i = 0; i < vaultTokens.length; i++) {
