@@ -1,12 +1,12 @@
 {
   "roles": [
     {
-      "name": "Redeem tokens",
+      "name": "Redeem tokens from the vault",
       "id": "REDEEM_ROLE",
       "params": []
     },
     {
-      "name": "Add member to the vault list",
+      "name": "Add token to the vault list",
       "id": "ADD_TOKEN_ROLE",
       "params": []
     },
