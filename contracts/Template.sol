@@ -68,24 +68,24 @@ contract Template is TemplateBase {
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         address root = msg.sender;
-        bytes32 appId = apmNamehash("redemptions");
+        bytes32 redemptionsAppId = apmNamehash("redemptions");
         bytes32 votingAppId = apmNamehash("voting");
         bytes32 tokenManagerAppId = apmNamehash("token-manager");
         bytes32 vaultAppId = apmNamehash("vault");
 
 
         Vault vault = Vault(dao.newAppInstance(vaultAppId, latestVersionAppBase(vaultAppId)));
-        Redemptions app = Redemptions(dao.newAppInstance(appId, latestVersionAppBase(appId)));
+        Redemptions redemptions = Redemptions(dao.newAppInstance(redemptionsAppId, latestVersionAppBase(redemptionsAppId)));
         Voting voting = Voting(dao.newAppInstance(votingAppId, latestVersionAppBase(votingAppId)));
         TokenManager tokenManager = TokenManager(dao.newAppInstance(tokenManagerAppId, latestVersionAppBase(tokenManagerAppId)));
 
-        MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "App token", 0, "APP", true);
+        MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "Rdemable token", 0, "RDT", true);
         token.changeController(tokenManager);
     
         // Initialize apps
         vault.initialize();
         tokenManager.initialize(token, true, 0);
-        app.initialize(vault, tokenManager, new address[](0));
+        redemptions.initialize(vault, tokenManager, new address[](0));
         voting.initialize(token, 50 * PCT, 20 * PCT, 1 days);
 
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
@@ -93,11 +93,11 @@ contract Template is TemplateBase {
 
         acl.createPermission(tokenManager, voting, voting.CREATE_VOTES_ROLE(), root);
 
-        acl.createPermission(app, vault, vault.TRANSFER_ROLE(), root);
+        acl.createPermission(redemptions, vault, vault.TRANSFER_ROLE(), root);
 
-        acl.createPermission(tokenManager, app, app.REDEEM_ROLE(), root);
-        acl.createPermission(voting, app, app.ADD_TOKEN_ROLE(), root);
-        acl.createPermission(voting, app, app.REMOVE_TOKEN_ROLE(), root);
+        acl.createPermission(tokenManager, redemptions, redemptions.REDEEM_ROLE(), root);
+        acl.createPermission(voting, redemptions, redemptions.ADD_TOKEN_ROLE(), root);
+        acl.createPermission(voting, redemptions, redemptions.REMOVE_TOKEN_ROLE(), root);
 
         acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
 
