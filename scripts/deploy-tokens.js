@@ -31,22 +31,23 @@ module.exports = async (
 
   const BasicToken = artifacts.require('BasicErc20')
 
-  const valutAddress = '0x..'
+  const valutAddress = '0x7f10285bc6b2f53e364aee91f996d6053897a50c'
 
   log('Deploying BasicTokens...')
   const token0 = await BasicToken.new()
-  const token1 = await BasicToken.new()
-  await logDeploy(token0, { verbose })
+  //const token1 = await BasicToken.new()
+  //await logDeploy(token0, { verbose })
 
-  // const receipt = await factory.newENS(owner)
+  //await logDeploy(token1, { verbose })
 
-  await logDeploy(token1, { verbose })
+  console.log('#################################################')
 
-  // const ensAddr = receipt.logs.filter(l => l.event == 'DeployENS')[0].args.ens
-  // log('====================')
-  // log('Deployed ENS:', ensAddr)
+  token0.transfer(valutAddress, 100)
 
-  // log(ensAddr)
+  console.log("VAULT BALANCE")
+
+  console.log(await token0.balanceOf(valutAddress));
+
 
   if (typeof truffleExecCallback === 'function') {
     // Called directly via `truffle exec`
