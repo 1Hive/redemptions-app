@@ -29,12 +29,12 @@ module.exports = async (
     )
   }
 
-  const BasicToken = artifacts.require('BasicErc20')
+  const BasicToken = artifacts.require('TestToken')
 
-  const valutAddress = '0x7f10285bc6b2f53e364aee91f996d6053897a50c'
-
+  const valutAddress = '0xd4303618a7eab0092a4bdea064a1be66c665478c'
+  
   log('Deploying BasicTokens...')
-  const token0 = await BasicToken.new()
+  const token0 = await BasicToken.new(valutAddress, 'TEST', 'TST', 18)
   //const token1 = await BasicToken.new()
   //await logDeploy(token0, { verbose })
 
@@ -42,7 +42,7 @@ module.exports = async (
 
   console.log('#################################################')
 
-  token0.transfer(valutAddress, 100)
+  //token0.transfer(valutAddress, 100)
 
   console.log("VAULT BALANCE")
 
