@@ -4,6 +4,7 @@ import { useAragonApi } from '@aragon/api-react'
 import { Main, SidePanel } from '@aragon/ui'
 
 import AppLayout from './components/AppLayout'
+//test
 
 class App extends React.Component {
   static propTypes = {
