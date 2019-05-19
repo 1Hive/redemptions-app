@@ -5,7 +5,7 @@ const globalArtifacts = this.artifacts // Not injected unless called directly vi
 const globalWeb3 = this.web3 // Not injected unless called directly via truffle
 
 const defaultOwner = process.env.OWNER
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
 
 const getKernelEventLogs = (kernel,event) => {
   kernel[event]({},(err,log) => {
@@ -37,9 +37,14 @@ module.exports = async (
     )
   }
 
-  const ERC20Token = artifacts.require('ERC20Token')
+  
   const Kernel = artifacts.require('Kernel')
   const Vault = artifacts.require('Vault')
+  const TokenFactory = artifacts.require('TokenFactory');
+  const Depositer = artifacts.depositer.require('Depositer')
+
+  const tokenFactory = TokenFactory.new()
+  const depositer = Depositer.new(tokenFactory)
 
   const daoAddress = process.argv.slice(4)[0]
 
@@ -50,19 +55,15 @@ module.exports = async (
   const vaultAddress = await kernel.getApp(PROXY_APP_NAMESPACE,KERNEL_DEFAULT_VAULT_APP_ID)
   const vault = Vault.at(vaultAddress)
   
-  const token0 = await ERC20Token.new(owner,'Test Token 0', 'TS0',18)
-  await token0.approve(vaultAddress,100)
-  let recipt = await vault.deposit(token0.address, 100)
+  const token0 = await tokenFactory.newToken('Test Token 0', 'TS0')
+  await depositer.pleaseAirdrop(vault,token0,1000)
 
-  const token1 = await ERC20Token.new(owner,'Test Token 1', 'TS1',18)
-  await token1.approve(vaultAddress,100)
-  recipt = await vault.deposit(token1.address, 150)
+  const token1 = await tokenFactory.newToken('Test Token 1', 'TS1')
+  await depositer.pleaseAirdrop(vault,token0,1000)
 
 
-  await vault.deposit(ZERO_ADDRESS,12e18, {value:12e18})
-
-  console.log('Vault balance',await token0.balanceOf(vaultAddress))
-  console.log('Vault balance',await token1.balanceOf(vaultAddress))
+  console.log('Vault balance t0',await token0.balanceOf(vaultAddress));
+  console.log('Vault balance t1',await token1.balanceOf(vaultAddress));
 
   if (typeof truffleExecCallback === 'function') {
     // Called directly via `truffle exec`
