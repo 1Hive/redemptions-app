@@ -3,6 +3,8 @@ import PropTypes from 'prop-types'
 import { useAragonApi } from '@aragon/api-react'
 import { Main, SidePanel } from '@aragon/ui'
 
+import Balances from './components/Balances'
+
 import AppLayout from './components/AppLayout'
 //test
 
@@ -13,40 +15,42 @@ class App extends React.Component {
   }
 
   state = {
-    addTokenOpen: false
+    redeemOpen: false,
   }
 
-  handleAddTokenOpen = () => {
-    this.setState({ addTokenOpen:true })
+  handleRedeemOpen = () => {
+    this.setState({ redeemOpen: true })
   }
 
-  handleAddTokenClose = () => {
-    this.setState({ addTokenOpen:false })
+  handleRedeemClose = () => {
+    this.setState({ redeemOpen: false })
   }
 
   render() {
     const { appState } = this.props
-    const { addTokenOpen } = this.state
+    const { redeemOpen } = this.state
+    const { addedTokens } = appState
+
+    console.log('state', appState)
 
     return (
       <Main>
-        <AppLayout 
+        <AppLayout
           title="Redemptions"
           mainButton={{
-            label: 'Add Token',
-            onClick: this.handleAddTokenOpen,
-            icon: ''
+            label: 'Redeem',
+            onClick: this.handleRedeemOpen,
+            icon: '',
           }}
           smallViewPadding={0}
         >
+          {addedTokens && <Balances addedTokens={addedTokens} />}
         </AppLayout>
         <SidePanel
-            opened={addTokenOpen}
-            onClose={this.handleAddTokenClose}
-            title="Add token"
-        >
-  
-        </SidePanel>
+          opened={redeemOpen}
+          onClose={this.handleRedeemClose}
+          title="Redeem"
+        />
       </Main>
     )
   }
@@ -54,5 +58,5 @@ class App extends React.Component {
 
 export default () => {
   const { api, appState } = useAragonApi()
-  return <App api={api} appState={appState}/>
+  return <App api={api} appState={appState} />
 }

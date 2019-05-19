@@ -1,8 +1,7 @@
 import '@babel/polyfill'
-import { first } from  'rxjs/operators'
+import { first } from 'rxjs/operators'
 import { of } from 'rxjs'
 import AragonApi from '@aragon/api'
-
 
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
@@ -19,13 +18,17 @@ import vaultBalanceAbi from './abi/vault-balance.json'
 import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
 
+//will unncomment if needed
+// import tokenManagerTokenAbi from './abi/tokenManager-token.json'
+// import tokenManagerBalanceAbi from './abi/tokenManager-spendableBalanceOf.json'
+// const tokenManagerAbi = [].concat(tokenManagerAbi, tokenManagerBalanceAbi)
+
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
 const vaultAbi = [].concat(
   vaultBalanceAbi,
   vaultGetInitializationBlockAbi,
   vaultEventAbi
 )
-
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const tokenContracts = new Map() // Addr -> External contract
@@ -39,11 +42,8 @@ const api = new AragonApi()
 
 api.identify('Redemptions')
 
-
-
-api.call('vault')
-.subscribe(
-  vaultAddress => initialize(vaultAddress,ETHER_TOKEN_FAKE_ADDRESS),
+api.call('vault').subscribe(
+  vaultAddress => initialize(vaultAddress, ETHER_TOKEN_FAKE_ADDRESS),
   err => {
     console.error(
       'Could not start background script execution due to the contract not loading the vault:',
@@ -51,7 +51,6 @@ api.call('vault')
     )
   }
 )
-
 
 async function initialize(vaultAddress, ethAddress) {
   const vaultContract = api.external(vaultAddress, vaultAbi)
@@ -79,7 +78,6 @@ async function initialize(vaultAddress, ethAddress) {
   })
 }
 
-
 async function createStore(settings) {
   let vaultInitializationBlock
 
@@ -93,8 +91,6 @@ async function createStore(settings) {
 
   return api.store(
     async (state, event) => {
-
-      console.log('evento',event)
       const { vault } = settings
       const { address: eventAddress, event: eventName } = event
       let nextState = {
@@ -106,11 +102,8 @@ async function createStore(settings) {
       } else if (addressesEqual(eventAddress, vault.address)) {
         // Vault event
         nextState = await vaultLoadBalance(nextState, event, settings)
-      } else { 
+      } else {
         // Redemptions event
-
-
-
       }
 
       return nextState
@@ -124,7 +117,6 @@ async function createStore(settings) {
   )
 }
 
-
 /***********************
  *                     *
  *   Event Handlers    *
@@ -135,6 +127,7 @@ async function initializeState(state, settings) {
   const nextState = {
     ...state,
     vaultAddress: settings.vault.address,
+    addedTokens: await api.call('getVaultTokens').toPromise(),
   }
 
   const withEthBalance = await loadEthBalance(nextState, settings)
@@ -151,9 +144,6 @@ async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
     ),
   }
 }
-
-
-
 
 /***********************
  *                     *
@@ -232,7 +222,6 @@ async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
   }
   return decimals
 }
-
 
 async function loadTokenName(tokenContract, tokenAddress, { network }) {
   if (tokenNames.has(tokenContract)) {

@@ -89,13 +89,30 @@ contract Redemptions is AragonApp {
         uint256 redemptionAmount;
 
         for (uint256 i = 0; i < vaultTokens.length; i++) {
-            redemptionAmount = _amount.mul(vault.balance(vaultTokens[i])).div(tokenManager.token().totalSupply());
+            redemptionAmount = _amount.mul(vault.balance(vaultTokens[i])).div(totalSupply());
             vault.transfer(vaultTokens[i], msg.sender, redemptionAmount);
         }
         
         tokenManager.burn(msg.sender, _amount);
 
         emit Redeem(msg.sender, _amount);
+    }
+
+    /**
+    * @notice Get MinimeToken total supply
+    * @return total supply 
+    */
+    function totalSupply() public view returns (uint256) {
+        return tokenManager.token().totalSupply();
+    }
+
+
+   /**
+    * @notice Get spendable balance of address
+    * @return spendable balance of holder
+    */
+    function spendableBalanceOf(address holder) public view returns (uint256) {
+        return tokenManager.spendableBalanceOf(holder);
     }
 
     /**
