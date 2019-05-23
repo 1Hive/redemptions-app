@@ -106,7 +106,7 @@ async function createStore(settings) {
         // Redemptions event
         nextState = await updateTokens(nextState, settings)
       }
-
+      console.log('nextState', nextState)
       return nextState
     },
     [
@@ -138,9 +138,10 @@ async function initializeState(state, settings) {
 
 async function updateTokens(state, settings) {
   const tokens = await api.call('getTokens').toPromise()
+
   return {
     ...state,
-    tokens: await getVaultTokens(tokens, settings),
+    tokens: await getVaultBalances(tokens, settings),
   }
 }
 
@@ -151,15 +152,19 @@ async function updateTokens(state, settings) {
  ***********************/
 
 /** returns `tokens` balances from vault */
-async function getVaultTokens(tokens = [], settings) {
-  return tokens.map(tokenAddress => {
+async function getVaultBalances(tokens = [], settings) {
+  let balances = []
+  for (let tokenAddress of tokens) {
     const tokenContract = tokenContracts.has(tokenAddress)
       ? tokenContracts.get(tokenAddress)
       : api.external(tokenAddress, tokenAbi)
     tokenContracts.set(tokenAddress, tokenContract)
-
-    return newBalanceEntry(tokenContract, tokenAddress, settings)
-  })
+    balances = [
+      ...balances,
+      await newBalanceEntry(tokenContract, tokenAddress, settings),
+    ]
+  }
+  return balances
 }
 
 async function newBalanceEntry(tokenContract, tokenAddress, settings) {
