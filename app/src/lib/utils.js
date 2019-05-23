@@ -16,6 +16,10 @@ export function formatDecimals(value, digits) {
   }
 }
 
+export function capitalizeFirst(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
 export function formatTokenAmount(
   amount,
   isIncoming,

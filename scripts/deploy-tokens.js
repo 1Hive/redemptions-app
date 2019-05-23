@@ -64,8 +64,16 @@ module.exports = async (
 
   await vault.deposit(ZERO_ADDRESS, 2e18, { value: 2e18 })
 
-  console.log('Vault token0 balance', await token0.balanceOf(vaultAddress))
-  console.log('Vault token1 balance', await token1.balanceOf(vaultAddress))
+  console.log(
+    'Vault token0:',
+    token0.address,
+    await token0.balanceOf(vaultAddress)
+  )
+  console.log(
+    'Vault token1',
+    token1.address,
+    await token1.balanceOf(vaultAddress)
+  )
 
   if (typeof truffleExecCallback === 'function') {
     // Called directly via `truffle exec`

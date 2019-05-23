@@ -5,30 +5,17 @@ import { theme, breakpoint, Button, SidePanel } from '@aragon/ui'
 import BalanceToken from './BalanceToken'
 
 class Balances extends Component {
-  state = {
-    addTokenOpen: false,
-  }
-
-  handleAddTokenOpen = () => {
-    this.setState({ addTokenOpen: true })
-  }
-
-  handleAddTokenClose = () => {
-    this.setState({ addTokenOpen: false })
-  }
-
   render() {
-    const { addedTokens } = this.props
-    const { addTokenOpen } = this.state
+    const { tokens, onAddToken, onRemoveToken } = this.props
 
     return (
       <React.Fragment>
         <section>
-          <Title>Vault tokens</Title>
+          <Title>Tokens for redemption</Title>
           <ScrollView>
             <List>
-              {addedTokens.length > 0 ? (
-                addedTokens.map(({ address, name, amount, symbol }) => (
+              {tokens.length > 0 ? (
+                tokens.map(({ address, name, amount, symbol }) => (
                   <ListItem key={address}>
                     <BalanceToken amount={amount} name={name} symbol={symbol} />
                   </ListItem>
@@ -37,16 +24,11 @@ class Balances extends Component {
                 <EmptyListItem />
               )}
             </List>
-            <Button mode="strong" onClick={() => this.handleAddTokenOpen()}>
+            <Button mode="outline" onClick={onAddToken}>
               Add Token
             </Button>
           </ScrollView>
         </section>
-        <SidePanel
-          opened={addTokenOpen}
-          onClose={this.handleAddTokenClose}
-          title="Add token"
-        />
       </React.Fragment>
     )
   }

@@ -101,9 +101,10 @@ async function createStore(settings) {
         nextState = await initializeState(nextState, settings)
       } else if (addressesEqual(eventAddress, vault.address)) {
         // Vault event
-        nextState = await vaultLoadBalance(nextState, event, settings)
+        // nextState = await getVaultToken(nextState, event)
       } else {
         // Redemptions event
+        nextState = await updateTokens(nextState, settings)
       }
 
       return nextState
@@ -124,24 +125,22 @@ async function createStore(settings) {
  ***********************/
 
 async function initializeState(state, settings) {
-  const nextState = {
+  let nextState = {
     ...state,
     vaultAddress: settings.vault.address,
-    addedTokens: await api.call('getVaultTokens').toPromise(),
   }
 
-  const withEthBalance = await loadEthBalance(nextState, settings)
-  return withEthBalance
+  nextState = await updateTokens(nextState, settings)
+  return nextState
+  // const withEthBalance = await loadEthBalance(nextState, settings)
+  // return withEthBalance
 }
 
-async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
+async function updateTokens(state, settings) {
+  const tokens = await api.call('getTokens').toPromise()
   return {
     ...state,
-    balances: await updateBalances(
-      state,
-      token || settings.ethToken.address,
-      settings
-    ),
+    tokens: await getVaultTokens(tokens, settings),
   }
 }
 
@@ -150,27 +149,17 @@ async function vaultLoadBalance(state, { returnValues: { token } }, settings) {
  *       Helpers       *
  *                     *
  ***********************/
-async function updateBalances({ balances = [] }, tokenAddress, settings) {
-  const tokenContract = tokenContracts.has(tokenAddress)
-    ? tokenContracts.get(tokenAddress)
-    : api.external(tokenAddress, tokenAbi)
-  tokenContracts.set(tokenAddress, tokenContract)
 
-  const balancesIndex = balances.findIndex(({ address }) =>
-    addressesEqual(address, tokenAddress)
-  )
-  if (balancesIndex === -1) {
-    return balances.concat(
-      await newBalanceEntry(tokenContract, tokenAddress, settings)
-    )
-  } else {
-    const newBalances = Array.from(balances)
-    newBalances[balancesIndex] = {
-      ...balances[balancesIndex],
-      amount: await loadTokenBalance(tokenAddress, settings),
-    }
-    return newBalances
-  }
+/** returns `tokens` balances from vault */
+async function getVaultTokens(tokens = [], settings) {
+  return tokens.map(tokenAddress => {
+    const tokenContract = tokenContracts.has(tokenAddress)
+      ? tokenContracts.get(tokenAddress)
+      : api.external(tokenAddress, tokenAbi)
+    tokenContracts.set(tokenAddress, tokenContract)
+
+    return newBalanceEntry(tokenContract, tokenAddress, settings)
+  })
 }
 
 async function newBalanceEntry(tokenContract, tokenAddress, settings) {
@@ -193,12 +182,16 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
   }
 }
 
-async function loadEthBalance(state, settings) {
-  return {
-    ...state,
-    balances: await updateBalances(state, settings.ethToken.address, settings),
-  }
-}
+// async function loadEthBalance(state, settings) {
+//   return {
+//     ...state,
+//     vaultBalances: await updateBalances(
+//       state,
+//       settings.ethToken.address,
+//       settings
+//     ),
+//   }
+// }
 
 function loadTokenBalance(tokenAddress, { vault }) {
   return vault.contract.balance(tokenAddress).toPromise()
