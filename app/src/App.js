@@ -6,9 +6,10 @@ import { Main, SidePanel } from '@aragon/ui'
 import { capitalizeFirst } from './lib/utils'
 
 import Balances from './components/Balances'
-import EmptyState from './screens/EmptyState'
 import AppLayout from './components/AppLayout'
-//test
+import EmptyState from './screens/EmptyState'
+import UpdateTokens from './components/Forms/UpdateTokens'
+import RedeemTokens from './components/Forms/RedeemTokens'
 
 class App extends React.Component {
   static propTypes = {
@@ -46,6 +47,17 @@ class App extends React.Component {
     this.setState({ sidePanelOpened: false })
   }
 
+  handleUpdateTokens = (mode, address) => {
+    const { api } = this.props
+
+    if (mode === 'add') api.addToken(address)
+    if (mode === 'remove') api.removeToken(address)
+
+    this.handleSidePanelClose()
+  }
+
+  handleRedeemTokens = () => {}
+
   render() {
     const { appState } = this.props
     const { tokens } = appState
@@ -54,7 +66,10 @@ class App extends React.Component {
     const sidePanelProps = {
       opened: sidePanelOpened,
       onClose: this.handleSidePanelClose,
-      title: mode === 'redeem' ? mode : `${capitalizeFirst(mode)} token`,
+      title:
+        mode === 'redeem'
+          ? capitalizeFirst(mode)
+          : `${capitalizeFirst(mode)} token`,
     }
     const showTokens = tokens && tokens.length > 0
     console.log('state', appState)
@@ -84,7 +99,16 @@ class App extends React.Component {
             <EmptyState onActivate={this.handleLaunchAddToken} />
           )}
         </AppLayout>
-        <SidePanel {...sidePanelProps} />
+        <SidePanel {...sidePanelProps}>
+          {mode === 'redeem' ? (
+            <RedeemTokens onRedeemTokens={this.handleRedeemTokens} />
+          ) : (
+            <UpdateTokens
+              onUpdateTokens={this.handleUpdateTokens}
+              mode={mode}
+            />
+          )}
+        </SidePanel>
       </Main>
     )
   }
