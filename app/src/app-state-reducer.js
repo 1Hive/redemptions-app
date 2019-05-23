@@ -1,8 +1,6 @@
-
-
-
 function appStateReducer(state) {
-   console.log(state)
- }
- 
- export default appStateReducer
+  if (!state) return {}
+  return state
+}
+
+export default appStateReducer

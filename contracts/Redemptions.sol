@@ -31,6 +31,8 @@ contract Redemptions is AragonApp {
     mapping(address => bool) public tokenAdded;
     address[] public vaultTokens;
 
+    event AddToken(address indexed token);
+    event RemoveToken(address indexed token);
     event Redeem(address indexed receiver, uint256 amount);
 
     /**
@@ -58,24 +60,28 @@ contract Redemptions is AragonApp {
     * @notice Add token `_token` to vault
     * @param _token token address
     */
-    function addVaultToken(address _token) external auth(ADD_TOKEN_ROLE) {
+    function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
         require(_token != address(tokenManager), ERROR_TOKEN_MANAGER);
         require(!tokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
         require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
 
         tokenAdded[_token] = true;
         vaultTokens.push(_token);
+
+        emit AddToken(_token);
     }
 
     /**
     * @notice Remove token `_token` from vault
     * @param _token token address
     */
-    function removeVaultToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
+    function removeToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
         require(tokenAdded[_token], ERROR_NOT_VAULT_TOKEN);
 
         tokenAdded[_token] = false;
         vaultTokens.deleteItem(_token);
+        
+        emit RemoveToken(_token);
     }
 
     /**
@@ -84,12 +90,12 @@ contract Redemptions is AragonApp {
     */
     function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
         require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
-        require(tokenManager.spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
+        require(spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
         
         uint256 redemptionAmount;
 
         for (uint256 i = 0; i < vaultTokens.length; i++) {
-            redemptionAmount = _amount.mul(vault.balance(vaultTokens[i])).div(tokenManager.token().totalSupply());
+            redemptionAmount = _amount.mul(vault.balance(vaultTokens[i])).div(totalSupply());
             vault.transfer(vaultTokens[i], msg.sender, redemptionAmount);
         }
         
@@ -99,10 +105,27 @@ contract Redemptions is AragonApp {
     }
 
     /**
+    * @notice Get MinimeToken total supply
+    * @return total supply 
+    */
+    function totalSupply() public view returns (uint256) {
+        return tokenManager.token().totalSupply();
+    }
+
+
+   /**
+    * @notice Get spendable balance of address
+    * @return spendable balance of holder
+    */
+    function spendableBalanceOf(address holder) public view returns (uint256) {
+        return tokenManager.spendableBalanceOf(holder);
+    }
+
+    /**
     * @notice Get tokens from vault
     * @return token addresses 
     */
-    function getVaultTokens() public view returns (address[]) {
+    function getTokens() public view returns (address[]) {
         return vaultTokens;
     }
 
