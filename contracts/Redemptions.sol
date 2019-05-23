@@ -128,5 +128,3 @@ contract Redemptions is AragonApp {
     }
 
 }
-
-}
