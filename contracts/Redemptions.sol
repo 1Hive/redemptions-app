@@ -16,30 +16,30 @@ contract Redemptions is AragonApp {
 
     string private constant ERROR_VAULT_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
     string private constant ERROR_TOKEN_MANAGER_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
-    string private constant ERROR_TOKEN_MANAGER = "REDEMPTIONS_TOKEN_MANAGER";
-    string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
+    string private constant ERROR_TOKEN_NOT_TOKEN_MANAGER = "REDEMPTIONS_TOKEN_NOT_TOKEN_MANAGER";
+    string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_NOT_VAULT_TOKEN = "REDEMPTIONS_NOT_VAULT_TOKEN";
     string private constant ERROR_CANNOT_REDEEM_ZERO = "REDEMPTIONS_CANNOT_REDEEM_ZERO";
     string private constant ERROR_INSUFFICIENT_BALANCE = "REDEMPTIONS_INSUFFICIENT_BALANCE";
-    string private constant ERROR_VAULT_CANNOT_REDEEM = "REDEMPTIONS_VAULT_CANNOT_REDEEM";
-    string private constant ERROR_TOKEN_MANAGER_CANNOT_REDEEM = "REDEMPTIONS_TOKEN_MANAGER_CANNOT_REDEEM";
 
     Vault public vault;
     TokenManager public tokenManager;
 
     mapping(address => bool) public tokenAdded;
-    address[] public vaultTokens;
+    address[] public redemptionTokenList;
 
+    event AddToken(address indexed token);
+    event RemoveToken(address indexed token);
     event Redeem(address indexed receiver, uint256 amount);
 
     /**
     * @notice Initialize Redemptions app contract
     * @param _vault Address of the vault
     * @param _tokenManager TokenManager address
-    * @param _vaultTokens token addreses
+    * @param _redemptionTokenList token addreses
     */
-    function initialize(Vault _vault, TokenManager _tokenManager, address[] _vaultTokens) external onlyInit {
+    function initialize(Vault _vault, TokenManager _tokenManager, address[] _redemptionTokenList) external onlyInit {
         initialized();
 
         require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
@@ -47,63 +47,84 @@ contract Redemptions is AragonApp {
 
         vault = _vault;
         tokenManager = _tokenManager;
-        vaultTokens = _vaultTokens;
+        redemptionTokenList = _redemptionTokenList;
 
-        for (uint i = 0; i < _vaultTokens.length; i++) {
-            tokenAdded[_vaultTokens[i]] = true;
+        for (uint i = 0; i < _redemptionTokenList.length; i++) {
+            tokenAdded[_redemptionTokenList[i]] = true;
         }
     }
 
     /**
-    * @notice Add token `_token` to vault
+    * @notice Add token `_token` to redemption list
     * @param _token token address
     */
-    function addVaultToken(address _token) external auth(ADD_TOKEN_ROLE) {
-        require(_token != address(tokenManager), ERROR_TOKEN_MANAGER);
+    function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
+        require(_token != address(tokenManager), ERROR_TOKEN_NOT_TOKEN_MANAGER);
         require(!tokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
         require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
 
         tokenAdded[_token] = true;
-        vaultTokens.push(_token);
+        redemptionTokenList.push(_token);
+
+        emit AddToken(_token);
     }
 
     /**
-    * @notice Remove token `_token` from vault
+    * @notice Remove token `_token` from redemption list
     * @param _token token address
     */
-    function removeVaultToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
+    function removeToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
         require(tokenAdded[_token], ERROR_NOT_VAULT_TOKEN);
 
         tokenAdded[_token] = false;
-        vaultTokens.deleteItem(_token);
+        redemptionTokenList.deleteItem(_token);
+
+        emit RemoveToken(_token);
     }
 
     /**
-    * @notice Redeem `_amount` tokens from vault
+    * @notice Redeem `_amount` redeemable tokens
     * @param _amount amount of tokens
     */
     function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
         require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
-        require(tokenManager.spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
-        
+        require(spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
+
         uint256 redemptionAmount;
 
-        for (uint256 i = 0; i < vaultTokens.length; i++) {
-            redemptionAmount = _amount.mul(vault.balance(vaultTokens[i])).div(tokenManager.token().totalSupply());
-            vault.transfer(vaultTokens[i], msg.sender, redemptionAmount);
+        for (uint256 i = 0; i < redemptionTokenList.length; i++) {
+            redemptionAmount = _amount.mul(vault.balance(redemptionTokenList[i])).div(totalSupply());
+            vault.transfer(redemptionTokenList[i], msg.sender, redemptionAmount);
         }
-        
+
         tokenManager.burn(msg.sender, _amount);
 
         emit Redeem(msg.sender, _amount);
     }
 
     /**
-    * @notice Get tokens from vault
-    * @return token addresses 
+    * @notice Get redeemable token total supply
+    * @return total supply
     */
-    function getVaultTokens() public view returns (address[]) {
-        return vaultTokens;
+    function totalSupply() public view returns (uint256) {
+        return tokenManager.token().totalSupply();
+    }
+
+
+   /**
+    * @notice Get spendable balance of address
+    * @return spendable balance of holder
+    */
+    function spendableBalanceOf(address holder) public view returns (uint256) {
+        return tokenManager.spendableBalanceOf(holder);
+    }
+
+    /**
+    * @notice Get tokens from redemption list
+    * @return token addresses
+    */
+    function getTokens() public view returns (address[]) {
+        return redemptionTokenList;
     }
 
 }
