@@ -31,7 +31,6 @@ When a user calls the `redeem(uint256 _amount)` function they must have >= `_amo
 
 ```
     tokenManager.burn(msg.sender, _amount);
-```
 
 ## How to run
 
