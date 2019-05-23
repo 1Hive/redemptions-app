@@ -30,7 +30,8 @@ When a user calls the `redeem(uint256 _amount)` function they must have >= `_amo
 2. burn `_amount` of the user tokens associated with `_tokenManager`
 
 ```
-    tokenManager.burn(msg.sender, _amount);
+    tokenManager.burn(msg.sender, _amount
+```
 
 ## How to run
 
@@ -53,4 +54,4 @@ We will use the `dao-address` to run a truffle script to deploy some test tokens
 
 ## How to deploy to an organization
 
-// TODO:
+TODO:
