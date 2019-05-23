@@ -1,5 +1,5 @@
 import '@babel/polyfill'
-import { first } from 'rxjs/operators'
+import { first, map, publishReplay } from 'rxjs/operators'
 import { of } from 'rxjs'
 import AragonApi from '@aragon/api'
 
@@ -31,6 +31,8 @@ const vaultAbi = [].concat(
 )
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
+const ACCOUNTS_TRIGGER = Symbol('ACCOUNTS_TRIGGER')
+
 const tokenContracts = new Map() // Addr -> External contract
 const tokenDecimals = new Map() // External contract -> decimals
 const tokenNames = new Map() // External contract -> name
@@ -89,16 +91,31 @@ async function createStore(settings) {
     console.error("Could not get attached vault's initialization block:", err)
   }
 
+  // Hot observable which emits an web3.js event-like object with an account string of the current active account.
+  const accounts$ = api.accounts().pipe(
+    map(accounts => {
+      return {
+        event: ACCOUNTS_TRIGGER,
+        account: accounts[0],
+      }
+    }),
+    publishReplay(1)
+  )
+
+  accounts$.connect()
+
   return api.store(
     async (state, event) => {
       const { vault } = settings
-      const { address: eventAddress, event: eventName } = event
+      const { address: eventAddress, event: eventName, account } = event
       let nextState = {
         ...state,
       }
 
       if (eventName === INITIALIZATION_TRIGGER) {
         nextState = await initializeState(nextState, settings)
+      } else if (eventName === ACCOUNTS_TRIGGER) {
+        nextState = await updateConnectedAccount(nextState, account)
       } else if (addressesEqual(eventAddress, vault.address)) {
         // Vault event
         // nextState = await getVaultToken(nextState, event)
@@ -106,12 +123,12 @@ async function createStore(settings) {
         // Redemptions event
         nextState = await updateTokens(nextState, settings)
       }
-      console.log('nextState', nextState)
       return nextState
     },
     [
       // Always initialize the store with our own home-made event
       of({ event: INITIALIZATION_TRIGGER }),
+      accounts$,
       // Handle Vault events in case they're not always controlled by this Finance app
       settings.vault.contract.events(vaultInitializationBlock),
     ]
@@ -128,12 +145,20 @@ async function initializeState(state, settings) {
   let nextState = {
     ...state,
     vaultAddress: settings.vault.address,
+    totalSupply: await api.call('totalSupply').toPromise(),
   }
 
   nextState = await updateTokens(nextState, settings)
   return nextState
   // const withEthBalance = await loadEthBalance(nextState, settings)
   // return withEthBalance
+}
+
+async function updateConnectedAccount(state, account) {
+  return {
+    ...state,
+    accountBalance: await api.call('spendableBalanceOf', account).toPromise(),
+  }
 }
 
 async function updateTokens(state, settings) {

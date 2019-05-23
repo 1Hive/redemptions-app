@@ -1,57 +1,82 @@
 import React, { Component } from 'react'
-import { Info, Field, TextInput, Button } from '@aragon/ui'
-import styled from 'styled-components'
+import { Field, TextInput, Button } from '@aragon/ui'
 
-import { isAddress } from '../../lib/web3-utils'
+import { isAddress, addressesEqual } from '../../lib/web3-utils'
 import { capitalizeFirst } from '../../lib/utils'
+
+import { ErrorMessage, InfoMessage } from './Message'
 
 class UpdateTokens extends Component {
   state = {
-    address: '',
+    address: {
+      value: '',
+      error: '',
+    },
   }
 
   handleAddressChange = event => {
-    this.setState({
-      [event.target.name]: event.target.value,
-    })
+    const value = event.target.value
+    this.setState(({ address }) => ({
+      address: { ...address, value },
+    }))
   }
 
   handleFormSubmit = event => {
     event.preventDefault()
 
-    const { address } = this.state
-    const { mode } = this.props
-    if (!isAddress(address)) {
-      console.log('not address')
+    const {
+      address: { value },
+    } = this.state
+    const { mode, tokens } = this.props
+
+    let error = null
+    if (!isAddress(value))
+      error = 'Tokens address is not a valid Ethereum address'
+    else if (tokens.some(t => addressesEqual(t.address, value)))
+      error = 'Token already added to redemption List'
+
+    if (error) {
+      this.setState(({ address }) => ({
+        address: {
+          ...address,
+          error,
+        },
+      }))
       return
     }
 
-    this.props.onUpdateTokens(mode, address)
+    this.props.onUpdateTokens(mode, value)
   }
+
   render() {
     const { address } = this.state
     const { mode } = this.props
+
+    const errorMessage = address.error
+
     return (
       <div>
         <form onSubmit={this.handleFormSubmit}>
-          <Info.Action title="Redeemption action">
-            {`This action will ${
+          <InfoMessage
+            title={'Redeemption action'}
+            text={`This action will ${
               mode === 'add'
-                ? 'add token address to redemption list'
-                : 'remove token address from the redemption list'
+                ? 'add token to redemption list'
+                : 'remove token from the redemption list'
             }.`}
-          </Info.Action>
+          />
           <Field label="Token address">
             <TextInput
               name="address"
               wide={true}
               onChange={this.handleAddressChange}
-              value={address}
+              value={address.value}
             />
           </Field>
           <Button mode="strong" wide={true} type="submit">
             {`${capitalizeFirst(mode)} token`}
           </Button>
+          {errorMessage && <ErrorMessage message={errorMessage} />}
         </form>
       </div>
     )

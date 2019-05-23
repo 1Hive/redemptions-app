@@ -56,11 +56,17 @@ class App extends React.Component {
     this.handleSidePanelClose()
   }
 
-  handleRedeemTokens = () => {}
+  handleRedeemTokens = amount => {
+    console.log('amount', amount)
+    const { api } = this.props
+    api.redeem(amount)
+
+    this.handleSidePanelClose()
+  }
 
   render() {
     const { appState } = this.props
-    const { tokens } = appState
+    const { tokens, accountBalance, totalSupply } = appState
     const { mode, sidePanelOpened } = this.state
 
     const sidePanelProps = {
@@ -72,7 +78,7 @@ class App extends React.Component {
           : `${capitalizeFirst(mode)} token`,
     }
     const showTokens = tokens && tokens.length > 0
-    console.log('state', appState)
+    // console.log('state', appState)
 
     return (
       <Main>
@@ -101,9 +107,15 @@ class App extends React.Component {
         </AppLayout>
         <SidePanel {...sidePanelProps}>
           {mode === 'redeem' ? (
-            <RedeemTokens onRedeemTokens={this.handleRedeemTokens} />
+            <RedeemTokens
+              balance={accountBalance}
+              totalSupply={totalSupply}
+              tokens={tokens}
+              onRedeemTokens={this.handleRedeemTokens}
+            />
           ) : (
             <UpdateTokens
+              tokens={tokens}
               onUpdateTokens={this.handleUpdateTokens}
               mode={mode}
             />
