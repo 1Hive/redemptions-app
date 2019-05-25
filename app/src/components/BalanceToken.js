@@ -2,17 +2,17 @@ import React from 'react'
 import styled from 'styled-components'
 import { theme, breakpoint } from '@aragon/ui'
 
-const BalanceToken = ({ name, amount, symbol }) => (
+const BalanceToken = ({ name, amount, symbol, verified }) => (
   <React.Fragment>
     <Token title={symbol || 'Unknown symbol'}>
-      {/* {verified && symbol && (
+      {verified && symbol && (
         <img
           alt=""
           width="16"
           height="16"
           src={`https://chasing-coins.com/coin/logo/${symbol}`}
         />
-      )} */}
+      )}
       {symbol || '?'}
     </Token>
     <Wrap>

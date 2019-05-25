@@ -49,7 +49,7 @@ class App extends React.Component {
 
   handleUpdateTokens = (mode, address) => {
     const { api } = this.props
-
+    console.log('tortaso')
     if (mode === 'add') api.addToken(address)
     if (mode === 'remove') api.removeToken(address)
 
@@ -57,7 +57,6 @@ class App extends React.Component {
   }
 
   handleRedeemTokens = amount => {
-    console.log('amount', amount)
     const { api } = this.props
     api.redeem(amount)
 
@@ -66,8 +65,10 @@ class App extends React.Component {
 
   render() {
     const { appState } = this.props
-    const { tokens, accountBalance, totalSupply } = appState
+    const { tokens, accountBalance, redeemableToken } = appState
     const { mode, sidePanelOpened } = this.state
+
+    console.log('state', appState)
 
     const sidePanelProps = {
       opened: sidePanelOpened,
@@ -109,7 +110,8 @@ class App extends React.Component {
           {mode === 'redeem' ? (
             <RedeemTokens
               balance={accountBalance}
-              totalSupply={totalSupply}
+              symbol={redeemableToken.symbol}
+              totalSupply={redeemableToken.totalSupply}
               tokens={tokens}
               onRedeemTokens={this.handleRedeemTokens}
             />

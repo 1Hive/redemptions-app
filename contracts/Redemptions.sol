@@ -55,6 +55,14 @@ contract Redemptions is AragonApp {
     }
 
     /**
+    * @notice Get tokens from redemption list
+    * @return token addresses
+    */
+    function getTokens() public view returns (address[]) {
+        return redemptionTokenList;
+    }
+
+    /**
     * @notice Add token `_token` to redemption list
     * @param _token token address
     */
@@ -103,13 +111,20 @@ contract Redemptions is AragonApp {
     }
 
     /**
+    * @notice Get reddemable token symbol
+    * @return token symbol
+    */
+    function symbol() public view  returns (string) {
+        return tokenManager.token().symbol();
+    }
+
+    /**
     * @notice Get redeemable token total supply
     * @return total supply
     */
     function totalSupply() public view returns (uint256) {
         return tokenManager.token().totalSupply();
     }
-
 
    /**
     * @notice Get spendable balance of address
@@ -119,12 +134,5 @@ contract Redemptions is AragonApp {
         return tokenManager.spendableBalanceOf(holder);
     }
 
-    /**
-    * @notice Get tokens from redemption list
-    * @return token addresses
-    */
-    function getTokens() public view returns (address[]) {
-        return redemptionTokenList;
-    }
 
 }

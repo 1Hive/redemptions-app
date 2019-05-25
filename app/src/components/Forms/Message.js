@@ -6,9 +6,11 @@ const Message = styled.div`
   margin-top: 1rem;
 `
 
-export const InfoMessage = ({ title, text }) => (
+export const InfoMessage = ({ title, text, background }) => (
   <div style={{ marginBottom: '1rem' }}>
-    <Info.Action title={title}>{text}</Info.Action>
+    <Info.Action title={title} background={background}>
+      {text}
+    </Info.Action>
   </div>
 )
 

@@ -14,6 +14,14 @@ class RedeemTokens extends Component {
     progress: 1,
   }
 
+  //react to account balance changes
+  componentDidUpdate(prevProps) {
+    if (prevProps.balance != this.props.balance) {
+      //recalculate new amount based on same progress and new balance
+      this.handleSliderChange(this.state.progress)
+    }
+  }
+
   getTokenExchange(amount, totalSupply, tokens) {
     return tokens.map(t => parseInt((amount * t.amount) / totalSupply))
   }
@@ -52,7 +60,7 @@ class RedeemTokens extends Component {
 
   render() {
     const { amount, progress } = this.state
-    const { balance, totalSupply, tokens } = this.props
+    const { balance, symbol, totalSupply, tokens } = this.props
 
     const youGet = this.getTokenExchange(amount.value, totalSupply, tokens)
     const errorMessage = amount.error
@@ -62,13 +70,14 @@ class RedeemTokens extends Component {
         <form onSubmit={this.handleFormSubmit}>
           <InfoMessage
             title={'Redeemption action'}
-            text={`This action will redeem ${amount.value} tokens`}
+            text={`You have ${balance} ${symbol} tokens for redemption out of a total of ${totalSupply}. \n This action will redeem ${
+              amount.value
+            } tokens`}
           />
-          <Text size="large">{`You have ${balance} {symbol} tokens for redemption out of a total of ${totalSupply}`}</Text>
-          <SliderField>
-            <Field label="Amount to redeem">
+          <InputWrapper>
+            <SliderWrapper label="Amount to redeem">
               <Slider value={progress} onUpdate={this.handleSliderChange} />
-            </Field>
+            </SliderWrapper>
             <TextInput.Number
               name="amount"
               wide={true}
@@ -77,9 +86,19 @@ class RedeemTokens extends Component {
               min={0}
               onChange={this.handleAmountChange}
             />
-          </SliderField>
+            <Text size="large">{symbol}</Text>
+          </InputWrapper>
           <RedeemTokenList tokens={tokens} youGet={youGet} />
-          <Button mode="strong" wide={true} type="submit">
+          {/* <InfoMessage
+            text="One you redeem your tokens will be burned"
+            background="yellow"
+          /> */}
+          <Button
+            mode="strong"
+            wide={true}
+            type="submit"
+            disabled={amount.value <= 0}
+          >
             {'Redeem tokens'}
           </Button>
           {errorMessage && <ErrorMessage message={errorMessage} />}
@@ -90,8 +109,23 @@ class RedeemTokens extends Component {
 }
 export default RedeemTokens
 
-const SliderField = styled.div`
+const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eaf6f6;
+  padding: 15px 0px;
+  > :not(:last-child) {
+    margin-right: 15px;
+  }
+  > :first-child > * {
+    background-color: black;
+  }
+`
+
+const SliderWrapper = styled(Field)`
+  label > :nth-child(2) {
+    min-width: 200px;
+    padding-left: 0;
+  }
 `

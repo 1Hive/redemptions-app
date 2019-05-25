@@ -19,9 +19,9 @@ import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.j
 import vaultEventAbi from './abi/vault-events.json'
 
 //will unncomment if needed
-// import tokenManagerTokenAbi from './abi/tokenManager-token.json'
-// import tokenManagerBalanceAbi from './abi/tokenManager-spendableBalanceOf.json'
-// const tokenManagerAbi = [].concat(tokenManagerAbi, tokenManagerBalanceAbi)
+import tokenManagerTokenAbi from './abi/tokenManager-token.json'
+import tokenManagerBalanceAbi from './abi/tokenManager-spendableBalanceOf.json'
+const tokenManagerAbi = [].concat(tokenManagerAbi, tokenManagerBalanceAbi)
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
 const vaultAbi = [].concat(
@@ -56,6 +56,13 @@ api.call('vault').subscribe(
 
 async function initialize(vaultAddress, ethAddress) {
   const vaultContract = api.external(vaultAddress, vaultAbi)
+  // const tokenManagerAddress = await api.call('tokenManager').toPromise()
+  // const tokenManagerContract = api.external(
+  //   tokenManagerAddress,
+  //   tokenManagerAbi
+  // )
+  // const redeemableTokenAddress = await tokenManagerContract.contract.token()
+  // console.log('redeemable address', redeemableTokenAddress)
 
   const network = await api
     .network()
@@ -145,7 +152,10 @@ async function initializeState(state, settings) {
   let nextState = {
     ...state,
     vaultAddress: settings.vault.address,
-    totalSupply: await api.call('totalSupply').toPromise(),
+    redeemableToken: {
+      totalSupply: await api.call('totalSupply').toPromise(),
+      symbol: await api.call('symbol').toPromise(),
+    },
   }
 
   nextState = await updateTokens(nextState, settings)
