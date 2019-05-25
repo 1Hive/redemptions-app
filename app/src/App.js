@@ -49,7 +49,7 @@ class App extends React.Component {
 
   handleUpdateTokens = (mode, address) => {
     const { api } = this.props
-    console.log('tortaso')
+
     if (mode === 'add') api.addToken(address)
     if (mode === 'remove') api.removeToken(address)
 
@@ -79,7 +79,6 @@ class App extends React.Component {
           : `${capitalizeFirst(mode)} token`,
     }
     const showTokens = tokens && tokens.length > 0
-    // console.log('state', appState)
 
     return (
       <Main>
