@@ -21,7 +21,7 @@ import "@aragon/apps-vault/contracts/Vault.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
 import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 
- import "./Redemptions.sol";
+import "./Redemptions.sol";
 
 
 contract TemplateBase is APMNamehash {
@@ -74,12 +74,12 @@ contract Template is TemplateBase {
         bytes32 vaultAppId = apmNamehash("vault");
 
 
-        Vault vault = Vault(dao.newAppInstance(vaultAppId, latestVersionAppBase(vaultAppId)));
+        Vault vault = Vault(dao.newAppInstance(vaultAppId, latestVersionAppBase(vaultAppId),new bytes(0),true));
         Redemptions redemptions = Redemptions(dao.newAppInstance(redemptionsAppId, latestVersionAppBase(redemptionsAppId)));
         Voting voting = Voting(dao.newAppInstance(votingAppId, latestVersionAppBase(votingAppId)));
         TokenManager tokenManager = TokenManager(dao.newAppInstance(tokenManagerAppId, latestVersionAppBase(tokenManagerAppId)));
 
-        MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "Rdemable token", 0, "RDT", true);
+        MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "Redeemable token", 0, "RDT", true);
         token.changeController(tokenManager);
 
         // Initialize apps
@@ -90,16 +90,14 @@ contract Template is TemplateBase {
 
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
         tokenManager.mint(root, 1); // Give one token to root
+        
 
         acl.createPermission(tokenManager, voting, voting.CREATE_VOTES_ROLE(), root);
-
         acl.createPermission(redemptions, vault, vault.TRANSFER_ROLE(), root);
-
         acl.createPermission(tokenManager, redemptions, redemptions.REDEEM_ROLE(), root);
         acl.createPermission(voting, redemptions, redemptions.ADD_TOKEN_ROLE(), root);
         acl.createPermission(voting, redemptions, redemptions.REMOVE_TOKEN_ROLE(), root);
 
-        acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
 
         // Clean up permissions
         acl.revokePermission(this, dao, tokenManager.MINT_ROLE());
@@ -113,6 +111,11 @@ contract Template is TemplateBase {
         acl.revokePermission(this, acl, acl.CREATE_PERMISSIONS_ROLE());
         acl.setPermissionManager(root, acl, acl.CREATE_PERMISSIONS_ROLE());
 
+        acl.grantPermission(voting, tokenManager, tokenManager.MINT_ROLE());
+        acl.revokePermission(this, tokenManager, tokenManager.MINT_ROLE());
+        acl.setPermissionManager(root, tokenManager, tokenManager.MINT_ROLE());
+
         emit DeployInstance(dao);
     }
+
 }
