@@ -2,8 +2,9 @@ pragma solidity ^0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
-import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/apps-vault/contracts/Vault.sol";
+import "@aragon/os/contracts/lib/math/SafeMath.sol";
+import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "./ArrayUtils.sol";
 
 contract Redemptions is AragonApp {
@@ -69,7 +70,10 @@ contract Redemptions is AragonApp {
     function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
         require(_token != address(tokenManager), ERROR_TOKEN_NOT_TOKEN_MANAGER);
         require(!tokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
-        require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
+
+        if (_token != ETH) {
+            require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
+        }
 
         tokenAdded[_token] = true;
         redemptionTokenList.push(_token);

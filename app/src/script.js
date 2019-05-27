@@ -56,13 +56,6 @@ api.call('vault').subscribe(
 
 async function initialize(vaultAddress, ethAddress) {
   const vaultContract = api.external(vaultAddress, vaultAbi)
-  // const tokenManagerAddress = await api.call('tokenManager').toPromise()
-  // const tokenManagerContract = api.external(
-  //   tokenManagerAddress,
-  //   tokenManagerAbi
-  // )
-  // const redeemableTokenAddress = await tokenManagerContract.contract.token()
-  // console.log('redeemable address', redeemableTokenAddress)
 
   const network = await api
     .network()
@@ -160,8 +153,6 @@ async function initializeState(state, settings) {
 
   nextState = await updateTokens(nextState, settings)
   return nextState
-  // const withEthBalance = await loadEthBalance(nextState, settings)
-  // return withEthBalance
 }
 
 async function updateConnectedAccount(state, account) {
