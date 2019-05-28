@@ -1,8 +1,23 @@
 import React from 'react'
 import styled from 'styled-components'
 import { theme, breakpoint } from '@aragon/ui'
+import { formatTokenAmount } from '../lib/utils'
 
-const BalanceToken = ({ name, amount, symbol, verified }) => (
+const splitAmount = (amount, decimals) => {
+  const [integer, fractional] = formatTokenAmount(
+    amount,
+    false,
+    decimals
+  ).split('.')
+  return (
+    <span>
+      <span className="integer">{integer}</span>
+      {fractional && <span className="fractional">.{fractional}</span>}
+    </span>
+  )
+}
+
+const BalanceToken = ({ name, amount, symbol, decimals, verified }) => (
   <React.Fragment>
     <Token title={symbol || 'Unknown symbol'}>
       {verified && symbol && (
@@ -16,12 +31,7 @@ const BalanceToken = ({ name, amount, symbol, verified }) => (
       {symbol || '?'}
     </Token>
     <Wrap>
-      <Amount>{amount}</Amount>
-      <ConvertedAmount>
-        {/* {convertedAmount >= 0
-          ? `$${formatTokenAmount(convertedAmount.toFixed(2))}`
-          : '−'} */}
-      </ConvertedAmount>
+      <Amount>{splitAmount(amount, decimals)}</Amount>
     </Wrap>
   </React.Fragment>
 )

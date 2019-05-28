@@ -18,7 +18,7 @@ contract Redemptions is AragonApp {
     string private constant ERROR_VAULT_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
     string private constant ERROR_TOKEN_MANAGER_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
-    string private constant ERROR_TOKEN_NOT_TOKEN_MANAGER = "REDEMPTIONS_TOKEN_NOT_TOKEN_MANAGER";
+    string private constant ERROR_CANNOT_ADD_TOKEN_MANAGER = "REDEMPTIONS_CANNOT_ADD_TOKEN_MANAGER";
     string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_NOT_VAULT_TOKEN = "REDEMPTIONS_NOT_VAULT_TOKEN";
     string private constant ERROR_CANNOT_REDEEM_ZERO = "REDEMPTIONS_CANNOT_REDEEM_ZERO";
@@ -56,19 +56,11 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Get tokens from redemption list
-    * @return token addresses
-    */
-    function getTokens() public view returns (address[]) {
-        return redemptionTokenList;
-    }
-
-    /**
     * @notice Add token `_token` to redemption list
     * @param _token token address
     */
     function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
-        require(_token != address(tokenManager), ERROR_TOKEN_NOT_TOKEN_MANAGER);
+        require(_token != address(tokenManager), ERROR_CANNOT_ADD_TOKEN_MANAGER);
         require(!tokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
 
         if (_token != ETH) {
@@ -100,12 +92,12 @@ contract Redemptions is AragonApp {
     */
     function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
         require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
-        require(spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
+        require(tokenManager.spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
 
         uint256 redemptionAmount;
 
         for (uint256 i = 0; i < redemptionTokenList.length; i++) {
-            redemptionAmount = _amount.mul(vault.balance(redemptionTokenList[i])).div(totalSupply());
+            redemptionAmount = _amount.mul(vault.balance(redemptionTokenList[i])).div(tokenManager.token().totalSupply());
             vault.transfer(redemptionTokenList[i], msg.sender, redemptionAmount);
         }
 
@@ -115,28 +107,28 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Get reddemable token symbol
-    * @return token symbol
+    * @notice Get tokens from redemption list
+    * @return token addresses
     */
-    function symbol() public view  returns (string) {
-        return tokenManager.token().symbol();
+    function getTokens() public view returns (address[]) {
+        return redemptionTokenList;
     }
+
+    /** Functions to make frontend app lighter */
 
     /**
-    * @notice Get redeemable token total supply
-    * @return total supply
+    * @notice Get redeemable token address
+    * @return redeemable token address
     */
-    function totalSupply() public view returns (uint256) {
-        return tokenManager.token().totalSupply();
+    function getRedeemableToken() public view returns (address) {
+        return tokenManager.token();
     }
-
-   /**
+    
+    /**
     * @notice Get spendable balance of address
     * @return spendable balance of holder
     */
     function spendableBalanceOf(address holder) public view returns (uint256) {
         return tokenManager.spendableBalanceOf(holder);
     }
-
-
 }

@@ -14,16 +14,21 @@ import { addressesEqual } from './lib/web3-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenNameAbi from './abi/token-name.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
+import tokenSupplyAbi from './abi/token-totalSupply.json'
 import vaultBalanceAbi from './abi/vault-balance.json'
 import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
 
-//will unncomment if needed
-import tokenManagerTokenAbi from './abi/tokenManager-token.json'
-import tokenManagerBalanceAbi from './abi/tokenManager-spendableBalanceOf.json'
-const tokenManagerAbi = [].concat(tokenManagerAbi, tokenManagerBalanceAbi)
+// import tokenManagerTokenAbi from './abi/tokenManager-token.json'
+// import tokenManagerBalanceAbi from './abi/tokenManager-spendableBalanceOf.json'
+// const tokenManagerAbi = [].concat(tokenManagerTokenAbi, tokenManagerBalanceAbi)
 
-const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi)
+const tokenAbi = [].concat(
+  tokenDecimalsAbi,
+  tokenNameAbi,
+  tokenSymbolAbi,
+  tokenSupplyAbi
+)
 const vaultAbi = [].concat(
   vaultBalanceAbi,
   vaultGetInitializationBlockAbi,
@@ -44,18 +49,28 @@ const api = new AragonApi()
 
 api.identify('Redemptions')
 
-api.call('vault').subscribe(
-  vaultAddress => initialize(vaultAddress, ETHER_TOKEN_FAKE_ADDRESS),
-  err => {
+init()
+
+async function init() {
+  try {
+    const vaultAddress = await api.call('vault').toPromise()
+    initialize(vaultAddress, ETHER_TOKEN_FAKE_ADDRESS)
+  } catch (err) {
     console.error(
-      'Could not start background script execution due to the contract not loading the vault:',
+      'Could not start background script execution due to the contract not loading vault or tokenManager',
       err
     )
+    retry()
   }
-)
+}
 
 async function initialize(vaultAddress, ethAddress) {
   const vaultContract = api.external(vaultAddress, vaultAbi)
+
+  const redeemableTokenAddress = await api
+    .call('getRedeemableToken')
+    .toPromise()
+  const redeemableTokenContract = api.external(redeemableTokenAddress, tokenAbi)
 
   const network = await api
     .network()
@@ -76,6 +91,10 @@ async function initialize(vaultAddress, ethAddress) {
     vault: {
       address: vaultAddress,
       contract: vaultContract,
+    },
+    redeemableToken: {
+      address: redeemableTokenAddress,
+      contract: redeemableTokenContract,
     },
   })
 }
@@ -112,6 +131,8 @@ async function createStore(settings) {
         ...state,
       }
 
+      console.log('evento', event)
+
       if (eventName === INITIALIZATION_TRIGGER) {
         nextState = await initializeState(nextState, settings)
       } else if (eventName === ACCOUNTS_TRIGGER) {
@@ -121,7 +142,7 @@ async function createStore(settings) {
         // nextState = await getVaultToken(nextState, event)
       } else {
         // Redemptions event
-        nextState = await updateTokens(nextState, settings)
+        nextState = await updateOnRedemption(nextState, settings)
       }
       return nextState
     },
@@ -129,7 +150,7 @@ async function createStore(settings) {
       // Always initialize the store with our own home-made event
       of({ event: INITIALIZATION_TRIGGER }),
       accounts$,
-      // Handle Vault events in case they're not always controlled by this Finance app
+      // Handle Vault events
       settings.vault.contract.events(vaultInitializationBlock),
     ]
   )
@@ -144,31 +165,38 @@ async function createStore(settings) {
 async function initializeState(state, settings) {
   let nextState = {
     ...state,
-    vaultAddress: settings.vault.address,
-    redeemableToken: {
-      totalSupply: await api.call('totalSupply').toPromise(),
-      symbol: await api.call('symbol').toPromise(),
-    },
+    redeemableToken: await getRedeemableTokenData(settings),
+    tokens: await updateTokens(settings),
   }
 
-  nextState = await updateTokens(nextState, settings)
   return nextState
 }
 
 async function updateConnectedAccount(state, account) {
   return {
     ...state,
-    accountBalance: await api.call('spendableBalanceOf', account).toPromise(),
+    redeemableToken: {
+      ...state.redeemableToken,
+      accountBalance: await api.call('spendableBalanceOf', account).toPromise(),
+    },
   }
 }
 
-async function updateTokens(state, settings) {
-  const tokens = await api.call('getTokens').toPromise()
-
+async function updateOnRedemption(state, settings) {
+  const newSupply = await settings.redeemableToken.contract.totalSupply()
   return {
     ...state,
-    tokens: await getVaultBalances(tokens, settings),
+    redeemableToken: {
+      ...state.redeemableToken,
+      totalSupply: newSupply,
+    },
+    tokens: await updateTokens(settings),
   }
+}
+
+async function updateTokens(settings) {
+  const tokens = await api.call('getTokens').toPromise()
+  return await getVaultBalances(tokens, settings)
 }
 
 /***********************
@@ -176,6 +204,19 @@ async function updateTokens(state, settings) {
  *       Helpers       *
  *                     *
  ***********************/
+
+async function getRedeemableTokenData({ redeemableToken: { contract } }) {
+  const [symbol, decimals, totalSupply] = await Promise.all([
+    contract.symbol().toPromise(),
+    contract.decimals().toPromise(),
+    contract.totalSupply().toPromise(),
+  ])
+  return {
+    symbol,
+    decimals,
+    totalSupply,
+  }
+}
 
 /** returns `tokens` balances from vault */
 async function getVaultBalances(tokens = [], settings) {
@@ -212,17 +253,6 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
       addressesEqual(tokenAddress, settings.ethToken.address),
   }
 }
-
-// async function loadEthBalance(state, settings) {
-//   return {
-//     ...state,
-//     vaultBalances: await updateBalances(
-//       state,
-//       settings.ethToken.address,
-//       settings
-//     ),
-//   }
-// }
 
 function loadTokenBalance(tokenAddress, { vault }) {
   return vault.contract.balance(tokenAddress).toPromise()

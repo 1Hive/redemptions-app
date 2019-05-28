@@ -18,6 +18,7 @@ export default function RedeemTokenList(props) {
               <BalanceToken
                 name={t.name}
                 symbol={t.symbol}
+                decimals={t.decimals}
                 amount={youGet[index]}
                 verified={t.verified}
               />

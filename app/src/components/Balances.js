@@ -15,16 +15,19 @@ class Balances extends Component {
           <ScrollView>
             <List>
               {tokens.length > 0 ? (
-                tokens.map(({ address, name, amount, symbol, verified }) => (
-                  <ListItem key={address}>
-                    <BalanceToken
-                      amount={amount}
-                      name={name}
-                      symbol={symbol}
-                      verified={verified}
-                    />
-                  </ListItem>
-                ))
+                tokens.map(
+                  ({ address, name, decimals, amount, symbol, verified }) => (
+                    <ListItem key={address}>
+                      <BalanceToken
+                        name={name}
+                        symbol={symbol}
+                        decimals={decimals}
+                        amount={amount}
+                        verified={verified}
+                      />
+                    </ListItem>
+                  )
+                )
               ) : (
                 <EmptyListItem />
               )}

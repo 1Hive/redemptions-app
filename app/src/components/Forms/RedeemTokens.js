@@ -5,10 +5,23 @@ import styled from 'styled-components'
 import RedeemTokenList from './RedeemTokenList'
 import { ErrorMessage, InfoMessage } from './Message'
 
+import { round } from '../../lib/math-utils'
+
+function getTokenExchange(tokens, amount, totalSupply) {
+  return tokens.map(t =>
+    totalSupply.isZero() ? 0 : amount * t.amount.div(totalSupply)
+  )
+}
+
+function adjustBalance(balance, decimals) {
+  return round(balance / Math.pow(10, decimals))
+}
+
 class RedeemTokens extends Component {
   state = {
     amount: {
       value: this.props.balance,
+      max: this.props.balance,
       error: '',
     },
     progress: 1,
@@ -20,10 +33,6 @@ class RedeemTokens extends Component {
       //recalculate new amount based on same progress and new balance
       this.handleSliderChange(this.state.progress)
     }
-  }
-
-  getTokenExchange(amount, totalSupply, tokens) {
-    return tokens.map(t => parseInt((amount * t.amount) / totalSupply))
   }
 
   handleAmountChange = event => {
@@ -62,7 +71,7 @@ class RedeemTokens extends Component {
     const { amount, progress } = this.state
     const { balance, symbol, totalSupply, tokens } = this.props
 
-    const youGet = this.getTokenExchange(amount.value, totalSupply, tokens)
+    const youGet = getTokenExchange(tokens, amount.value, totalSupply)
     const errorMessage = amount.error
 
     return (
@@ -82,7 +91,7 @@ class RedeemTokens extends Component {
               name="amount"
               wide={true}
               value={amount.value}
-              max={balance}
+              max={amount.max}
               min={0}
               onChange={this.handleAmountChange}
             />
