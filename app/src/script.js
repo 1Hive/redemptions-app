@@ -19,10 +19,6 @@ import vaultBalanceAbi from './abi/vault-balance.json'
 import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
 
-// import tokenManagerTokenAbi from './abi/tokenManager-token.json'
-// import tokenManagerBalanceAbi from './abi/tokenManager-spendableBalanceOf.json'
-// const tokenManagerAbi = [].concat(tokenManagerTokenAbi, tokenManagerBalanceAbi)
-
 const tokenAbi = [].concat(
   tokenDecimalsAbi,
   tokenNameAbi,
@@ -123,26 +119,45 @@ async function createStore(settings) {
 
   accounts$.connect()
 
+  const currentBlock = await getBlockNumber()
+
   return api.store(
     async (state, event) => {
       const { vault } = settings
-      const { address: eventAddress, event: eventName, account } = event
+      const { address: eventAddress, event: eventName, blockNumber } = event
+
+      //dont want to listen for past events for now
+      //(our app state can be obtained from smart contract vars)
+      if (blockNumber && blockNumber <= currentBlock) return state
+
       let nextState = {
         ...state,
       }
 
-      console.log('evento', event)
+      console.log('Event', event)
 
       if (eventName === INITIALIZATION_TRIGGER) {
         nextState = await initializeState(nextState, settings)
       } else if (eventName === ACCOUNTS_TRIGGER) {
-        nextState = await updateConnectedAccount(nextState, account)
+        nextState = await updateConnectedAccount(nextState, event)
       } else if (addressesEqual(eventAddress, vault.address)) {
         // Vault event
         // nextState = await getVaultToken(nextState, event)
       } else {
         // Redemptions event
-        nextState = await updateOnRedemption(nextState, settings)
+        switch (eventName) {
+          case 'AddToken':
+            nextState = await addedToken(nextState, event, settings)
+            break
+          case 'RemoveToken':
+            nextState = await removedToken(nextState, event)
+            break
+          case 'Redeem':
+            nextState = await newRedemption(nextState, settings)
+            break
+          default:
+            break
+        }
       }
       return nextState
     },
@@ -151,7 +166,7 @@ async function createStore(settings) {
       of({ event: INITIALIZATION_TRIGGER }),
       accounts$,
       // Handle Vault events
-      settings.vault.contract.events(vaultInitializationBlock),
+      // settings.vault.contract.events(vaultInitializationBlock),
     ]
   )
 }
@@ -172,23 +187,55 @@ async function initializeState(state, settings) {
   return nextState
 }
 
-async function updateConnectedAccount(state, account) {
+async function updateConnectedAccount(state, { account }) {
   return {
     ...state,
     redeemableToken: {
       ...state.redeemableToken,
       accountBalance: await api.call('spendableBalanceOf', account).toPromise(),
     },
+    account,
   }
 }
 
-async function updateOnRedemption(state, settings) {
-  const newSupply = await settings.redeemableToken.contract.totalSupply()
+async function addedToken(state, { returnValues: { token } }, settings) {
+  return {
+    ...state,
+    tokens: [...state.tokens, ...(await getVaultBalances([token], settings))],
+  }
+}
+
+async function removedToken(state, { returnValues: { token } }) {
+  const { tokens } = state
+
+  let nextState = {
+    ...state,
+  }
+
+  const index = tokens.findIndex(t => addressesEqual(t.address, token))
+
+  if (index != -1) {
+    tokens.splice(1, index)
+    nextState.tokens = [...tokens]
+  }
+
+  return nextState
+}
+
+async function newRedemption(state, settings) {
+  const newSupply = await settings.redeemableToken.contract
+    .totalSupply()
+    .toPromise()
+  const newBalance = await api
+    .call('spendableBalanceOf', state.account)
+    .toPromise()
+
   return {
     ...state,
     redeemableToken: {
       ...state.redeemableToken,
       totalSupply: newSupply,
+      accountBalance: newBalance,
     },
     tokens: await updateTokens(settings),
   }
@@ -309,4 +356,10 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
     symbol = fallback
   }
   return symbol
+}
+
+function getBlockNumber() {
+  return new Promise((resolve, reject) =>
+    api.web3Eth('getBlockNumber').subscribe(resolve, reject)
+  )
 }

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Field, Text, TextInput, Button, Slider } from '@aragon/ui'
+import { Field, Text, TextInput, Button, Slider, theme } from '@aragon/ui'
 import styled from 'styled-components'
 
 import RedeemTokenList from './RedeemTokenList'
@@ -22,7 +22,7 @@ class RedeemTokens extends Component {
     amount: {
       value: this.props.balance,
       max: this.props.balance,
-      error: '',
+      error: null,
     },
     progress: 1,
   }
@@ -99,8 +99,8 @@ class RedeemTokens extends Component {
           </InputWrapper>
           <RedeemTokenList tokens={tokens} youGet={youGet} />
           {/* <InfoMessage
-            text="One you redeem your tokens will be burned"
-            background="yellow"
+            text="You'll have to sign a message first for security porpuses."
+            background={theme.infoPermissionsBackground}
           /> */}
           <Button
             mode="strong"
