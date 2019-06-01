@@ -1,4 +1,4 @@
-import { toChecksumAddress } from 'web3-utils'
+import { toChecksumAddress, hexToNumber } from 'web3-utils'
 
 // Check address equality without checksums
 export function addressesEqual(first, second) {
@@ -37,5 +37,16 @@ export function shortenAddress(address, charsLength = 4) {
   )
 }
 
+export function getSignatureFields(signature) {
+  signature = signature.substr(2) //remove 0x
+  const v = hexToNumber(`0x${signature.slice(128, 130)}`)
+
+  return {
+    r: `0x${signature.slice(0, 64)}`,
+    s: `0x${signature.slice(64, 128)}`,
+    v: v != 27 && v != 28 ? v + 27 : v,
+  }
+}
+
 // Re-export some web3-utils functions
-export { isAddress, toChecksumAddress, toUtf8 } from 'web3-utils'
+export { isAddress, toChecksumAddress, toUtf8, soliditySha3 } from 'web3-utils'

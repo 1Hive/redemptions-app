@@ -3,15 +3,35 @@ import { Field, TextInput, Button } from '@aragon/ui'
 
 import { isAddress, addressesEqual } from '../../lib/web3-utils'
 import { capitalizeFirst } from '../../lib/utils'
-
 import { ErrorMessage, InfoMessage } from './Message'
+
+const validate = (mode, address, tokens) => {
+  if (!isAddress(address))
+    return 'Token address is not a valid Ethereum address'
+
+  const exists = tokens.some(t => addressesEqual(t.address, address))
+  if (mode === 'add' && exists) return 'Token already added to redemption list'
+
+  if (mode === 'remove' && !exists)
+    return 'Token is not added to redemption list'
+
+  return null
+}
 
 class UpdateTokens extends Component {
   state = {
     address: {
-      value: '',
-      error: '',
+      value: this.props.tokenAddress || '',
+      error: null,
     },
+  }
+
+  componentDidUpdate({ tokenAddress }, prevState) {
+    if (tokenAddress != this.props.tokenAddress) {
+      this.setState(({ address }) => ({
+        address: { ...address, value: this.props.tokenAddress },
+      }))
+    }
   }
 
   handleAddressChange = event => {
@@ -24,17 +44,10 @@ class UpdateTokens extends Component {
   handleFormSubmit = event => {
     event.preventDefault()
 
-    const {
-      address: { value },
-    } = this.state
+    const { address } = this.state
     const { mode, tokens } = this.props
 
-    let error = null
-    if (!isAddress(value))
-      error = 'Tokens address is not a valid Ethereum address'
-    else if (tokens.some(t => addressesEqual(t.address, value)))
-      error = 'Token already added to redemption List'
-
+    const error = validate(mode, address.value, tokens)
     if (error) {
       this.setState(({ address }) => ({
         address: {
@@ -45,12 +58,12 @@ class UpdateTokens extends Component {
       return
     }
 
-    this.props.onUpdateTokens(mode, value)
+    this.props.onUpdateTokens(mode, address.value)
   }
 
   render() {
     const { address } = this.state
-    const { mode } = this.props
+    const { mode, tokenSymbol } = this.props
 
     const errorMessage = address.error
 
@@ -62,7 +75,7 @@ class UpdateTokens extends Component {
             text={`This action will ${
               mode === 'add'
                 ? 'add token to redemption list'
-                : 'remove token from the redemption list'
+                : `remove ${tokenSymbol} token from the redemption list`
             }.`}
           />
           <Field label="Token address">
@@ -71,6 +84,7 @@ class UpdateTokens extends Component {
               wide={true}
               onChange={this.handleAddressChange}
               value={address.value}
+              disabled={mode === 'remove'}
             />
           </Field>
           <Button mode="strong" wide={true} type="submit">
