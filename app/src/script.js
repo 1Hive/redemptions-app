@@ -214,8 +214,8 @@ async function removedToken(state, { returnValues: { token } }) {
 
   const index = tokens.findIndex(t => addressesEqual(t.address, token))
 
-  if (index != -1) {
-    tokens.splice(1, index)
+  if (index > -1) {
+    tokens.splice(index, 1)
     nextState.tokens = [...tokens]
   }
 

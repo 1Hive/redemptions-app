@@ -99,7 +99,7 @@ class RedeemTokens extends Component {
           </InputWrapper>
           <RedeemTokenList tokens={tokens} youGet={youGet} />
           {/* <InfoMessage
-            text="You'll have to sign a message first for security porpuses."
+            text="You'll have to sign a message first for security purposes."
             background={theme.infoPermissionsBackground}
           /> */}
           <Button
