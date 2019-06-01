@@ -89,14 +89,15 @@ contract Template is TemplateBase {
         voting.initialize(token, 50 * PCT, 20 * PCT, 1 days);
 
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
-        tokenManager.mint(root, 1); // Give one token to root
+        acl.createPermission(redemptions, tokenManager, tokenManager.BURN_ROLE(), root);
+        tokenManager.mint(root, 10); // Give ten tokens to root
         
 
         acl.createPermission(tokenManager, voting, voting.CREATE_VOTES_ROLE(), root);
         acl.createPermission(redemptions, vault, vault.TRANSFER_ROLE(), root);
-        acl.createPermission(tokenManager, redemptions, redemptions.REDEEM_ROLE(), root);
-        acl.createPermission(voting, redemptions, redemptions.ADD_TOKEN_ROLE(), root);
-        acl.createPermission(voting, redemptions, redemptions.REMOVE_TOKEN_ROLE(), root);
+        acl.createPermission(ANY_ENTITY, redemptions, redemptions.REDEEM_ROLE(), root);
+        acl.createPermission(voting, redemptions, redemptions.ADD_TOKEN_ROLE(), root);  
+        acl.createPermission(voting, redemptions, redemptions.REMOVE_TOKEN_ROLE(), root); 
 
 
         // Clean up permissions
