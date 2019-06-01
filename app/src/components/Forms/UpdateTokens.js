@@ -7,7 +7,7 @@ import { ErrorMessage, InfoMessage } from './Message'
 
 const validate = (mode, address, tokens) => {
   if (!isAddress(address))
-    return 'Tokens address is not a valid Ethereum address'
+    return 'Token address is not a valid Ethereum address'
 
   const exists = tokens.some(t => addressesEqual(t.address, address))
   if (mode === 'add' && exists) return 'Token already added to redemption list'
