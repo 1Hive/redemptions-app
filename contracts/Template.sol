@@ -68,7 +68,7 @@ contract Template is TemplateBase {
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         address root = msg.sender;
-        bytes32 redemptionsAppId = apmNamehash("redemptions.open");
+        bytes32 redemptionsAppId = apmNamehash("redemptions");
         bytes32 votingAppId = apmNamehash("voting");
         bytes32 tokenManagerAppId = apmNamehash("token-manager");
         bytes32 vaultAppId = apmNamehash("vault");
@@ -101,8 +101,6 @@ contract Template is TemplateBase {
 
 
         // Clean up permissions
-        acl.revokePermission(this, dao, tokenManager.MINT_ROLE());
-        acl.setPermissionManager(voting, dao, tokenManager.MINT_ROLE());
 
         acl.grantPermission(root, dao, dao.APP_MANAGER_ROLE());
         acl.revokePermission(this, dao, dao.APP_MANAGER_ROLE());
