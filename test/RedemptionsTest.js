@@ -1,5 +1,4 @@
 import DaoDeployment from './helpers/DaoDeployment'
-
 const Redemptions = artifacts.require('Redemptions')
 const TokenManager = artifacts.require('TokenManager')
 const Vault = artifacts.require('Vault')
@@ -7,7 +6,7 @@ const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('BasicErc20')
 
-const { assertRevert, deployedContract } = require('./helpers/helpers')
+const { assertRevert, deployedContract , getSignatureFields} = require('./helpers/helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -171,7 +170,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         it('reverts if adding token manager', async () => {
           await assertRevert(
             redemptions.addToken(tokenManager.address),
-            'ERROR_CANNOT_ADD_TOKEN_MANAGER'
+            'REDEMPTIONS_CANNOT_ADD_TOKEN_MANAGER'
           )
         })
 
@@ -219,6 +218,10 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         const redeemerAmount = 20000
         const vaultToken0Amount = 45231
         const vaultToken1Amount = 20001
+        const CORRECTMSG = web3.utils.sha3("I WOULD LIKE TO REDEEM SOME TOKENS PLEASE")
+        let correctSignature, correctValues
+        const INCORRECTMSG = web3.utils.sha3("REDEEM PLEASE")
+        let incorrectSignature, incorrectValues
 
         beforeEach(async () => {
           //set permissions
@@ -251,9 +254,16 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
           //mint redeemableTokens to first two accounts
           await tokenManager.mint(redeemer, redeemerAmount)
           await tokenManager.mint(rootAccount, rootAccountRedeemableTokenAmount)
+
+          correctSignature = await web3.eth.sign(CORRECTMSG,redeemer)
+          correctValues = getSignatureFields(correctSignature) 
+          incorrectSignature = await web3.eth.sign(INCORRECTMSG,redeemer)
+          incorrectValues = getSignatureFields(incorrectSignature) 
+          
         })
 
         it('Should redeem tokens as expected', async () => {
+         
           const redeemableTokenTotalSupply = await redeemableToken.totalSupply()
           const expectedRedeemAmountToken0 = parseInt(
             (redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply
@@ -262,7 +272,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
             (redeemerAmount * vaultToken1Amount) / redeemableTokenTotalSupply
           )
 
-          await redemptions.redeem(redeemerAmount, { from: redeemer })
+          await redemptions.redeem(redeemerAmount, CORRECTMSG, correctValues.v, correctValues.r, correctValues.s, { from: redeemer })
 
           const token0Balance = await token0.balanceOf(redeemer)
           const token1Balance = await token1.balanceOf(redeemer)
@@ -273,15 +283,22 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
 
         it('reverts if amount to redeem is zero', async () => {
           await assertRevert(
-            redemptions.redeem(0, { from: redeemer }),
+            redemptions.redeem(0, CORRECTMSG, correctValues.v, correctValues.r, correctValues.s, { from: redeemer }),
             'REDEMPTIONS_CANNOT_REDEEM_ZERO'
           )
         })
 
         it("reverts if amount to redeem exceeds account's balance", async () => {
           await assertRevert(
-            redemptions.redeem(redeemerAmount + 1, { from: redeemer }),
+            redemptions.redeem(redeemerAmount + 1, CORRECTMSG, correctValues.v, correctValues.r, correctValues.s, { from: redeemer }),
             'REDEMPTIONS_INSUFFICIENT_BALANCE'
+          )
+        })
+
+        it('revert if incorrect signed message ', async () => { 
+          await assertRevert(
+            redemptions.redeem(redeemerAmount, INCORRECTMSG, incorrectValues.v, incorrectValues.r, incorrectValues.s, { from: redeemer }),
+            'REDEMPTIONS_INCORRECT_MESSAGE'
           )
         })
       })
