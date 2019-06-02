@@ -2,14 +2,16 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { useAragonApi } from '@aragon/api-react'
 import { Main, SidePanel } from '@aragon/ui'
-
 import { capitalizeFirst } from './lib/utils'
+import { getSignatureFields, soliditySha3 } from './lib/web3-utils'
 
 import Balances from './components/Balances'
 import AppLayout from './components/AppLayout'
 import EmptyState from './screens/EmptyState'
 import UpdateTokens from './components/Forms/UpdateTokens'
 import RedeemTokens from './components/Forms/RedeemTokens'
+
+const hashMessage = soliditySha3('I WOULD LIKE TO REDEEM SOME TOKENS PLEASE')
 
 class App extends React.Component {
   static propTypes = {
@@ -20,19 +22,24 @@ class App extends React.Component {
   state = {
     sidePanelOpened: false,
     mode: 'add',
+    tokenAddress: '',
+    tokenSymbol: '',
   }
 
   handleLaunchAddToken = () => {
-    this.setState({
-      sidePanelOpened: true,
-      mode: 'add',
-    })
+    this.handleLaunchToken('add', '', '')
   }
 
-  handleLaunchRemoveToken = () => {
+  handleLaunchRemoveToken = (address, symbol) => {
+    this.handleLaunchToken('remove', address, symbol)
+  }
+
+  handleLaunchToken = (mode, tokenAddress, tokenSymbol) => {
     this.setState({
       sidePanelOpened: true,
-      mode: 'remove',
+      mode,
+      tokenAddress,
+      tokenSymbol,
     })
   }
 
@@ -56,11 +63,18 @@ class App extends React.Component {
     this.handleSidePanelClose()
   }
 
-  handleRedeemTokens = amount => {
+  handleRedeemTokens = async amount => {
     const { api } = this.props
 
-    console.log('amount', typeof amount, amount)
-    api.redeem(amount)
+    api.requestSignMessage(hashMessage).subscribe(
+      signature => {
+        const signFields = Object.values(getSignatureFields(signature))
+        api.redeem(amount, hashMessage, ...signFields)
+      },
+      err => {
+        console.log(err)
+      }
+    )
 
     this.handleSidePanelClose()
   }
@@ -68,9 +82,7 @@ class App extends React.Component {
   render() {
     const { appState } = this.props
     const { tokens, redeemableToken } = appState
-    const { mode, sidePanelOpened } = this.state
-
-    console.log('state', appState)
+    const { mode, sidePanelOpened, tokenAddress, tokenSymbol } = this.state
 
     const modeStr = capitalizeFirst(mode)
     const sidePanelProps = {
@@ -80,6 +92,8 @@ class App extends React.Component {
     }
 
     const showTokens = tokens && tokens.length > 0
+    //show only tokens that are going to be redeemed
+    const redeemables = showTokens ? tokens.filter(t => !t.amount.isZero()) : []
 
     return (
       <Main>
@@ -112,14 +126,16 @@ class App extends React.Component {
               balance={redeemableToken.accountBalance}
               symbol={redeemableToken.symbol}
               totalSupply={redeemableToken.totalSupply}
-              tokens={tokens}
+              tokens={redeemables}
               onRedeemTokens={this.handleRedeemTokens}
             />
           ) : (
             <UpdateTokens
-              tokens={tokens}
-              onUpdateTokens={this.handleUpdateTokens}
               mode={mode}
+              tokens={tokens}
+              tokenAddress={tokenAddress}
+              tokenSymbol={tokenSymbol}
+              onUpdateTokens={this.handleUpdateTokens}
             />
           )}
         </SidePanel>

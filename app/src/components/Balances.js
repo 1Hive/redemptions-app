@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
-import { theme, breakpoint, Button, SidePanel } from '@aragon/ui'
+import { theme, breakpoint, Button, Viewport } from '@aragon/ui'
 
 import BalanceToken from './BalanceToken'
 
@@ -9,35 +9,43 @@ class Balances extends Component {
     const { tokens, onAddToken, onRemoveToken } = this.props
 
     return (
-      <React.Fragment>
-        <section>
-          <Title>Tokens for redemption</Title>
-          <ScrollView>
-            <List>
-              {tokens.length > 0 ? (
-                tokens.map(
-                  ({ address, name, decimals, amount, symbol, verified }) => (
-                    <ListItem key={address}>
-                      <BalanceToken
-                        name={name}
-                        symbol={symbol}
-                        decimals={decimals}
-                        amount={amount}
-                        verified={verified}
-                      />
-                    </ListItem>
+      <Viewport>
+        {({ below }) => (
+          <section>
+            <Title>Tokens for redemption</Title>
+            <ScrollView>
+              <List>
+                {tokens.length > 0 ? (
+                  tokens.map(
+                    ({ address, name, decimals, amount, symbol, verified }) => (
+                      <ListItem
+                        key={address}
+                        onClick={() => onRemoveToken(address, symbol)}
+                      >
+                        <BalanceToken
+                          name={name}
+                          symbol={symbol}
+                          decimals={decimals}
+                          amount={amount}
+                          verified={verified}
+                          removable={true}
+                        />
+                      </ListItem>
+                    )
                   )
-                )
-              ) : (
-                <EmptyListItem />
-              )}
-            </List>
-            <Button mode="outline" onClick={onAddToken}>
-              Add Token
-            </Button>
-          </ScrollView>
-        </section>
-      </React.Fragment>
+                ) : (
+                  <EmptyListItem />
+                )}
+              </List>
+              {!below('medium') && AddTokenButton(false, 'outline', onAddToken)}
+            </ScrollView>
+
+            {below('medium') && (
+              <Wrapper>{AddTokenButton(true, 'strong', onAddToken)}</Wrapper>
+            )}
+          </section>
+        )}
+      </Viewport>
     )
   }
 }
@@ -84,30 +92,38 @@ const Title = styled.h1`
 
 const List = styled.ul`
   list-style: none;
-
+  width: 100%;
   ${breakpoint(
     'medium',
     `
-   display: flex;
-   padding: 0 10px;
+    width: auto;
+    display: flex;
+    padding: 0 10px;
  `
   )};
 `
 
 const ListItem = styled.li`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   padding: 8px 20px;
   border-bottom: 1px solid ${theme.contentBorder};
 
   ${breakpoint(
     'medium',
     `
-   display: block;
    padding: 25px;
    border: 0;
  `
-  )};
+  )}
+`
+
+const AddTokenButton = (wide, mode, onClick) => (
+  <Button wide={wide} mode={mode} onClick={onClick}>
+    Add Token
+  </Button>
+)
+
+const Wrapper = styled.div`
+  margin: 1rem 1.5rem;
 `
 
 export default Balances
