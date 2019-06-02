@@ -1,6 +1,5 @@
-An application for Aragon.
+1Hive's Redemptions app allows Aragon organizations to grant their token holders the right to redeem tokens in exchange for a proportional share of the organizations treasury assets.
 
-**Features**
-- Feature \#1.
-- Feature \#2.
-- Feature \#3.
+**Waring**
+
+- The code in this repo has not been audited.
