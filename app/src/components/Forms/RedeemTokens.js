@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
-import { Field, Text, TextInput, Button, Slider, theme } from '@aragon/ui'
+import { Field, Text, TextInput, Button, Slider } from '@aragon/ui'
 import styled from 'styled-components'
+import BN from 'bn.js'
 
 import RedeemTokenList from './RedeemTokenList'
 import { ErrorMessage, InfoMessage } from './Message'
@@ -9,12 +10,8 @@ import { round } from '../../lib/math-utils'
 
 function getTokenExchange(tokens, amount, totalSupply) {
   return tokens.map(t =>
-    totalSupply.isZero() ? 0 : amount * t.amount.div(totalSupply)
+    totalSupply.isZero() ? new BN(0) : amount.mul(t.amount.div(totalSupply))
   )
-}
-
-function adjustBalance(balance, decimals) {
-  return round(balance / Math.pow(10, decimals))
 }
 
 class RedeemTokens extends Component {
@@ -71,7 +68,7 @@ class RedeemTokens extends Component {
     const { amount, progress } = this.state
     const { balance, symbol, totalSupply, tokens } = this.props
 
-    const youGet = getTokenExchange(tokens, amount.value, totalSupply)
+    const youGet = getTokenExchange(tokens, new BN(amount.value), totalSupply)
     const errorMessage = amount.error
 
     return (
@@ -97,7 +94,12 @@ class RedeemTokens extends Component {
             />
             <Text size="large">{symbol}</Text>
           </InputWrapper>
-          <RedeemTokenList tokens={tokens} youGet={youGet} />
+          {tokens.length > 0 ? (
+            <RedeemTokenList tokens={tokens} youGet={youGet} />
+          ) : (
+            <Info>No tokens for redemption</Info>
+          )}
+
           {/* <InfoMessage
             text="You'll have to sign a message first for security purposes."
             background={theme.infoPermissionsBackground}
@@ -106,7 +108,7 @@ class RedeemTokens extends Component {
             mode="strong"
             wide={true}
             type="submit"
-            disabled={amount.value <= 0}
+            disabled={amount.value <= 0 || tokens.length === 0}
           >
             {'Redeem tokens'}
           </Button>
@@ -137,4 +139,10 @@ const SliderWrapper = styled(Field)`
     min-width: 200px;
     padding-left: 0;
   }
+`
+
+const Info = styled.div`
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
 `
