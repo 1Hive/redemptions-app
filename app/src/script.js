@@ -134,8 +134,6 @@ async function createStore(settings) {
         ...state,
       }
 
-      console.log('Event', event)
-
       if (eventName === INITIALIZATION_TRIGGER) {
         nextState = await initializeState(nextState, settings)
       } else if (eventName === ACCOUNTS_TRIGGER) {
@@ -251,7 +249,7 @@ async function updateTokens(settings) {
  *       Helpers       *
  *                     *
  ***********************/
-
+/** returns redeemable token metadata + supply */
 async function getRedeemableTokenData({ redeemableToken: { contract } }) {
   const [symbol, decimals, totalSupply] = await Promise.all([
     contract.symbol().toPromise(),

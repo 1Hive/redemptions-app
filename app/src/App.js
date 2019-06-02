@@ -68,14 +68,8 @@ class App extends React.Component {
 
     api.requestSignMessage(hashMessage).subscribe(
       signature => {
-        const signFields = getSignatureFields(signature)
-        api.redeem(
-          amount,
-          hashMessage,
-          signFields.v,
-          signFields.r,
-          signFields.s
-        )
+        const signFields = Object.values(getSignatureFields(signature))
+        api.redeem(amount, hashMessage, ...signFields)
       },
       err => {
         console.log(err)
@@ -90,8 +84,6 @@ class App extends React.Component {
     const { tokens, redeemableToken } = appState
     const { mode, sidePanelOpened, tokenAddress, tokenSymbol } = this.state
 
-    console.log('state', appState)
-
     const modeStr = capitalizeFirst(mode)
     const sidePanelProps = {
       opened: sidePanelOpened,
@@ -100,6 +92,8 @@ class App extends React.Component {
     }
 
     const showTokens = tokens && tokens.length > 0
+    //show only tokens that are going to be redeemed
+    const redeemables = showTokens ? tokens.filter(t => !t.amount.isZero()) : []
 
     return (
       <Main>
@@ -132,7 +126,7 @@ class App extends React.Component {
               balance={redeemableToken.accountBalance}
               symbol={redeemableToken.symbol}
               totalSupply={redeemableToken.totalSupply}
-              tokens={tokens}
+              tokens={redeemables}
               onRedeemTokens={this.handleRedeemTokens}
             />
           ) : (

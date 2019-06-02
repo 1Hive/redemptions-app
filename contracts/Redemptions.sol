@@ -111,9 +111,11 @@ contract Redemptions is AragonApp {
             tokenBalance = vault.balance(redemptionTokenList[i]);
 
             redemptionAmount = _amount.mul(tokenBalance).div(totalSuuply);
-            vault.transfer(redemptionTokenList[i], redeemer, redemptionAmount);
+            if (redemptionAmount > 0)
+                vault.transfer(redemptionTokenList[i], redeemer, redemptionAmount);
         }
 
+        //burn only if total sum of redemption amounts > 0 ?
         tokenManager.burn(redeemer, _amount);
 
         emit Redeem(redeemer, _amount);

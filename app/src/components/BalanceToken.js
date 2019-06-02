@@ -150,6 +150,12 @@ const Balance = styled.div`
         color: ${theme.negative}
       }
     }
+
+    &:active {
+      ${Top} > ${Remove} {
+        color: ${theme.negative}
+      }
+    }
     `}
 `
 
