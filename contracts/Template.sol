@@ -81,7 +81,7 @@ contract Template is TemplateBase {
 
         MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "Redeemable token", 0, "RDT", true);
         token.changeController(tokenManager);
-    
+
         // Initialize apps
         vault.initialize();
         tokenManager.initialize(token, true, 0);
@@ -91,16 +91,17 @@ contract Template is TemplateBase {
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
         acl.createPermission(redemptions, tokenManager, tokenManager.BURN_ROLE(), root);
         tokenManager.mint(root, 10); // Give ten tokens to root
-        
+
 
         acl.createPermission(tokenManager, voting, voting.CREATE_VOTES_ROLE(), root);
         acl.createPermission(redemptions, vault, vault.TRANSFER_ROLE(), root);
         acl.createPermission(tokenManager, redemptions, redemptions.REDEEM_ROLE(), root);
-        acl.createPermission(voting, redemptions, redemptions.ADD_TOKEN_ROLE(), root);  
-        acl.createPermission(voting, redemptions, redemptions.REMOVE_TOKEN_ROLE(), root); 
+        acl.createPermission(voting, redemptions, redemptions.ADD_TOKEN_ROLE(), root);
+        acl.createPermission(voting, redemptions, redemptions.REMOVE_TOKEN_ROLE(), root);
 
 
         // Clean up permissions
+
         acl.grantPermission(root, dao, dao.APP_MANAGER_ROLE());
         acl.revokePermission(this, dao, dao.APP_MANAGER_ROLE());
         acl.setPermissionManager(root, dao, dao.APP_MANAGER_ROLE());
