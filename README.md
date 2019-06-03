@@ -50,10 +50,10 @@ The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the 
 The redemptions app allows organizations to add and remove tokens from a list of eligible tokens. When a user choses to redeem tokens they will receive a proportional share of all eligible tokens in the `Vault`.
 
 ### Adding eligible vault token:
-![Add Token Gif](https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/add-token.gif)
+<img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/add-token.gif" width="100" />
 
 ### Redeeming tokens:
-![Redeem Gif](https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redeem.gif)
+<img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redeem.gif" width="100" />
 
 ### Removing eligible vault token:
-![Remove Token Gif](https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/remove-token.gif)
+<img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/remove-token.gif" width="100" />
