@@ -49,11 +49,13 @@ The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the 
 
 The redemptions app allows organizations to add and remove tokens from a list of eligible tokens. When a user choses to redeem tokens they will receive a proportional share of all eligible tokens in the `Vault`.
 
-### Adding eligible vault token:
-<img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/add-token.gif" width="600" />
-
 ### Redeeming tokens:
+To redeem tokens, click on the redeem then use the slider to select how many tokens you would like to redeem. When satified with the amount, click redeem to confirm. You will be prompted to sign a message, then you will be able to confirm the transaction. 
+
 <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redeem.gif" width="600" />
 
+### Adding eligible vault token:
+To add an eligble token click "Add Token", then enter the address of the token contract you would like to add. 
+
 ### Removing eligible vault token:
-<img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/remove-token.gif" width="600" />
+To remove an eligble token, hover over the token you want to remove and click "Remove Token", then enter the address of the token contract you would like to remove. 
