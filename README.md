@@ -4,7 +4,7 @@
 
 #### 🐲 Project stage: Rinkeby
 
-The Redemptions app has been published to open.aragonpm.eth on rinkeby. If you are interested in contributing please see our open [issues](https://github.com/1hive/redemptions/issues).
+The Redemptions app has been published to `open.aragonpm.eth` on the Rinkeby test network. If you experience any issues or are interested in contributing please see review our open [issues](https://github.com/1hive/redemptions/issues).
 
 #### 🚨 Security review status: pre-audit
 
