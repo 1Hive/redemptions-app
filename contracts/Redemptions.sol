@@ -40,9 +40,8 @@ contract Redemptions is AragonApp {
     * @notice Initialize Redemptions app contract
     * @param _vault Address of the vault
     * @param _tokenManager TokenManager address
-    * @param _redemptionTokenList token addreses
     */
-    function initialize(Vault _vault, TokenManager _tokenManager, address[] _redemptionTokenList) external onlyInit {
+    function initialize(Vault _vault, TokenManager _tokenManager) external onlyInit {
         initialized();
 
         require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
@@ -50,11 +49,6 @@ contract Redemptions is AragonApp {
 
         vault = _vault;
         tokenManager = _tokenManager;
-        redemptionTokenList = _redemptionTokenList;
-
-        for (uint i = 0; i < _redemptionTokenList.length; i++) {
-            tokenAdded[_redemptionTokenList[i]] = true;
-        }
     }
 
     /**
