@@ -122,206 +122,203 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
     await vault.initialize()
   })
 
-  context(
-    'initialize(Vault _vault, TokenManager _tokenManager, address[] _vaultTokens)',
-    () => {
-      beforeEach(async () => {
-        await redemptions.initialize(vault.address, tokenManager.address)
-      })
+  context('initialize(Vault _vault, TokenManager _tokenManager)', () => {
+    beforeEach(async () => {
+      await redemptions.initialize(vault.address, tokenManager.address)
+    })
 
-      it('should set initial values correctly', async () => {
-        const actualVaultAddress = await redemptions.vault()
-        const actualTokenManager = await redemptions.tokenManager()
+    it('should set initial values correctly', async () => {
+      const actualVaultAddress = await redemptions.vault()
+      const actualTokenManager = await redemptions.tokenManager()
+
+      const actualTokenAddresses = await redemptions.getTokens()
+      assert.strictEqual(actualVaultAddress, vault.address)
+      assert.strictEqual(actualTokenManager, tokenManager.address)
+      assert.deepStrictEqual(actualTokenAddresses, [])
+    })
+
+    context('addToken(address _token)', () => {
+      let token0
+      let expectedTokenAddresses = []
+      it('should add an address to the vault tokens', async () => {
+        token0 = await Erc20.new()
+        expectedTokenAddresses.push(token0.address)
+
+        await redemptions.addToken(token0.address)
 
         const actualTokenAddresses = await redemptions.getTokens()
-        assert.strictEqual(actualVaultAddress, vault.address)
-        assert.strictEqual(actualTokenManager, tokenManager.address)
-        assert.deepStrictEqual(actualTokenAddresses, [])
-      })
-
-      context('addToken(address _token)', () => {
-        let token0
-        let expectedTokenAddresses = []
-        it('should add an address to the vault tokens', async () => {
-          token0 = await Erc20.new()
-          expectedTokenAddresses.push(token0.address)
-
-          await redemptions.addToken(token0.address)
-
-          const actualTokenAddresses = await redemptions.getTokens()
-          const actualTokenAddedToken = await redemptions.tokenAdded(
-            token0.address
-          )
-          assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
-          assert.isTrue(actualTokenAddedToken)
-        })
-
-        it('reverts if adding token manager', async () => {
-          await assertRevert(
-            redemptions.addToken(tokenManager.address),
-            'REDEMPTIONS_CANNOT_ADD_TOKEN_MANAGER'
-          )
-        })
-
-        it('reverts if adding already added token', async () => {
-          await redemptions.addToken(token0.address)
-          await assertRevert(
-            redemptions.addToken(token0.address),
-            'REDEMPTIONS_TOKEN_ALREADY_ADDED'
-          )
-        })
-
-        it('reverts if adding non-contract address', async () => {
-          await assertRevert(
-            redemptions.addToken(accounts[0]),
-            'REDEMPTIONS_TOKEN_NOT_CONTRACT'
-          )
-        })
-      })
-
-      context('removeToken(address _token)', () => {
-        let token0
-        let expectedTokenAddresses
-
-        beforeEach(async () => {
-          token0 = await Erc20.new()
-          await redemptions.addToken(token0.address)
-          expectedTokenAddresses = [token0.address]
-        })
-        it('Should remove token address', async () => {
-          expectedTokenAddresses = expectedTokenAddresses.slice(1)
-          await redemptions.removeToken(token0.address)
-
-          const actualTokenAddresses = await redemptions.getTokens()
-
-          const actualTokenAddedToken = await redemptions.tokenAdded(
-            token0.address
-          )
-          assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
-          assert.isFalse(actualTokenAddedToken)
-        })
-
-        it('reverts if removing token not present', async () => {
-          await assertRevert(
-            redemptions.removeToken(accounts[0]),
-            'REDEMPTIONS_NOT_VAULT_TOKEN'
-          )
-        })
-      })
-
-      context('redeem(uint256 _amount)', () => {
-        let token0, token1
-
-        const redeemer = accounts[0]
-
-        const rootAccountRedeemableTokenAmount = 80000
-        const redeemerAmount = 20000
-        const vaultToken0Amount = 45231
-        const vaultToken1Amount = 20001
-
-        const CORRECTMSG = web3.sha3(
-          'I WOULD LIKE TO REDEEM SOME TOKENS PLEASE'
+        const actualTokenAddedToken = await redemptions.tokenAdded(
+          token0.address
         )
-        let correctSignature, correctValues
-
-        const INCORRECTMSG = web3.sha3('REDEEM PLEASE')
-        let incorrectSignature, incorrectValues
-
-        beforeEach(async () => {
-          //set permissions
-          await daoDeployment.acl.createPermission(
-            rootAccount,
-            tokenManager.address,
-            MINT_ROLE,
-            rootAccount,
-            { from: rootAccount }
-          )
-          await daoDeployment.acl.createPermission(
-            redemptions.address,
-            tokenManager.address,
-            BURN_ROLE,
-            rootAccount,
-            { from: rootAccount }
-          )
-          await daoDeployment.acl.createPermission(
-            redemptions.address,
-            vault.address,
-            TRANSFER_ROLE,
-            rootAccount,
-            { from: rootAccount }
-          )
-
-          token0 = await Erc20.new()
-          token1 = await Erc20.new()
-          await redemptions.addToken(token0.address)
-          await redemptions.addToken(token1.address)
-
-          //transfer tokens to vault
-          await token0.transfer(vault.address, vaultToken0Amount)
-          await token1.transfer(vault.address, vaultToken1Amount)
-
-          //mint redeemableTokens to first two accounts
-          await tokenManager.mint(redeemer, redeemerAmount)
-          await tokenManager.mint(rootAccount, rootAccountRedeemableTokenAmount)
-
-          //get hash signatures
-          correctSignature = await web3.eth.sign(redeemer, CORRECTMSG)
-          correctValues = getSignatureFields(correctSignature)
-          incorrectSignature = await web3.eth.sign(redeemer, INCORRECTMSG)
-          incorrectValues = getSignatureFields(incorrectSignature)
-        })
-
-        it('Should redeem tokens as expected', async () => {
-          const redeemableTokenTotalSupply = await redeemableToken.totalSupply()
-          const expectedRedeemAmountToken0 = parseInt(
-            (redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply
-          )
-          const expectedRedeemAmountToken1 = parseInt(
-            (redeemerAmount * vaultToken1Amount) / redeemableTokenTotalSupply
-          )
-
-          const values = Object.values(correctValues)
-          await redemptions.redeem(redeemerAmount, CORRECTMSG, ...values, {
-            from: redeemer,
-          })
-
-          const token0Balance = await token0.balanceOf(redeemer)
-          const token1Balance = await token1.balanceOf(redeemer)
-
-          assert.equal(token0Balance.toNumber(), expectedRedeemAmountToken0)
-          assert.equal(token1Balance.toNumber(), expectedRedeemAmountToken1)
-        })
-
-        it('reverts if amount to redeem is zero', async () => {
-          const values = Object.values(correctValues)
-          await assertRevert(
-            redemptions.redeem(0, CORRECTMSG, ...values, {
-              from: redeemer,
-            }),
-            'REDEMPTIONS_CANNOT_REDEEM_ZERO'
-          )
-        })
-
-        it("reverts if amount to redeem exceeds account's balance", async () => {
-          const values = Object.values(correctValues)
-          await assertRevert(
-            redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...values, {
-              from: redeemer,
-            }),
-            'REDEMPTIONS_INSUFFICIENT_BALANCE'
-          )
-        })
-
-        it('reverts if incorrect signed message ', async () => {
-          const values = Object.values(incorrectValues)
-          await assertRevert(
-            redemptions.redeem(redeemerAmount, INCORRECTMSG, ...values, {
-              from: redeemer,
-            }),
-            'REDEMPTIONS_INCORRECT_MESSAGE'
-          )
-        })
+        assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
+        assert.isTrue(actualTokenAddedToken)
       })
-    }
-  )
+
+      it('reverts if adding token manager', async () => {
+        await assertRevert(
+          redemptions.addToken(tokenManager.address),
+          'REDEMPTIONS_CANNOT_ADD_TOKEN_MANAGER'
+        )
+      })
+
+      it('reverts if adding already added token', async () => {
+        await redemptions.addToken(token0.address)
+        await assertRevert(
+          redemptions.addToken(token0.address),
+          'REDEMPTIONS_TOKEN_ALREADY_ADDED'
+        )
+      })
+
+      it('reverts if adding non-contract address', async () => {
+        await assertRevert(
+          redemptions.addToken(accounts[0]),
+          'REDEMPTIONS_TOKEN_NOT_CONTRACT'
+        )
+      })
+    })
+
+    context('removeToken(address _token)', () => {
+      let token0
+      let expectedTokenAddresses
+
+      beforeEach(async () => {
+        token0 = await Erc20.new()
+        await redemptions.addToken(token0.address)
+        expectedTokenAddresses = [token0.address]
+      })
+      it('Should remove token address', async () => {
+        expectedTokenAddresses = expectedTokenAddresses.slice(1)
+        await redemptions.removeToken(token0.address)
+
+        const actualTokenAddresses = await redemptions.getTokens()
+
+        const actualTokenAddedToken = await redemptions.tokenAdded(
+          token0.address
+        )
+        assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
+        assert.isFalse(actualTokenAddedToken)
+      })
+
+      it('reverts if removing token not present', async () => {
+        await assertRevert(
+          redemptions.removeToken(accounts[0]),
+          'REDEMPTIONS_NOT_VAULT_TOKEN'
+        )
+      })
+    })
+
+    context('redeem(uint256 _amount)', () => {
+      let token0, token1
+
+      const redeemer = accounts[0]
+
+      const rootAccountRedeemableTokenAmount = 80000
+      const redeemerAmount = 20000
+      const vaultToken0Amount = 45231
+      const vaultToken1Amount = 20001
+
+      const CORRECTMSG = web3.utils.sha3(
+        'I WOULD LIKE TO REDEEM SOME TOKENS PLEASE'
+      )
+      let correctSignature, correctValues
+
+      const INCORRECTMSG = web3.utils.sha3('REDEEM PLEASE')
+      let incorrectSignature, incorrectValues
+
+      beforeEach(async () => {
+        // set permissions
+        await daoDeployment.acl.createPermission(
+          rootAccount,
+          tokenManager.address,
+          MINT_ROLE,
+          rootAccount,
+          { from: rootAccount }
+        )
+        await daoDeployment.acl.createPermission(
+          redemptions.address,
+          tokenManager.address,
+          BURN_ROLE,
+          rootAccount,
+          { from: rootAccount }
+        )
+        await daoDeployment.acl.createPermission(
+          redemptions.address,
+          vault.address,
+          TRANSFER_ROLE,
+          rootAccount,
+          { from: rootAccount }
+        )
+
+        token0 = await Erc20.new()
+        token1 = await Erc20.new()
+        await redemptions.addToken(token0.address)
+        await redemptions.addToken(token1.address)
+
+        // transfer tokens to vault
+        await token0.transfer(vault.address, vaultToken0Amount)
+        await token1.transfer(vault.address, vaultToken1Amount)
+
+        // mint redeemableTokens to first two accounts
+        await tokenManager.mint(redeemer, redeemerAmount)
+        await tokenManager.mint(rootAccount, rootAccountRedeemableTokenAmount)
+
+        // get hash signatures
+        correctSignature = await web3.eth.sign(CORRECTMSG, redeemer)
+        correctValues = getSignatureFields(correctSignature)
+        incorrectSignature = await web3.eth.sign(INCORRECTMSG, redeemer)
+        incorrectValues = getSignatureFields(incorrectSignature)
+      })
+
+      it('Should redeem tokens as expected', async () => {
+        const redeemableTokenTotalSupply = await redeemableToken.totalSupply()
+        const expectedRedeemAmountToken0 = parseInt(
+          (redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply
+        )
+        const expectedRedeemAmountToken1 = parseInt(
+          (redeemerAmount * vaultToken1Amount) / redeemableTokenTotalSupply
+        )
+
+        const values = Object.values(correctValues)
+        await redemptions.redeem(redeemerAmount, CORRECTMSG, ...values, {
+          from: redeemer,
+        })
+
+        const token0Balance = await token0.balanceOf(redeemer)
+        const token1Balance = await token1.balanceOf(redeemer)
+
+        assert.equal(token0Balance.toNumber(), expectedRedeemAmountToken0)
+        assert.equal(token1Balance.toNumber(), expectedRedeemAmountToken1)
+      })
+
+      it('reverts if amount to redeem is zero', async () => {
+        const values = Object.values(correctValues)
+        await assertRevert(
+          redemptions.redeem(0, CORRECTMSG, ...values, {
+            from: redeemer,
+          }),
+          'REDEMPTIONS_CANNOT_REDEEM_ZERO'
+        )
+      })
+
+      it("reverts if amount to redeem exceeds account's balance", async () => {
+        const values = Object.values(correctValues)
+        await assertRevert(
+          redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...values, {
+            from: redeemer,
+          }),
+          'REDEMPTIONS_INSUFFICIENT_BALANCE'
+        )
+      })
+
+      it('reverts if incorrect signed message ', async () => {
+        const values = Object.values(incorrectValues)
+        await assertRevert(
+          redemptions.redeem(redeemerAmount, INCORRECTMSG, ...values, {
+            from: redeemer,
+          }),
+          'REDEMPTIONS_INCORRECT_MESSAGE'
+        )
+      })
+    })
+  })
 })
