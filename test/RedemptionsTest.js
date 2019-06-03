@@ -125,50 +125,35 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
   context(
     'initialize(Vault _vault, TokenManager _tokenManager, address[] _vaultTokens)',
     () => {
-      let token0, token1
-      let expectedTokenAddresses
-
       beforeEach(async () => {
-        token0 = await Erc20.new()
-        token1 = await Erc20.new()
-        expectedTokenAddresses = [token0.address, token1.address]
-        await redemptions.initialize(
-          vault.address,
-          tokenManager.address,
-          expectedTokenAddresses
-        )
+        await redemptions.initialize(vault.address, tokenManager.address)
       })
 
       it('should set initial values correctly', async () => {
         const actualVaultAddress = await redemptions.vault()
         const actualTokenManager = await redemptions.tokenManager()
-        const actualTokenAddedToken0 = await redemptions.tokenAdded(
-          token0.address
-        )
-        const actualTokenAddedToken1 = await redemptions.tokenAdded(
-          token1.address
-        )
+
         const actualTokenAddresses = await redemptions.getTokens()
         assert.strictEqual(actualVaultAddress, vault.address)
         assert.strictEqual(actualTokenManager, tokenManager.address)
-        assert.isTrue(actualTokenAddedToken0)
-        assert.isTrue(actualTokenAddedToken1)
-        assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
+        assert.deepStrictEqual(actualTokenAddresses, [])
       })
 
       context('addToken(address _token)', () => {
+        let token0
+        let expectedTokenAddresses = []
         it('should add an address to the vault tokens', async () => {
-          const token2 = await Erc20.new()
-          expectedTokenAddresses.push(token2.address)
+          token0 = await Erc20.new()
+          expectedTokenAddresses.push(token0.address)
 
-          await redemptions.addToken(token2.address)
+          await redemptions.addToken(token0.address)
 
           const actualTokenAddresses = await redemptions.getTokens()
-          const actualTokenAddedToken2 = await redemptions.tokenAdded(
-            token2.address
+          const actualTokenAddedToken = await redemptions.tokenAdded(
+            token0.address
           )
           assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
-          assert.isTrue(actualTokenAddedToken2)
+          assert.isTrue(actualTokenAddedToken)
         })
 
         it('reverts if adding token manager', async () => {
@@ -179,6 +164,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         })
 
         it('reverts if adding already added token', async () => {
+          await redemptions.addToken(token0.address)
           await assertRevert(
             redemptions.addToken(token0.address),
             'REDEMPTIONS_TOKEN_ALREADY_ADDED'
@@ -194,17 +180,25 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       })
 
       context('removeToken(address _token)', () => {
+        let token0
+        let expectedTokenAddresses
+
+        beforeEach(async () => {
+          token0 = await Erc20.new()
+          await redemptions.addToken(token0.address)
+          expectedTokenAddresses = [token0.address]
+        })
         it('Should remove token address', async () => {
           expectedTokenAddresses = expectedTokenAddresses.slice(1)
           await redemptions.removeToken(token0.address)
 
           const actualTokenAddresses = await redemptions.getTokens()
 
-          const actualTokenAddedToken0 = await redemptions.tokenAdded(
+          const actualTokenAddedToken = await redemptions.tokenAdded(
             token0.address
           )
           assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
-          assert.isFalse(actualTokenAddedToken0)
+          assert.isFalse(actualTokenAddedToken)
         })
 
         it('reverts if removing token not present', async () => {
@@ -216,6 +210,8 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       })
 
       context('redeem(uint256 _amount)', () => {
+        let token0, token1
+
         const redeemer = accounts[0]
 
         const rootAccountRedeemableTokenAmount = 80000
@@ -254,6 +250,11 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
             rootAccount,
             { from: rootAccount }
           )
+
+          token0 = await Erc20.new()
+          token1 = await Erc20.new()
+          await redemptions.addToken(token0.address)
+          await redemptions.addToken(token1.address)
 
           //transfer tokens to vault
           await token0.transfer(vault.address, vaultToken0Amount)
