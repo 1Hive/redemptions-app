@@ -64,7 +64,6 @@ class App extends React.Component {
   handleRedeemTokens = async amount => {
     const { api } = this.props
 
-    console.log('amount', amount)
     api.requestSignMessage(hashMessage).subscribe(
       signature => {
         const signFields = Object.values(getSignatureFields(signature))
