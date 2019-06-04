@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Field, TextInput, Button } from '@aragon/ui'
+import { Field, TextInput, Button, TokenBadge } from '@aragon/ui'
 
 import { isAddress, addressesEqual } from '../../lib/web3-utils'
 import { capitalizeFirst } from '../../lib/utils'
@@ -63,7 +63,10 @@ class UpdateTokens extends Component {
 
   render() {
     const { address } = this.state
-    const { mode, tokenSymbol } = this.props
+    const { mode, tokens } = this.props
+    let token =
+      mode === 'remove' ? tokens.find(t => t.address === address.value) : {}
+    let { name, symbol } = token ? token : {}
 
     const errorMessage = address.error
 
@@ -75,17 +78,21 @@ class UpdateTokens extends Component {
             text={`This action will ${
               mode === 'add'
                 ? 'add token to redemption list'
-                : `remove ${tokenSymbol} token from the redemption list`
+                : `remove ${symbol && symbol} token from the redemption list`
             }.`}
           />
           <Field label="Token address">
-            <TextInput
-              name="address"
-              wide={true}
-              onChange={this.handleAddressChange}
-              value={address.value}
-              disabled={mode === 'remove'}
-            />
+            {mode === 'add' ? (
+              <TextInput
+                name="address"
+                wide={true}
+                onChange={this.handleAddressChange}
+                value={address.value}
+                disabled={mode === 'remove'}
+              />
+            ) : (
+              <TokenBadge address={address.value} name={name} symbol={symbol} />
+            )}
           </Field>
           <Button mode="strong" wide={true} type="submit">
             {`${capitalizeFirst(mode)} token`}

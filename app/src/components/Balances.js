@@ -20,7 +20,7 @@ class Balances extends Component {
                     ({ address, name, decimals, amount, symbol, verified }) => (
                       <ListItem
                         key={address}
-                        onClick={() => onRemoveToken(address, symbol)}
+                        onClick={() => onRemoveToken(address)}
                       >
                         <BalanceToken
                           name={name}

@@ -23,23 +23,21 @@ class App extends React.Component {
     sidePanelOpened: false,
     mode: 'add',
     tokenAddress: '',
-    tokenSymbol: '',
   }
 
   handleLaunchAddToken = () => {
     this.handleLaunchToken('add', '', '')
   }
 
-  handleLaunchRemoveToken = (address, symbol) => {
-    this.handleLaunchToken('remove', address, symbol)
+  handleLaunchRemoveToken = address => {
+    this.handleLaunchToken('remove', address)
   }
 
-  handleLaunchToken = (mode, tokenAddress, tokenSymbol) => {
+  handleLaunchToken = (mode, tokenAddress) => {
     this.setState({
       sidePanelOpened: true,
       mode,
       tokenAddress,
-      tokenSymbol,
     })
   }
 
@@ -134,7 +132,6 @@ class App extends React.Component {
               mode={mode}
               tokens={tokens}
               tokenAddress={tokenAddress}
-              tokenSymbol={tokenSymbol}
               onUpdateTokens={this.handleUpdateTokens}
             />
           )}
