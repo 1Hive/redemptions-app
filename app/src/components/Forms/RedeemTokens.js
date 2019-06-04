@@ -6,23 +6,25 @@ import BN from 'bn.js'
 import RedeemTokenList from './RedeemTokenList'
 import { ErrorMessage, InfoMessage } from './Message'
 
-import { round } from '../../lib/math-utils'
+import { fromDecimals, toDecimals, formatTokenAmount } from '../../lib/utils'
 
 function getTokenExchange(tokens, amount, totalSupply) {
   return tokens.map(t =>
-    totalSupply.isZero() ? new BN(0) : amount.mul(t.amount.div(totalSupply))
+    totalSupply === 0 ? 0 : (amount * t.amount) / totalSupply
   )
 }
 
+const initialState = {
+  amount: {
+    value: '',
+    max: '',
+    error: null,
+  },
+  progress: 0,
+}
+
 class RedeemTokens extends Component {
-  state = {
-    amount: {
-      value: this.props.balance,
-      max: this.props.balance,
-      error: null,
-    },
-    progress: 1,
-  }
+  state = { ...initialState }
 
   //react to account balance changes
   componentDidUpdate(prevProps) {
@@ -33,16 +35,20 @@ class RedeemTokens extends Component {
   }
 
   handleAmountChange = event => {
-    const { balance } = this.props
-    const amount = Math.min(event.target.value, balance)
-    const progress = amount / balance
+    const { balance, decimals } = this.props
+    const formattedBalance = fromDecimals(String(balance), decimals)
+
+    const amount = Math.min(event.target.value, formattedBalance)
+    const progress = amount / formattedBalance
 
     this.updateAmount(amount, progress)
   }
 
   handleSliderChange = progress => {
-    const { balance } = this.props
-    const amount = parseInt(progress * balance)
+    const { balance, decimals } = this.props
+    const formattedBalance = fromDecimals(String(balance), decimals)
+
+    const amount = Math.round(progress * formattedBalance)
 
     this.updateAmount(amount, progress)
   }
@@ -57,18 +63,27 @@ class RedeemTokens extends Component {
   handleFormSubmit = event => {
     event.preventDefault()
 
+    const { decimals } = this.props
     const {
       amount: { value },
     } = this.state
 
-    this.props.onRedeemTokens(value)
+    console.log('value', value)
+    this.props.onRedeemTokens(toDecimals(String(value), decimals))
   }
 
   render() {
     const { amount, progress } = this.state
-    const { balance, symbol, totalSupply, tokens } = this.props
+    const { balance, symbol, decimals, totalSupply, tokens } = this.props
 
-    const youGet = getTokenExchange(tokens, new BN(amount.value), totalSupply)
+    const formattedBalance = formatTokenAmount(balance, false, decimals)
+    const formattedSupply = formatTokenAmount(totalSupply, false, decimals)
+
+    const youGet = getTokenExchange(
+      tokens,
+      amount.value,
+      totalSupply / Math.pow(10, decimals)
+    )
     const errorMessage = amount.error
 
     return (
@@ -76,7 +91,7 @@ class RedeemTokens extends Component {
         <form onSubmit={this.handleFormSubmit}>
           <InfoMessage
             title={'Redeemption action'}
-            text={`You have ${balance} ${symbol} tokens for redemption out of a total of ${totalSupply}. \n This action will redeem ${
+            text={`You have ${formattedBalance} ${symbol} tokens for redemption out of a total of ${formattedSupply}. \n This action will redeem ${
               amount.value
             } tokens`}
           />
@@ -89,8 +104,11 @@ class RedeemTokens extends Component {
               wide={true}
               value={amount.value}
               max={amount.max}
-              min={0}
+              min={'0'}
+              step={'1'}
+              disabled={amount.max === '0'}
               onChange={this.handleAmountChange}
+              required
             />
             <Text size="large">{symbol}</Text>
           </InputWrapper>
