@@ -159,7 +159,4 @@ const Balance = styled.div`
     `}
 `
 
-const ConvertedAmount = styled.div`
-  color: ${theme.textTertiary};
-`
 export default BalanceToken

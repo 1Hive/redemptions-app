@@ -79,7 +79,7 @@ contract Template is TemplateBase {
         Voting voting = Voting(dao.newAppInstance(votingAppId, latestVersionAppBase(votingAppId)));
         TokenManager tokenManager = TokenManager(dao.newAppInstance(tokenManagerAppId, latestVersionAppBase(tokenManagerAppId)));
 
-        MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "Redeemable token", 0, "RDT", true);
+        MiniMeToken token = tokenFactory.createCloneToken(MiniMeToken(0), 0, "Redeemable token", 18, "RDT", true);
         token.changeController(tokenManager);
 
         // Initialize apps
@@ -90,7 +90,7 @@ contract Template is TemplateBase {
 
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);
         acl.createPermission(redemptions, tokenManager, tokenManager.BURN_ROLE(), root);
-        tokenManager.mint(root, 10); // Give ten tokens to root
+        tokenManager.mint(root, 10e18); // Give ten tokens to root
 
 
         acl.createPermission(tokenManager, voting, voting.CREATE_VOTES_ROLE(), root);
