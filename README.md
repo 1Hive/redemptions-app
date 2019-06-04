@@ -52,7 +52,10 @@ The redemptions app allows organizations to add and remove tokens from a list of
 ### Redeeming tokens:
 To redeem tokens, click on the redeem then use the slider to select how many tokens you would like to redeem. When satified with the amount, click redeem to confirm. You will be prompted to sign a message, then you will be able to confirm the transaction. 
 
-<img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redeem.gif" width="600" />
+<p align="center">
+    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redeem.gif" width="600" />
+</p>
+
 
 ### Adding eligible vault token:
 To add an eligble token click "Add Token", then enter the address of the token contract you would like to add. 
