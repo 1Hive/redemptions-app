@@ -1,17 +1,14 @@
 import React, { Component } from 'react'
 import { Field, Text, TextInput, Button, Slider } from '@aragon/ui'
 import styled from 'styled-components'
-import BN from 'bn.js'
 
 import RedeemTokenList from './RedeemTokenList'
 import { ErrorMessage, InfoMessage } from './Message'
 
-import { fromDecimals, toDecimals, formatTokenAmount } from '../../lib/utils'
+import { formatTokenAmount, toDecimals, safeDiv } from '../../lib/math-utils'
 
 function getTokenExchange(tokens, amount, totalSupply) {
-  return tokens.map(t =>
-    totalSupply === 0 ? 0 : (amount * t.amount) / totalSupply
-  )
+  return tokens.map(t => safeDiv(amount * t.amount, totalSupply))
 }
 
 const initialState = {
@@ -36,17 +33,17 @@ class RedeemTokens extends Component {
 
   handleAmountChange = event => {
     const { balance, decimals } = this.props
-    const formattedBalance = fromDecimals(String(balance), decimals)
+    const formattedBalance = formatTokenAmount(balance, false, decimals)
 
     const amount = Math.min(event.target.value, formattedBalance)
-    const progress = amount / formattedBalance
+    const progress = safeDiv(amount, formattedBalance)
 
     this.updateAmount(amount, progress)
   }
 
   handleSliderChange = progress => {
     const { balance, decimals } = this.props
-    const formattedBalance = fromDecimals(String(balance), decimals)
+    const formattedBalance = formatTokenAmount(balance, false, decimals)
 
     const amount = Math.round(progress * formattedBalance)
 

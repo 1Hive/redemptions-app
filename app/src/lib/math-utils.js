@@ -1,3 +1,32 @@
+export function formatDecimals(value, digits) {
+  try {
+    return value.toLocaleString('latn', {
+      style: 'decimal',
+      maximumFractionDigits: digits,
+    })
+  } catch (err) {
+    if (err.name === 'RangeError') {
+      // Fallback to Number.prototype.toString()
+      // if the language tag is not supported.
+      return value.toString()
+    }
+    throw err
+  }
+}
+
+export function formatTokenAmount(
+  amount,
+  isIncoming,
+  decimals = 0,
+  displaySign = false,
+  { rounding = 2 } = {}
+) {
+  return (
+    (displaySign ? (isIncoming ? '+' : '-') : '') +
+    formatDecimals(round(amount / Math.pow(10, decimals), rounding), 18)
+  )
+}
+
 /**
  * Generic round function, see:
  *  - https://stackoverflow.com/a/18358056/1375656
@@ -86,4 +115,9 @@ export function toDecimals(num, decimals, { truncate = true } = {}) {
     return `${wholeWithBase}.${withoutDecimals.slice(wholeLengthWithBase)}`
   }
   return wholeWithBase
+}
+
+// Return 0 if denominator is 0 to avoid NaNs
+export function safeDiv(num, denom) {
+  return denom ? num / denom : 0
 }
