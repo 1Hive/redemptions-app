@@ -55,7 +55,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Add `_token.symbol()` token to redemption list
+    * @notice Add `_token` token to redemption list
     * @param _token token address
     */
     function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
