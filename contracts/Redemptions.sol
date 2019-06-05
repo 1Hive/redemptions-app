@@ -2,6 +2,7 @@ pragma solidity ^0.4.24;
 
 import "@aragon/os/contracts/apps/AragonApp.sol";
 import "@aragon/apps-token-manager/contracts/TokenManager.sol";
+import "@aragon/apps-shared-minime/contracts/MiniMeToken.sol";
 import "@aragon/apps-vault/contracts/Vault.sol";
 import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
@@ -28,6 +29,7 @@ contract Redemptions is AragonApp {
 
     Vault public vault;
     TokenManager public tokenManager;
+    MiniMeToken private token;              //temporary workaround, to show amount of tokens on radspecs's redeem function
 
     mapping(address => bool) public tokenAdded;
     address[] public redemptionTokenList;
@@ -49,10 +51,11 @@ contract Redemptions is AragonApp {
 
         vault = _vault;
         tokenManager = _tokenManager;
+        token = _tokenManager.token();
     }
 
     /**
-    * @notice Add token `_token` to redemption list
+    * @notice Add `_token` token to redemption list
     * @param _token token address
     */
     function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
@@ -70,7 +73,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Remove token `_token` from redemption list
+    * @notice Remove `_token.symbol()` token from redemption list
     * @param _token token address
     */
     function removeToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
@@ -85,7 +88,7 @@ contract Redemptions is AragonApp {
     /**
     * @dev As we cannot get origin sender address when using a forwarder such as token manager, the best solution
     * we came up to is to make the redeemer to sign a message client side and get the signer address using ecrecover
-    * @notice Redeem `_amount` redeemable tokens
+    * @notice Redeem `@tokenAmount(self.token(): address, _amount, false)` redeemable tokens
     * @param _amount amount of tokens
     * @param msgHash message that was signed
     */

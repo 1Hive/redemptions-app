@@ -79,8 +79,8 @@ class App extends React.Component {
 
   render() {
     const { appState } = this.props
-    const { tokens, redeemableToken } = appState
-    const { mode, sidePanelOpened, tokenAddress, tokenSymbol } = this.state
+    const { tokens, redeemableToken: rdt } = appState
+    const { mode, sidePanelOpened, tokenAddress } = this.state
 
     const modeStr = capitalizeFirst(mode)
     const sidePanelProps = {
@@ -121,9 +121,10 @@ class App extends React.Component {
         <SidePanel {...sidePanelProps}>
           {mode === 'redeem' ? (
             <RedeemTokens
-              balance={redeemableToken.accountBalance}
-              symbol={redeemableToken.symbol}
-              totalSupply={redeemableToken.totalSupply}
+              balance={rdt.balance}
+              symbol={rdt.symbol}
+              decimals={rdt.numData.decimals}
+              totalSupply={rdt.totalSupply}
               tokens={redeemables}
               onRedeemTokens={this.handleRedeemTokens}
             />

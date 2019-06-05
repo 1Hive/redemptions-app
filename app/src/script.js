@@ -190,7 +190,7 @@ async function updateConnectedAccount(state, { account }) {
     ...state,
     redeemableToken: {
       ...state.redeemableToken,
-      accountBalance: await api.call('spendableBalanceOf', account).toPromise(),
+      balance: await api.call('spendableBalanceOf', account).toPromise(),
     },
     account,
   }
@@ -233,7 +233,7 @@ async function newRedemption(state, settings) {
     redeemableToken: {
       ...state.redeemableToken,
       totalSupply: newSupply,
-      accountBalance: newBalance,
+      balance: newBalance,
     },
     tokens: await updateTokens(settings),
   }

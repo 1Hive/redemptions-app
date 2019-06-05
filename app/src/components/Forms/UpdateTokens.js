@@ -66,7 +66,7 @@ class UpdateTokens extends Component {
     const { mode, tokens } = this.props
     let token =
       mode === 'remove' ? tokens.find(t => t.address === address.value) : {}
-    let { name, symbol } = token ? token : {}
+    let { name, symbol } = token || {}
 
     const errorMessage = address.error
 
