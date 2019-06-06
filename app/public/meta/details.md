@@ -1,5 +1,5 @@
-1Hive's Redemptions app allows Aragon organizations to grant their token holders the right to redeem tokens in exchange for a proportional share of the organizations treasury assets.
+The Redemptions app allows Aragon organizations to grant their token holders the right to redeem tokens in exchange for a proportional share of the organizations treasury assets.
 
-**Waring**
+**WARING**
 
-- The code in this repo has not been audited.
+The code in this repo has not been audited.
