@@ -55,9 +55,9 @@ class RedeemTokens extends Component {
     const { balance, decimals } = this.props
     const formattedBalance = formatAmount(balance, decimals)
 
-    const rounded = Math.min(MAX_INPUT_DECIMAL_BASE, decimals)
+    const rounding = Math.min(MAX_INPUT_DECIMAL_BASE, decimals)
 
-    const amount = round(progress * formattedBalance, rounded)
+    const amount = round(progress * formattedBalance, rounding)
     this.updateAmount(amount, progress)
   }
 
