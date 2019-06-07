@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
-import { theme, breakpoint, Button, Viewport, Text } from '@aragon/ui'
+import { theme, breakpoint, Button, Viewport } from '@aragon/ui'
 
 import BalanceToken from './BalanceToken'
 
@@ -120,8 +120,8 @@ const ListItem = styled.li`
 `
 
 const AddTokenButton = (wide, mode, onClick) => (
-  <Button css="margin: 15px 0" wide={wide} mode={mode} onClick={onClick}>
-    <Text>Add Token</Text>
+  <Button wide={wide} mode={mode} onClick={onClick}>
+    Add Token
   </Button>
 )
 
