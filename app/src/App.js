@@ -5,6 +5,7 @@ import { Main, SidePanel } from '@aragon/ui'
 import { capitalizeFirst } from './lib/utils'
 import { getSignatureFields, soliditySha3 } from './lib/web3-utils'
 
+import redeemIcon from './assets/icono.svg'
 import Balances from './components/Balances'
 import AppLayout from './components/AppLayout'
 import EmptyState from './screens/EmptyState'
@@ -102,7 +103,7 @@ class App extends React.Component {
               ? {
                   label: 'Redeem',
                   onClick: this.handleLaunchRedeemTokens,
-                  icon: '',
+                  icon: <img src={redeemIcon} height="30px" alt="" />,
                 }
               : null
           }
@@ -134,6 +135,7 @@ class App extends React.Component {
               tokens={tokens}
               tokenAddress={tokenAddress}
               onUpdateTokens={this.handleUpdateTokens}
+              opened={sidePanelProps.opened}
             />
           )}
         </SidePanel>

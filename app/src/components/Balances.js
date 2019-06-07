@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
-import { theme, breakpoint, Button, Viewport } from '@aragon/ui'
+import { theme, breakpoint, Button, Viewport, Text } from '@aragon/ui'
 
 import BalanceToken from './BalanceToken'
 
@@ -36,8 +36,9 @@ class Balances extends Component {
                 ) : (
                   <EmptyListItem />
                 )}
+                {!below('medium') &&
+                  AddTokenButton(false, 'outline', onAddToken)}
               </List>
-              {!below('medium') && AddTokenButton(false, 'outline', onAddToken)}
             </ScrollView>
 
             {below('medium') && (
@@ -98,6 +99,8 @@ const List = styled.ul`
     `
     width: auto;
     display: flex;
+    flex-wrap: wrap;
+    align-items: center
     padding: 0 10px;
  `
   )};
@@ -117,8 +120,8 @@ const ListItem = styled.li`
 `
 
 const AddTokenButton = (wide, mode, onClick) => (
-  <Button wide={wide} mode={mode} onClick={onClick}>
-    Add Token
+  <Button css="margin: 15px 0" wide={wide} mode={mode} onClick={onClick}>
+    <Text>Add Token</Text>
   </Button>
 )
 
