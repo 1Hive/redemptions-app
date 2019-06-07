@@ -36,8 +36,9 @@ class Balances extends Component {
                 ) : (
                   <EmptyListItem />
                 )}
+                {!below('medium') &&
+                  AddTokenButton(false, 'outline', onAddToken)}
               </List>
-              {!below('medium') && AddTokenButton(false, 'outline', onAddToken)}
             </ScrollView>
 
             {below('medium') && (
@@ -98,6 +99,8 @@ const List = styled.ul`
     `
     width: auto;
     display: flex;
+    flex-wrap: wrap;
+    align-items: center
     padding: 0 10px;
  `
   )};

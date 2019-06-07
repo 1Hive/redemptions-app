@@ -4,24 +4,34 @@ import styled from 'styled-components'
 
 import RedeemTokenList from './RedeemTokenList'
 import { ErrorMessage, InfoMessage } from './Message'
+import {
+  formatTokenAmount,
+  toDecimals,
+  safeDiv,
+  fromDecimals,
+  round,
+} from '../../lib/math-utils'
 
-import { formatTokenAmount, toDecimals, safeDiv } from '../../lib/math-utils'
+const MAX_INPUT_DECIMAL_BASE = 6
 
 function getTokenExchange(tokens, amount, totalSupply) {
   return tokens.map(t => safeDiv(amount * t.amount, totalSupply))
 }
 
-const initialState = {
-  amount: {
-    value: '',
-    max: '',
-    error: null,
-  },
-  progress: 0,
+function formatAmount(amount, decimals) {
+  const rounding = Math.min(MAX_INPUT_DECIMAL_BASE, decimals)
+  return formatTokenAmount(amount, false, decimals, false, { rounding })
 }
 
 class RedeemTokens extends Component {
-  state = { ...initialState }
+  state = {
+    amount: {
+      value: formatAmount(this.props.balance, this.props.decimals),
+      max: formatAmount(this.props.balance, this.props.decimals),
+      error: null,
+    },
+    progress: 1,
+  }
 
   //react to account balance changes
   componentDidUpdate(prevProps) {
@@ -33,7 +43,7 @@ class RedeemTokens extends Component {
 
   handleAmountChange = event => {
     const { balance, decimals } = this.props
-    const formattedBalance = formatTokenAmount(balance, false, decimals)
+    const formattedBalance = formatAmount(balance, decimals)
 
     const amount = Math.min(event.target.value, formattedBalance)
     const progress = safeDiv(amount, formattedBalance)
@@ -43,10 +53,11 @@ class RedeemTokens extends Component {
 
   handleSliderChange = progress => {
     const { balance, decimals } = this.props
-    const formattedBalance = formatTokenAmount(balance, false, decimals)
+    const formattedBalance = formatAmount(balance, decimals)
 
-    const amount = Math.round(progress * formattedBalance)
+    const rounding = Math.min(MAX_INPUT_DECIMAL_BASE, decimals)
 
+    const amount = round(progress * formattedBalance, rounding)
     this.updateAmount(amount, progress)
   }
 
@@ -61,26 +72,29 @@ class RedeemTokens extends Component {
     event.preventDefault()
 
     const { decimals } = this.props
-    const {
-      amount: { value },
-    } = this.state
+    const { amount } = this.state
 
-    console.log('value', value)
-    this.props.onRedeemTokens(toDecimals(String(value), decimals))
+    this.props.onRedeemTokens(toDecimals(String(amount.value), decimals))
   }
 
   render() {
     const { amount, progress } = this.state
     const { balance, symbol, decimals, totalSupply, tokens } = this.props
 
-    const formattedBalance = formatTokenAmount(balance, false, decimals)
-    const formattedSupply = formatTokenAmount(totalSupply, false, decimals)
+    const formattedBalance = formatAmount(balance, decimals)
+    const formattedSupply = formatAmount(totalSupply, decimals)
 
     const youGet = getTokenExchange(
       tokens,
       amount.value,
       totalSupply / Math.pow(10, decimals)
     )
+
+    const minTokenStep = fromDecimals(
+      '1',
+      Math.min(MAX_INPUT_DECIMAL_BASE, decimals)
+    )
+
     const errorMessage = amount.error
 
     return (
@@ -88,10 +102,15 @@ class RedeemTokens extends Component {
         <form onSubmit={this.handleFormSubmit}>
           <InfoMessage
             title={'Redeemption action'}
-            text={`You have ${formattedBalance} ${symbol} tokens for redemption out of a total of ${formattedSupply}. \n This action will redeem ${
-              amount.value
-            } tokens`}
+            text={`This action will redeem ${amount.value} tokens`}
           />
+          <TokenInfo>
+            You have{' '}
+            <Text weight="bold">
+              {formattedBalance} out of a total of {formattedSupply} {symbol}{' '}
+            </Text>{' '}
+            tokens for redemption
+          </TokenInfo>
           <InputWrapper>
             <SliderWrapper label="Amount to redeem">
               <Slider value={progress} onUpdate={this.handleSliderChange} />
@@ -102,8 +121,7 @@ class RedeemTokens extends Component {
               value={amount.value}
               max={amount.max}
               min={'0'}
-              step={'1'}
-              disabled={amount.max === '0'}
+              step={minTokenStep}
               onChange={this.handleAmountChange}
               required
             />
@@ -140,7 +158,8 @@ const InputWrapper = styled.div`
   align-items: center;
   margin-bottom: 20px;
   border-bottom: 1px solid #eaf6f6;
-  padding: 15px 0px;
+  border-top: 1px solid #eaf6f6;
+  padding: 20px 0px;
   > :not(:last-child) {
     margin-right: 15px;
   }
@@ -160,4 +179,8 @@ const Info = styled.div`
   padding: 20px;
   margin-bottom: 20px;
   text-align: center;
+`
+
+const TokenInfo = styled.div`
+  padding: 20px 0;
 `

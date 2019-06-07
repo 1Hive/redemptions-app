@@ -18,19 +18,36 @@ const validate = (mode, address, tokens) => {
   return null
 }
 
+const initialState = {
+  address: {
+    value: '',
+    error: null,
+  },
+}
+
 class UpdateTokens extends Component {
   state = {
+    ...initialState,
     address: {
-      value: this.props.tokenAddress || '',
-      error: null,
+      value: this.props.tokenAddress,
     },
   }
 
-  componentDidUpdate({ tokenAddress }, prevState) {
-    if (tokenAddress != this.props.tokenAddress) {
+  componentDidUpdate({ opened }) {
+    if (!opened && this.props.opened) {
+      // setTimeout is needed as a small hack to wait until the input's on
+      // screen until we call focus
+      this.props.mode === 'add' &&
+        this.addressRef &&
+        setTimeout(() => this.addressRef.focus(), 100)
+
       this.setState(({ address }) => ({
         address: { ...address, value: this.props.tokenAddress },
       }))
+    }
+
+    if (opened && !this.props.opened) {
+      this.setState({ ...initialState })
     }
   }
 
@@ -88,10 +105,16 @@ class UpdateTokens extends Component {
                 wide={true}
                 onChange={this.handleAddressChange}
                 value={address.value}
-                disabled={mode === 'remove'}
+                ref={address => (this.addressRef = address)}
               />
             ) : (
-              <TokenBadge address={address.value} name={name} symbol={symbol} />
+              address.value && (
+                <TokenBadge
+                  address={address.value}
+                  name={name}
+                  symbol={symbol}
+                />
+              )
             )}
           </Field>
           <Button mode="strong" wide={true} type="submit">
