@@ -55,7 +55,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Add `_token` token to redemption list
+    * @notice Add `_token.symbol()` token to redemption list
     * @param _token token address
     */
     function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
@@ -125,26 +125,6 @@ contract Redemptions is AragonApp {
     function getTokens() public view returns (address[]) {
         return redemptionTokenList;
     }
-
-    /** Functions to make frontend app lighter */
-
-    /**
-    * @notice Get redeemable token address
-    * @return redeemable token address
-    */
-    function getRedeemableToken() public view returns (address) {
-        return tokenManager.token();
-    }
-    
-    /**
-    * @notice Get spendable balance of address
-    * @return spendable balance of holder
-    */
-    function spendableBalanceOf(address holder) public view returns (uint256) {
-        return tokenManager.spendableBalanceOf(holder);
-    }
-
-
 
     function recoverAddr(bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
