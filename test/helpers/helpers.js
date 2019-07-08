@@ -17,20 +17,8 @@ const getLog = (receipt, logName, argName) => {
 
 const deployedContract = receipt => getLog(receipt, 'NewAppProxy', 'proxy')
 
-const getSignatureFields = signature => {
-  signature = signature.slice(2) // remove 0x
-  const v = web3.utils.toDecimal(`0x${signature.slice(128, 130)}`)
-
-  return {
-    v: v != 27 && v != 28 ? v + 27 : v,
-    r: `0x${signature.slice(0, 64)}`,
-    s: `0x${signature.slice(64, 128)}`,
-  }
-}
-
 module.exports = {
-  getLog: getLog,
-  assertRevert: assertRevert,
-  deployedContract: deployedContract,
-  getSignatureFields,
+  getLog,
+  assertRevert,
+  deployedContract,
 }

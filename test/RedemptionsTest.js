@@ -4,9 +4,10 @@ const TokenManager = artifacts.require('TokenManager')
 const Vault = artifacts.require('Vault')
 const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
-const Erc20 = artifacts.require('BasicErc20')
+const Erc20 = artifacts.require('ERC20Token')
 
-const { assertRevert, deployedContract, getSignatureFields } = require('./helpers/helpers')
+const { assertRevert, deployedContract } = require('./helpers/helpers')
+const { getSignatureFields, sha3, sign } = require('./helpers/web3-helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -139,10 +140,10 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       const vaultToken0Amount = 45231
       const vaultToken1Amount = 20001
 
-      const CORRECTMSG = web3.utils.sha3('I WOULD LIKE TO REDEEM SOME TOKENS PLEASE')
+      const CORRECTMSG = sha3('I WOULD LIKE TO REDEEM SOME TOKENS PLEASE')
       let correctSignature, correctValues
 
-      const INCORRECTMSG = web3.utils.sha3('REDEEM PLEASE')
+      const INCORRECTMSG = sha3('REDEEM PLEASE')
       let incorrectSignature, incorrectValues
 
       beforeEach(async () => {
@@ -151,8 +152,8 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await daoDeployment.acl.createPermission(redemptions.address, tokenManager.address, BURN_ROLE, rootAccount, { from: rootAccount })
         await daoDeployment.acl.createPermission(redemptions.address, vault.address, TRANSFER_ROLE, rootAccount, { from: rootAccount })
 
-        token0 = Erc20.new(rootAccount, '', '')
-        token1 = Erc20.new(rootAccount, '', '')
+        token0 = await Erc20.new(rootAccount, '', '')
+        token1 = await Erc20.new(rootAccount, '', '')
         await redemptions.addToken(token0.address)
         await redemptions.addToken(token1.address)
 
@@ -165,9 +166,9 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await tokenManager.mint(rootAccount, rootAccountRedeemableTokenAmount)
 
         // get hash signatures
-        correctSignature = await web3.eth.sign(CORRECTMSG, redeemer)
+        correctSignature = await sign(CORRECTMSG, redeemer)
         correctValues = getSignatureFields(correctSignature)
-        incorrectSignature = await web3.eth.sign(INCORRECTMSG, redeemer)
+        incorrectSignature = await sign(INCORRECTMSG, redeemer)
         incorrectValues = getSignatureFields(incorrectSignature)
       })
 
