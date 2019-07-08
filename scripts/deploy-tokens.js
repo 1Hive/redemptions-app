@@ -1,4 +1,5 @@
 const getAccounts = require('./helpers/get-accounts')
+const tokens = require('./helpers/get-tokens')
 
 const globalArtifacts = this.artifacts // Not injected unless called directly via truffle
 const globalWeb3 = this.web3 // Not injected unless called directly via truffle
@@ -25,7 +26,7 @@ module.exports = async (
     }
   }
 
-  if (!owner) {
+   if (!owner) {
     const accounts = await getAccounts(web3)
     owner = accounts[0]
     log(
@@ -37,6 +38,7 @@ module.exports = async (
   const Kernel = artifacts.require('Kernel')
   const Vault = artifacts.require('Vault')
 
+  //get Vault contract
   const daoAddress = process.argv.slice(4)[0]
 
   const kernel = await Kernel.at(daoAddress)
@@ -46,32 +48,29 @@ module.exports = async (
   )
   const vault = Vault.at(vaultAddress)
 
-  // Deposit test tokens
-  const token0 = await ERC20Token.new(owner, 'Dai Token', 'DAI', 18)
-  await token0.approve(vaultAddress, 100e18)
-  await vault.deposit(token0.address, 100e18)
 
-  const token1 = await ERC20Token.new(owner, 'Omise Go', 'OMG', 18)
-  await token1.approve(vaultAddress, 141894e17)
-  await vault.deposit(token1.address, 141894e17)
+  try {
+    // Deposit test tokens
+    let tokenContract
+    for (const { amount, ...token } of tokens) {
+      tokenContract = await ERC20Token.new(owner, ...Object.values(token))
 
-  const token2 = await ERC20Token.new(owner, 'Test token 0', 'TS0', 18)
-  await token2.approve(vaultAddress, 40e18)
-  await vault.deposit(token2.address, 40e18)
+      await tokenContract.approve(vaultAddress, amount)
+      await vault.deposit(tokenContract.address, amount)
 
-  const token3 = await ERC20Token.new(owner, 'Test token 1', 'TS1', 18)
-  await token3.approve(vaultAddress, 25e18)
-  await vault.deposit(token3.address, 25e18)
+      let balance = await tokenContract.balanceOf(vaultAddress)
+      log(`${token.symbol} token: `, tokenContract.address, ' Balance: ', balance.toNumber() / Math.pow(10,token.decimals))
+    }
+    
+    // Deposit ETH
+    await vault.deposit(ZERO_ADDRESS, 2e18, { value: web3.toWei('2', 'ether') })
+    log('Ether: ', web3.eth.getBalance(vaultAddress).toNumber() / Math.pow(10,18))
 
-  // Deposit ETH
-  await vault.deposit(ZERO_ADDRESS, 2e18, { value: web3.toWei('2', 'ether') })
-
-  log('Vault token0:', token0.address, await token0.balanceOf(vaultAddress))
-  log('Vault token1', token1.address, await token1.balanceOf(vaultAddress))
-  log('Vault token2:', token2.address, await token2.balanceOf(vaultAddress))
-  log('Vault token3', token3.address, await token3.balanceOf(vaultAddress))
-  log('Vault eth: Number', web3.eth.getBalance(vaultAddress).toNumber())
-  log('Vault eth Big Number', web3.eth.getBalance(vaultAddress))
+  } catch (err) {
+    console.log(`Error depositing tokens: ${err}`)
+  }
+  
+  
 
   if (typeof truffleExecCallback === 'function') {
     // Called directly via `truffle exec`
