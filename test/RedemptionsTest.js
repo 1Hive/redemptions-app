@@ -79,7 +79,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       let token0
       let expectedTokenAddresses = []
       it('should add an address to the vault tokens', async () => {
-        token0 = await Erc20.new()
+        token0 = await Erc20.new(rootAccount, '', '')
         expectedTokenAddresses.push(token0.address)
 
         await redemptions.addToken(token0.address)
@@ -109,7 +109,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       let expectedTokenAddresses
 
       beforeEach(async () => {
-        token0 = await Erc20.new()
+        token0 = await Erc20.new(rootAccount, '', '')
         await redemptions.addToken(token0.address)
         expectedTokenAddresses = [token0.address]
       })
@@ -151,8 +151,8 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await daoDeployment.acl.createPermission(redemptions.address, tokenManager.address, BURN_ROLE, rootAccount, { from: rootAccount })
         await daoDeployment.acl.createPermission(redemptions.address, vault.address, TRANSFER_ROLE, rootAccount, { from: rootAccount })
 
-        token0 = await Erc20.new()
-        token1 = await Erc20.new()
+        token0 = Erc20.new(rootAccount, '', '')
+        token1 = Erc20.new(rootAccount, '', '')
         await redemptions.addToken(token0.address)
         await redemptions.addToken(token1.address)
 
