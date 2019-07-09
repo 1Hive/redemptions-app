@@ -15,7 +15,7 @@ The code in this repo has not been audited.
 Run a testing dao with the redemptions app already deployed on your local envrionment:
 
 ```sh
-npx aragon run --template Template --template-init @ARAGON_ENS
+npm run start:template
 ```
 
 This command will output the configuration for deployment:
@@ -50,15 +50,17 @@ The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the 
 The redemptions app allows organizations to add and remove tokens from a list of eligible tokens. When a user choses to redeem tokens they will receive a proportional share of all eligible tokens in the `Vault`.
 
 ### Redeeming tokens:
-To redeem tokens, click on the redeem then use the slider to select how many tokens you would like to redeem. When satified with the amount, click redeem to confirm. You will be prompted to sign a message, then you will be able to confirm the transaction. 
+
+To redeem tokens, click on the redeem then use the slider to select how many tokens you would like to redeem. When satified with the amount, click redeem to confirm. You will be prompted to sign a message, then you will be able to confirm the transaction.
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redeem.gif" width="600" />
 </p>
 
-
 ### Adding eligible vault token:
-To add an eligble token click "Add Token", then enter the address of the token contract you would like to add. 
+
+To add an eligble token click "Add Token", then enter the address of the token contract you would like to add.
 
 ### Removing eligible vault token:
-To remove an eligble token, hover over the token you want to remove and click "Remove Token", then enter the address of the token contract you would like to remove. 
+
+To remove an eligble token, hover over the token you want to remove and click "Remove Token", then enter the address of the token contract you would like to remove.

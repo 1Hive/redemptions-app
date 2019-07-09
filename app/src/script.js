@@ -1,15 +1,9 @@
 import '@babel/polyfill'
 import { first, map, publishReplay } from 'rxjs/operators'
-import { of } from 'rxjs'
+import { of, forkJoin } from 'rxjs'
 import AragonApi from '@aragon/api'
 
-import {
-  ETHER_TOKEN_FAKE_ADDRESS,
-  isTokenVerified,
-  tokenDataFallback,
-  getTokenSymbol,
-  getTokenName,
-} from './lib/token-utils'
+import { ETHER_TOKEN_FAKE_ADDRESS, isTokenVerified, tokenDataFallback, getTokenSymbol, getTokenName } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenNameAbi from './abi/token-name.json'
@@ -19,17 +13,8 @@ import vaultBalanceAbi from './abi/vault-balance.json'
 import vaultGetInitializationBlockAbi from './abi/vault-getinitializationblock.json'
 import vaultEventAbi from './abi/vault-events.json'
 
-const tokenAbi = [].concat(
-  tokenDecimalsAbi,
-  tokenNameAbi,
-  tokenSymbolAbi,
-  tokenSupplyAbi
-)
-const vaultAbi = [].concat(
-  vaultBalanceAbi,
-  vaultGetInitializationBlockAbi,
-  vaultEventAbi
-)
+const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi, tokenSupplyAbi)
+const vaultAbi = [].concat(vaultBalanceAbi, vaultGetInitializationBlockAbi, vaultEventAbi)
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const ACCOUNTS_TRIGGER = Symbol('ACCOUNTS_TRIGGER')
@@ -45,27 +30,15 @@ const api = new AragonApi()
 
 api.identify('Redemptions')
 
-init()
+forkJoin(api.call('vault'), api.call('tokenManager')).subscribe(
+  adresses => initialize(...adresses, ETHER_TOKEN_FAKE_ADDRESS),
+  err => console.error('Could not start background script execution due to the contract not loading vault or tokenManager')
+)
 
-async function init() {
-  try {
-    const vaultAddress = await api.call('vault').toPromise()
-    initialize(vaultAddress, ETHER_TOKEN_FAKE_ADDRESS)
-  } catch (err) {
-    console.error(
-      'Could not start background script execution due to the contract not loading vault or tokenManager',
-      err
-    )
-    retry()
-  }
-}
-
-async function initialize(vaultAddress, ethAddress) {
+async function initialize(vaultAddress, tmAddress, ethAddress) {
   const vaultContract = api.external(vaultAddress, vaultAbi)
 
-  const redeemableTokenAddress = await api
-    .call('getRedeemableToken')
-    .toPromise()
+  const redeemableTokenAddress = await api.call('getRedeemableToken').toPromise()
   const redeemableTokenContract = api.external(redeemableTokenAddress, tokenAbi)
 
   const network = await api
@@ -99,9 +72,7 @@ async function createStore(settings) {
   let vaultInitializationBlock
 
   try {
-    vaultInitializationBlock = await settings.vault.contract
-      .getInitializationBlock()
-      .toPromise()
+    vaultInitializationBlock = await settings.vault.contract.getInitializationBlock().toPromise()
   } catch (err) {
     console.error("Could not get attached vault's initialization block:", err)
   }
@@ -221,12 +192,8 @@ async function removedToken(state, { returnValues: { token } }) {
 }
 
 async function newRedemption(state, settings) {
-  const newSupply = await settings.redeemableToken.contract
-    .totalSupply()
-    .toPromise()
-  const newBalance = await api
-    .call('spendableBalanceOf', state.account)
-    .toPromise()
+  const newSupply = await settings.redeemableToken.contract.totalSupply().toPromise()
+  const newBalance = await api.call('spendableBalanceOf', state.account).toPromise()
 
   return {
     ...state,
@@ -271,10 +238,7 @@ async function getVaultBalances(tokens = [], settings) {
       ? tokenContracts.get(tokenAddress)
       : api.external(tokenAddress, tokenAbi)
     tokenContracts.set(tokenAddress, tokenContract)
-    balances = [
-      ...balances,
-      await newBalanceEntry(tokenContract, tokenAddress, settings),
-    ]
+    balances = [...balances, await newBalanceEntry(tokenContract, tokenAddress, settings)]
   }
   return balances
 }
@@ -293,9 +257,7 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
     symbol,
     address: tokenAddress,
     amount: balance,
-    verified:
-      isTokenVerified(tokenAddress, settings.network.type) ||
-      addressesEqual(tokenAddress, settings.ethToken.address),
+    verified: isTokenVerified(tokenAddress, settings.network.type) || addressesEqual(tokenAddress, settings.ethToken.address),
   }
 }
 
@@ -308,8 +270,7 @@ async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
     return tokenDecimals.get(tokenContract)
   }
 
-  const fallback =
-    tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
+  const fallback = tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
 
   let decimals
   try {
@@ -357,7 +318,5 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
 }
 
 function getBlockNumber() {
-  return new Promise((resolve, reject) =>
-    api.web3Eth('getBlockNumber').subscribe(resolve, reject)
-  )
+  return new Promise((resolve, reject) => api.web3Eth('getBlockNumber').subscribe(resolve, reject))
 }
