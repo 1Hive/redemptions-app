@@ -6,5 +6,4 @@ ipfs.cmd
 package-lock.json
 coverage.json
 coverage
-.vscode
 .DS_Store
