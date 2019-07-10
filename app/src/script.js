@@ -24,6 +24,7 @@ const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi, token
 
 const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
 const ACCOUNTS_TRIGGER = Symbol('ACCOUNTS_TRIGGER')
+const ZERO_ADDRESS = ETHER_TOKEN_FAKE_ADDRESS
 
 const tokenContracts = new Map() // Addr -> External contract
 const tokenDecimals = new Map() // External contract -> decimals
@@ -131,6 +132,9 @@ async function createStore(settings) {
       } else if (addressesEqual(eventAddress, vault.address)) {
         // Vault event
         nextState = await vaultEvent(nextState, event, settings)
+      } else if (addressesEqual(eventAddress, minimeToken.address)) {
+        //minimeTokenEvent
+        nextState = await minimeTokenEvent(nextState, event, settings)
       } else {
         // Redemptions event
         switch (eventName) {
@@ -167,12 +171,11 @@ async function createStore(settings) {
  ***********************/
 
 async function initializeState(state, settings) {
-  let minimeContract = settings.minimeToken.contract
   let nextState = {
     ...state,
     redeemableToken: {
       ...settings.minimeToken.data,
-      totalSupply: await getMinimeTokenTotalSupply(minimeContract),
+      totalSupply: await getMinimeTokenTotalSupply(settings),
     },
     tokens: await updateTokens(settings),
   }
@@ -180,58 +183,15 @@ async function initializeState(state, settings) {
   return nextState
 }
 
-async function updateConnectedAccount(state, { account }, { tokenManager: { contract } }) {
+async function updateConnectedAccount(state, { account }, settings) {
   const { redeemableToken } = state
   return {
     ...state,
     redeemableToken: {
       ...redeemableToken,
-      balance: await contract.spendableBalanceOf(account).toPromise(),
+      balance: await spendableBalanceOf(settings, account),
     },
     account,
-  }
-}
-
-async function addedToken(state, { returnValues: { token } }, settings) {
-  return {
-    ...state,
-    tokens: [...state.tokens, ...(await getVaultBalances([token], settings))],
-  }
-}
-
-async function removedToken(state, { returnValues: { token } }) {
-  const { tokens } = state
-
-  let nextState = {
-    ...state,
-  }
-
-  const index = tokens.findIndex(t => addressesEqual(t.address, token))
-
-  if (index > -1) {
-    tokens.splice(index, 1)
-    nextState.tokens = [...tokens]
-  }
-
-  return nextState
-}
-
-async function newRedemption({ redeemableToken, ...state }, settings) {
-  const {
-    tokenManager: { contract: tokenManagerContract },
-    minimeToken: { contract: minimeContract },
-  } = settings
-  const newBalance = await minimeContract.spendableBalanceOf(state.account).toPromise()
-  const newSupply = await tokenManagerContract.totalSupply().toPromise()
-
-  return {
-    ...state,
-    redeemableToken: {
-      ...redeemableToken,
-      totalSupply: newSupply,
-      balance: newBalance,
-    },
-    tokens: await updateTokens(settings),
   }
 }
 
@@ -254,10 +214,56 @@ async function vaultEvent(state, { returnValues: { token } }, settings) {
   }
 }
 
-/** called when redemption has been made (refresh of all tokens balances)  */
-async function updateTokens(settings) {
-  const tokens = await api.call('getTokens').toPromise()
-  return getVaultBalances(tokens, settings)
+/** called when minimeToken balance has increased/decreased or has been transfered between accounts*/
+async function minimeTokenEvent(state, { returnValues: { _from, _to } }, settings) {
+  const { redeemableToken, account } = state
+  const newRedeemableToken = { ...redeemableToken }
+  //tokens minted or burned
+  if (addressesEqual(_from, ZERO_ADDRESS) || addressesEqual(_to, ZERO_ADDRESS))
+    newRedeemableToken.totalSupply = await getMinimeTokenTotalSupply(settings)
+
+  //transfered from/to connected account
+  if (addressesEqual(_from, account) || addressesEqual(_to, account))
+    newRedeemableToken.balance = await spendableBalanceOf(settings, account)
+
+  return {
+    ...state,
+    redeemableToken: newRedeemableToken,
+  }
+}
+
+/** new token has been added to redemptions list*/
+async function addedToken(state, { returnValues: { token } }, settings) {
+  return {
+    ...state,
+    tokens: [...state.tokens, ...(await getVaultBalances([token], settings))],
+  }
+}
+
+/** token has been removed from redemptions list*/
+async function removedToken(state, { returnValues: { token } }) {
+  const { tokens } = state
+
+  let nextState = {
+    ...state,
+  }
+
+  const index = tokens.findIndex(t => addressesEqual(t.address, token))
+
+  if (index > -1) {
+    tokens.splice(index, 1)
+    nextState.tokens = [...tokens]
+  }
+
+  return nextState
+}
+
+/** new redemptionhas been made */
+async function newRedemption(state, settings) {
+  return {
+    ...state,
+    tokens: await updateTokens(settings),
+  }
 }
 
 /***********************
@@ -265,9 +271,10 @@ async function updateTokens(settings) {
  *       Helpers       *
  *                     *
  ***********************/
-/** returns redeemable token metadata + supply */
+
+/** returns redeemable token metadata */
 async function getMinimeTokenData(minimeContract) {
-  const [symbol, decimals, totalSupply] = await Promise.all([
+  const [symbol, decimals] = await Promise.all([
     minimeContract.symbol().toPromise(),
     minimeContract.decimals().toPromise(),
   ])
@@ -277,8 +284,18 @@ async function getMinimeTokenData(minimeContract) {
   }
 }
 
-function getMinimeTokenTotalSupply(minimeContract) {
-  return minimeContract.totalSupply().toPromise()
+function getMinimeTokenTotalSupply({ minimeToken: { contract } }) {
+  return contract.totalSupply().toPromise()
+}
+
+function spendableBalanceOf({ tokenManager: { contract } }, account) {
+  return contract.spendableBalanceOf(account).toPromise()
+}
+
+/** called when redemption has been made (refresh of all tokens balances)  */
+async function updateTokens(settings) {
+  const tokens = await api.call('getTokens').toPromise()
+  return getVaultBalances(tokens, settings)
 }
 
 /** returns `tokens` balances from vault */
