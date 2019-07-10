@@ -30,7 +30,7 @@ This command will output the configuration for deployment:
 We will use the `dao-address` to run a truffle script to deploy some test tokens to interact with.
 
 ```sh
-npx truffle exec scripts/deploy-tokens.js <dao-address>
+npm run deploy-tokens <dao-address>
 ```
 
 ## How to deploy to an organization
