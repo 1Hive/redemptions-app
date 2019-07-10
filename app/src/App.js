@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { useAragonApi } from '@aragon/api-react'
-import { Main, SidePanel } from '@aragon/ui'
+import { Main, Badge, SidePanel } from '@aragon/ui'
 import { capitalizeFirst } from './lib/utils'
 import { getSignatureFields, soliditySha3 } from './lib/web3-utils'
 
@@ -98,6 +98,7 @@ class App extends React.Component {
       <Main>
         <AppLayout
           title="Redemptions"
+          afterTitle={rdt && <Badge.App>{rdt.symbol}</Badge.App>}
           mainButton={
             showTokens
               ? {
@@ -110,11 +111,7 @@ class App extends React.Component {
           smallViewPadding={0}
         >
           {showTokens ? (
-            <Balances
-              tokens={tokens}
-              onAddToken={this.handleLaunchAddToken}
-              onRemoveToken={this.handleLaunchRemoveToken}
-            />
+            <Balances tokens={tokens} onAddToken={this.handleLaunchAddToken} onRemoveToken={this.handleLaunchRemoveToken} />
           ) : (
             <EmptyState onActivate={this.handleLaunchAddToken} />
           )}

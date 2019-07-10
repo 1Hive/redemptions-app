@@ -4,33 +4,18 @@ const TokenManager = artifacts.require('TokenManager')
 const Vault = artifacts.require('Vault')
 const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
-const Erc20 = artifacts.require('BasicErc20')
+const Erc20 = artifacts.require('ERC20Token')
 
-const {
-  assertRevert,
-  deployedContract,
-  getSignatureFields,
-} = require('./helpers/helpers')
+const { assertRevert, deployedContract } = require('./helpers/helpers')
+const { getSignatureFields, sha3, sign } = require('./helpers/web3-helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 contract('Redemptions', ([rootAccount, ...accounts]) => {
   let daoDeployment = new DaoDeployment()
-  let APP_MANAGER_ROLE,
-    REDEEM_ROLE,
-    ADD_TOKEN_ROLE,
-    REMOVE_TOKEN_ROLE,
-    TRANSFER_ROLE,
-    MINT_ROLE,
-    BURN_ROLE
-  let vaultBase,
-    vault,
-    redeemableToken,
-    redemptionsBase,
-    redemptions,
-    tokenManagerBase,
-    tokenManager
+  let APP_MANAGER_ROLE, REDEEM_ROLE, ADD_TOKEN_ROLE, REMOVE_TOKEN_ROLE, TRANSFER_ROLE, MINT_ROLE, BURN_ROLE
+  let vaultBase, vault, redeemableToken, redemptionsBase, redemptions, tokenManagerBase, tokenManager
 
   before(async () => {
     await daoDeployment.deployBefore()
@@ -52,13 +37,9 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
   beforeEach(async () => {
     await daoDeployment.deployBeforeEach(rootAccount)
 
-    const newVaultAppReceipt = await daoDeployment.kernel.newAppInstance(
-      '0x5678',
-      vaultBase.address,
-      '0x',
-      false,
-      { from: rootAccount }
-    )
+    const newVaultAppReceipt = await daoDeployment.kernel.newAppInstance('0x5678', vaultBase.address, '0x', false, {
+      from: rootAccount,
+    })
     vault = await Vault.at(deployedContract(newVaultAppReceipt))
 
     const newRedemptionsAppReceipt = await daoDeployment.kernel.newAppInstance(
@@ -66,44 +47,32 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       redemptionsBase.address,
       '0x',
       false,
-      { from: rootAccount }
+      {
+        from: rootAccount,
+      }
     )
-    redemptions = await Redemptions.at(
-      deployedContract(newRedemptionsAppReceipt)
-    )
+    redemptions = await Redemptions.at(deployedContract(newRedemptionsAppReceipt))
 
     const newTokenManagerAppReceipt = await daoDeployment.kernel.newAppInstance(
       '0x4321',
       tokenManagerBase.address,
       '0x',
       false,
-      { from: rootAccount }
+      {
+        from: rootAccount,
+      }
     )
-    tokenManager = await TokenManager.at(
-      deployedContract(newTokenManagerAppReceipt)
-    )
+    tokenManager = await TokenManager.at(deployedContract(newTokenManagerAppReceipt))
 
-    await daoDeployment.acl.createPermission(
-      ANY_ADDRESS,
-      redemptions.address,
-      REDEEM_ROLE,
-      rootAccount,
-      { from: rootAccount }
-    )
-    await daoDeployment.acl.createPermission(
-      ANY_ADDRESS,
-      redemptions.address,
-      ADD_TOKEN_ROLE,
-      rootAccount,
-      { from: rootAccount }
-    )
-    await daoDeployment.acl.createPermission(
-      ANY_ADDRESS,
-      redemptions.address,
-      REMOVE_TOKEN_ROLE,
-      rootAccount,
-      { from: rootAccount }
-    )
+    await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REDEEM_ROLE, rootAccount, {
+      from: rootAccount,
+    })
+    await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, ADD_TOKEN_ROLE, rootAccount, {
+      from: rootAccount,
+    })
+    await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REMOVE_TOKEN_ROLE, rootAccount, {
+      from: rootAccount,
+    })
 
     const miniMeTokenFactory = await MiniMeTokenFactory.new()
     redeemableToken = await MiniMeToken.new(
@@ -141,39 +110,28 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       let token0
       let expectedTokenAddresses = []
       it('should add an address to the vault tokens', async () => {
-        token0 = await Erc20.new()
+        token0 = await Erc20.new(rootAccount, '', '')
         expectedTokenAddresses.push(token0.address)
 
         await redemptions.addToken(token0.address)
 
         const actualTokenAddresses = await redemptions.getTokens()
-        const actualTokenAddedToken = await redemptions.tokenAdded(
-          token0.address
-        )
+        const actualTokenAddedToken = await redemptions.tokenAdded(token0.address)
         assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
         assert.isTrue(actualTokenAddedToken)
       })
 
       it('reverts if adding token manager', async () => {
-        await assertRevert(
-          redemptions.addToken(tokenManager.address),
-          'REDEMPTIONS_CANNOT_ADD_TOKEN_MANAGER'
-        )
+        await assertRevert(redemptions.addToken(tokenManager.address))
       })
 
       it('reverts if adding already added token', async () => {
         await redemptions.addToken(token0.address)
-        await assertRevert(
-          redemptions.addToken(token0.address),
-          'REDEMPTIONS_TOKEN_ALREADY_ADDED'
-        )
+        await assertRevert(redemptions.addToken(token0.address))
       })
 
       it('reverts if adding non-contract address', async () => {
-        await assertRevert(
-          redemptions.addToken(accounts[0]),
-          'REDEMPTIONS_TOKEN_NOT_CONTRACT'
-        )
+        await assertRevert(redemptions.addToken(accounts[0]))
       })
     })
 
@@ -182,7 +140,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       let expectedTokenAddresses
 
       beforeEach(async () => {
-        token0 = await Erc20.new()
+        token0 = await Erc20.new(rootAccount, '', '')
         await redemptions.addToken(token0.address)
         expectedTokenAddresses = [token0.address]
       })
@@ -192,18 +150,13 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
 
         const actualTokenAddresses = await redemptions.getTokens()
 
-        const actualTokenAddedToken = await redemptions.tokenAdded(
-          token0.address
-        )
+        const actualTokenAddedToken = await redemptions.tokenAdded(token0.address)
         assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
         assert.isFalse(actualTokenAddedToken)
       })
 
       it('reverts if removing token not present', async () => {
-        await assertRevert(
-          redemptions.removeToken(accounts[0]),
-          'REDEMPTIONS_NOT_VAULT_TOKEN'
-        )
+        await assertRevert(redemptions.removeToken(accounts[0]))
       })
     })
 
@@ -217,40 +170,26 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       const vaultToken0Amount = 45231
       const vaultToken1Amount = 20001
 
-      const CORRECTMSG = web3.utils.sha3(
-        'I WOULD LIKE TO REDEEM SOME TOKENS PLEASE'
-      )
+      const CORRECTMSG = sha3('I WOULD LIKE TO REDEEM SOME TOKENS PLEASE')
       let correctSignature, correctValues
 
-      const INCORRECTMSG = web3.utils.sha3('REDEEM PLEASE')
+      const INCORRECTMSG = sha3('REDEEM PLEASE')
       let incorrectSignature, incorrectValues
 
       beforeEach(async () => {
         // set permissions
-        await daoDeployment.acl.createPermission(
-          rootAccount,
-          tokenManager.address,
-          MINT_ROLE,
-          rootAccount,
-          { from: rootAccount }
-        )
-        await daoDeployment.acl.createPermission(
-          redemptions.address,
-          tokenManager.address,
-          BURN_ROLE,
-          rootAccount,
-          { from: rootAccount }
-        )
-        await daoDeployment.acl.createPermission(
-          redemptions.address,
-          vault.address,
-          TRANSFER_ROLE,
-          rootAccount,
-          { from: rootAccount }
-        )
+        await daoDeployment.acl.createPermission(rootAccount, tokenManager.address, MINT_ROLE, rootAccount, {
+          from: rootAccount,
+        })
+        await daoDeployment.acl.createPermission(redemptions.address, tokenManager.address, BURN_ROLE, rootAccount, {
+          from: rootAccount,
+        })
+        await daoDeployment.acl.createPermission(redemptions.address, vault.address, TRANSFER_ROLE, rootAccount, {
+          from: rootAccount,
+        })
 
-        token0 = await Erc20.new()
-        token1 = await Erc20.new()
+        token0 = await Erc20.new(rootAccount, '', '')
+        token1 = await Erc20.new(rootAccount, '', '')
         await redemptions.addToken(token0.address)
         await redemptions.addToken(token1.address)
 
@@ -263,20 +202,16 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await tokenManager.mint(rootAccount, rootAccountRedeemableTokenAmount)
 
         // get hash signatures
-        correctSignature = await web3.eth.sign(CORRECTMSG, redeemer)
+        correctSignature = await sign(CORRECTMSG, redeemer)
         correctValues = getSignatureFields(correctSignature)
-        incorrectSignature = await web3.eth.sign(INCORRECTMSG, redeemer)
+        incorrectSignature = await sign(INCORRECTMSG, redeemer)
         incorrectValues = getSignatureFields(incorrectSignature)
       })
 
       it('Should redeem tokens as expected', async () => {
         const redeemableTokenTotalSupply = await redeemableToken.totalSupply()
-        const expectedRedeemAmountToken0 = parseInt(
-          (redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply
-        )
-        const expectedRedeemAmountToken1 = parseInt(
-          (redeemerAmount * vaultToken1Amount) / redeemableTokenTotalSupply
-        )
+        const expectedRedeemAmountToken0 = parseInt((redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply)
+        const expectedRedeemAmountToken1 = parseInt((redeemerAmount * vaultToken1Amount) / redeemableTokenTotalSupply)
 
         const values = Object.values(correctValues)
         await redemptions.redeem(redeemerAmount, CORRECTMSG, ...values, {
@@ -295,8 +230,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await assertRevert(
           redemptions.redeem(0, CORRECTMSG, ...values, {
             from: redeemer,
-          }),
-          'REDEMPTIONS_CANNOT_REDEEM_ZERO'
+          })
         )
       })
 
@@ -305,8 +239,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await assertRevert(
           redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...values, {
             from: redeemer,
-          }),
-          'REDEMPTIONS_INSUFFICIENT_BALANCE'
+          })
         )
       })
 
@@ -315,8 +248,7 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await assertRevert(
           redemptions.redeem(redeemerAmount, INCORRECTMSG, ...values, {
             from: redeemer,
-          }),
-          'REDEMPTIONS_INCORRECT_MESSAGE'
+          })
         )
       })
     })
