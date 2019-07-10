@@ -32,7 +32,8 @@ jobs:
           paths:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
-
+  test:
+    steps:
       # run tests!
       - run: npm run ganache-cli:test
 workflows:
@@ -40,3 +41,4 @@ workflows:
   build_and_test:
     jobs:
       - build
+      -test
