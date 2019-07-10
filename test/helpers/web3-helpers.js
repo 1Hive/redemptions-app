@@ -12,9 +12,7 @@ const getSignatureFields = signature => {
 // in versions below 1.0.0 utils not defined
 const sign = (...args) => (web3.utils ? web3.eth.sign(...args) : web3.eth.sign(...args.reverse()))
 
-const toDecimal = web3.utils ? web3.utils.toDecimal : web3.toDecimal
-
-const sha3 = web3.utils ? web3.utils.sha3 : web3.sha3
+const { toDecimal, sha3 } = web3.utils || web3
 
 module.exports = {
   getSignatureFields,

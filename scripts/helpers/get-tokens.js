@@ -1,17 +1,25 @@
-module.exports = [
+const BN = require('bn.js')
+
+const base = new BN(10).pow(new BN(18))
+const tokens = [
   {
     name: 'Dai Token',
     symbol: 'DAI',
-    amount: 100e18,
+    amount: new BN(100).mul(base),
   },
   {
     name: 'Omise Go',
     symbol: 'OMG',
-    amount: 141894e17,
+    amount: new BN(14189).mul(base),
   },
   {
     name: 'Maker',
     symbol: 'MKR',
-    amount: 40e18,
+    amount: new BN(40).mul(base),
   },
 ]
+
+module.exports = {
+  base,
+  tokens,
+}
