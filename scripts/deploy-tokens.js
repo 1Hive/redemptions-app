@@ -57,7 +57,7 @@ module.exports = async (
     const etherAmount = toWei('2', 'ether')
     await vault.deposit(ZERO_ADDRESS, etherAmount, { value: etherAmount })
     const etherBalance = await web3.eth.getBalance(vaultAddress)
-    log(`ETH: ${ZERO_ADDRESS} Balance: ${fromWei(etherBalance)}`)
+    log(`ETH ${ZERO_ADDRESS} Balance: ${fromWei(etherBalance)}`)
     log('------------------------------------------------')
   } catch (err) {
     console.log(`Error depositing tokens: ${err}`)
