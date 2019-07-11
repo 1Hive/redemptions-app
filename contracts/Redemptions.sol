@@ -102,12 +102,12 @@ contract Redemptions is AragonApp {
 
         uint256 redemptionAmount;
         uint256 tokenBalance;
-        uint256 totalSuuply = tokenManager.token().totalSupply();
+        uint256 totalSupply = tokenManager.token().totalSupply();
 
         for (uint256 i = 0; i < redemptionTokenList.length; i++) {
             tokenBalance = vault.balance(redemptionTokenList[i]);
 
-            redemptionAmount = _amount.mul(tokenBalance).div(totalSuuply);
+            redemptionAmount = _amount.mul(tokenBalance).div(totalSupply);
             if (redemptionAmount > 0)
                 vault.transfer(redemptionTokenList[i], redeemer, redemptionAmount);
         }
