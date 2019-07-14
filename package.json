@@ -12,7 +12,7 @@
     "openzeppelin-solidity": "2.0.1"
   },
   "devDependencies": {
-    "@aragon/cli": "^5.9.3",
+    "@aragon/cli": "^6.0.0",
     "@aragon/test-helpers": "^1.0.1",
     "babel-eslint": "^10.0.1",
     "babel-polyfill": "^6.26.0",
