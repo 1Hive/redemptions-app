@@ -15,6 +15,9 @@ The code in this repo has not been audited.
 
 ## How to run locally
 
+Install dependencies:
+- Make sure that node, npm, and the Aragon CLI are working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html)
+
 Run a testing dao with the redemptions app already deployed on your local envrionment:
 
 ```sh
