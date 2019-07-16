@@ -9,7 +9,17 @@
     "@aragon/apps-vault": "4.1.0",
     "@aragon/apps-voting": "2.0.0",
     "@aragon/os": "^4.0.1",
-    "openzeppelin-solidity": "2.0.1"
+    "openzeppelin-solidity": "2.0.1",
+    "@babel/polyfill": "^7.2.5",
+    "@babel/plugin-proposal-object-rest-spread": "^7.3.4",
+    "@babel/preset-env": "^7.3.4",
+    "@babel/register": "^7.0.0",
+    "execa": "^1.0.0",
+    "fs-extra": "^8.0.1",
+    "kill-port": "^1.5.1",
+    "node-fetch": "^2.3.0",
+    "perm": "^1.0.0",
+    "ps-tree": "^1.2.0"
   },
   "devDependencies": {
     "@aragon/cli": "^5.9.3",
@@ -33,7 +43,11 @@
     "eslint-plugin-standard": "^4.0.0",
     "ethlint": "^1.2.3",
     "prettier": "^1.17.1",
-    "solidity-coverage": "^0.5.11"
+    "solidity-coverage": "^0.5.11",
+    "truffle": "^5.0.1",
+    "puppeteer": "^1.18.1",
+    "dappeteer": "=0.6.0",
+    "ava": "^2.2.0"
   },
   "scripts": {
     "start": "aragon run",
@@ -43,6 +57,7 @@
     "prepare": "cd app && npm install && cd ..",
     "start:app": "cd app && npm start && cd ..",
     "test": "cross-env TRUFFLE_TEST=true npm run ganache-cli:test",
+    "test:e2e": "ava",
     "compile": "aragon contracts compile",
     "build": "cd app && npm run build && cd ..",
     "publish:patch": "aragon apm publish patch",
@@ -52,7 +67,17 @@
     "lint": "eslint . & solium --dir ./contracts",
     "lint:fix": "eslint . --fix & solium --dir ./contracts --fix",
     "coverage": "cross-env SOLIDITY_COVERAGE=true npm run ganache-cli:test",
+    "coveralls": "cat ./coverage/lcov.info | npx coveralls",
     "ganache-cli:test": "sh ./node_modules/@aragon/test-helpers/ganache-cli.sh",
     "deploy-tokens": "npx truffle exec ./scripts/deploy-tokens.js"
+  },
+  "ava": {
+    "require": [
+      "@babel/polyfill",
+      "@babel/register"
+    ],
+    "files": [
+      "e2eTest/*.test.js"
+    ]
   }
 }
