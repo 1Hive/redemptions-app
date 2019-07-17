@@ -6,7 +6,7 @@ const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('ERC20Token')
 
-const { assertRevert, deployedContract, getVestedTokens, getSeconds } = require('./helpers/helpers')
+const { assertRevert, deployedContract, getSeconds } = require('./helpers/helpers')
 const { getSignatureFields, sha3, sign } = require('./helpers/web3-helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
