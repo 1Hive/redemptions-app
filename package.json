@@ -20,6 +20,7 @@
     "babel-preset-stage-2": "^6.24.1",
     "babel-preset-stage-3": "^6.17.0",
     "babel-register": "^6.23.0",
+    "coveralls": "3.0.2",
     "cross-env": "^5.2.0",
     "eslint": "^5.13.0",
     "eslint-config-prettier": "^4.0.0",
