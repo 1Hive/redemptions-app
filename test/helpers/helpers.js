@@ -17,8 +17,11 @@ const getLog = (receipt, logName, argName) => {
 
 const deployedContract = receipt => getLog(receipt, 'NewAppProxy', 'proxy')
 
+const getSeconds = () => Math.round(new Date() / 1000)
+
 module.exports = {
-  getLog,
   assertRevert,
+  getLog,
   deployedContract,
+  getSeconds,
 }
