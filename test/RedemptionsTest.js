@@ -263,11 +263,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
       context('respect vesting', () => {
         const vestingAmount = 200
 
-        let NOW
-        let start
-        let cliff
-        let vesting
-
+        let TIME_TO_START
         let TIME_TO_CLIFF
         let TIME_TO_VESTING
 
@@ -282,13 +278,14 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
             from: rootAccount,
           })
 
-          NOW = getSeconds()
-          start = NOW + 2
-          cliff = start + 3
-          vesting = start + 10
+          const NOW = getSeconds()
+          const start = NOW + 2
+          const cliff = start + 2
+          const vesting = start + 4
 
-          TIME_TO_CLIFF = cliff - NOW - 1
-          TIME_TO_VESTING = vesting - cliff
+          TIME_TO_START = start - NOW
+          TIME_TO_CLIFF = cliff - NOW
+          TIME_TO_VESTING = vesting - NOW
 
           await tokenManager.issue(vestingAmount)
           await tokenManager.assignVested(redeemer, vestingAmount, start, cliff, vesting, true)
@@ -296,7 +293,9 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
         // next tests will use setTimeout()
         // we cannot use mock contract in this case because the contract we want to fake its time is not the main one
-        it('reverts when redeeming tokens not yet vested', done => {
+        it('reverts when redeeming tokens before vesting starts', done => {
+          const timeout = TIME_TO_START - 1
+
           setTimeout(async () => {
             await assertRevert(
               redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
@@ -305,33 +304,61 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
               'REDEMPTIONS_INSUFFICIENT_BALANCE'
             )
             done()
-          }, TIME_TO_CLIFF * 1000)
+          }, timeout * 1000)
+        })
+
+        it('reverts when redeeming tokens before cliff', done => {
+          const timeout = TIME_TO_CLIFF - 1
+
+          setTimeout(async () => {
+            await assertRevert(
+              redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
+                from: redeemer,
+              }),
+              'REDEMPTIONS_INSUFFICIENT_BALANCE'
+            )
+            done()
+          }, timeout * 1000)
         })
 
         it('should redeem partial amount of vested tokens after cliff', async () => {
-          setTimeout(async () => {
-            const expectedRedeemableBalance = 0
+          const timeout = Math.round((TIME_TO_VESTING + TIME_TO_START) / 2)
 
-            await redemptions.redeem(redeemerAmount + 8, CORRECTMSG, ...correctValues, {
-              from: redeemer,
-            })
+          const redeem = new Promise((resolve, reject) => {
+            setTimeout(async () => {
+              const vestedBalance = vestingAmount / 2
 
-            const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
-            assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
-          }, (TIME_TO_CLIFF + 1) * 1000)
+              await redemptions.redeem(redeemerAmount + vestedBalance, CORRECTMSG, ...correctValues, {
+                from: redeemer,
+              })
+              resolve()
+            }, timeout * 1000)
+          })
+
+          const expectedRedeemableBalance = 0
+          await redeem
+
+          const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
+          assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
         })
 
         it('should redeem all tokens after vesting', async () => {
-          setTimeout(async () => {
-            const expectedRedeemableBalance = 0
+          const timeout = TIME_TO_VESTING
 
-            await redemptions.redeem(redeemerAmount + vestingAmount, CORRECTMSG, ...correctValues, {
-              from: redeemer,
-            })
+          const redeem = new Promise((resolve, reject) => {
+            setTimeout(async () => {
+              await redemptions.redeem(redeemerAmount + vestingAmount, CORRECTMSG, ...correctValues, {
+                from: redeemer,
+              })
+              resolve()
+            }, timeout * 1000)
+          })
 
-            const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
-            assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
-          }, TIME_TO_VESTING * 1000)
+          const expectedRedeemableBalance = 0
+          await redeem
+
+          const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
+          assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
         })
       })
     })
