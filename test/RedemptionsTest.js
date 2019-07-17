@@ -341,7 +341,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         })
 
         it('should redeem all tokens after vesting', async () => {
-          const timeout = TIME_TO_VESTING + 1
+          const timeout = TIME_TO_VESTING + 2
 
           const redeem = new Promise((resolve, reject) => {
             setTimeout(async () => {
