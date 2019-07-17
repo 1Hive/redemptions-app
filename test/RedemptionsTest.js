@@ -322,7 +322,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         })
 
         it('should redeem partial amount of vested tokens after cliff', async () => {
-          const timeout = Math.round((TIME_TO_VESTING + TIME_TO_START) / 2)
+          const timeout = (TIME_TO_VESTING + TIME_TO_START) / 2
 
           const redeem = new Promise((resolve, reject) => {
             setTimeout(async () => {
@@ -343,7 +343,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         })
 
         it('should redeem all tokens after vesting', async () => {
-          const timeout = TIME_TO_VESTING
+          const timeout = TIME_TO_VESTING + 1
 
           const redeem = new Promise((resolve, reject) => {
             setTimeout(async () => {
