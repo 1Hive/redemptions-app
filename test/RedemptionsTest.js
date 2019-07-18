@@ -263,7 +263,6 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
       context('respect vesting', () => {
         const vestingAmount = 200
 
-        let TIME_TO_START
         let TIME_TO_CLIFF
         let TIME_TO_VESTING
 
@@ -279,11 +278,10 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           })
 
           const NOW = getSeconds()
-          const start = NOW + 2
+          const start = NOW 
           const cliff = start + 2
           const vesting = start + 4
 
-          TIME_TO_START = start - NOW
           TIME_TO_CLIFF = cliff - NOW
           TIME_TO_VESTING = vesting - NOW
 
@@ -293,18 +291,13 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
         // next tests will use setTimeout()
         // we cannot use mock contract in this case because the contract we want to fake its time is not the main one
-        it('reverts when redeeming tokens before vesting starts', done => {
-          const timeout = TIME_TO_START - 1
-
-          setTimeout(async () => {
-            await assertRevert(
-              redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
-                from: redeemer,
-              }),
-              'REDEMPTIONS_INSUFFICIENT_BALANCE'
-            )
-            done()
-          }, timeout * 1000)
+        it('reverts when redeeming tokens before vesting starts', async () => {
+          await assertRevert(
+            redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
+              from: redeemer,
+            }),
+            'REDEMPTIONS_INSUFFICIENT_BALANCE'
+          )
         })
 
         it('reverts when redeeming tokens before cliff', done => {
@@ -341,7 +334,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         })
 
         it('should redeem all tokens after vesting', async () => {
-          const timeout = TIME_TO_VESTING + 2
+          const timeout = TIME_TO_VESTING + 1
 
           const redeem = new Promise((resolve, reject) => {
             setTimeout(async () => {
