@@ -13,7 +13,8 @@ The Redemptions app has been published to `open.aragonpm.eth` on the Rinkeby tes
 
 The code in this repo has not been audited.
 
-## How to run locally
+
+## How to run Redemptions locally
 
 First make sure that you have node, npm, and the Aragon CLI installed and working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html).
 
@@ -40,7 +41,11 @@ Deploy a dao with Redemptions installed on your local environment.
 npm run start:template
 ```
 
-If everything is working correctly, you will see the configuration for your local deployment.
+If everything is working correctly, your new DAO will be deployed and your browser will open http://localhost:3000/#/YOUR-DAO-ADDRESS. It should look something like this: 
+
+![newly deployed dao with Redemptions](assets/newly-deployed-dao.png)
+
+You will also see the configuration for your local deployment in the terminal. It should look something like this:
 
 ```sh
     Ethereum Node: ws://localhost:8545
@@ -49,13 +54,13 @@ If everything is working correctly, you will see the configuration for your loca
     DAO address: <dao-address>
 ```
 
-We will use the `dao-address` to run a truffle script to deploy some test tokens to interact with.
+Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemption app. We need to run run a truffle script to deploy some token contracts to interact with.
 
 ```sh
 npm run deploy-tokens <dao-address>
 ```
 
-## How to deploy to an organization
+## How to deploy Redemptions to an organization
 
 Redemptions has been published to APM on rinkeby at `redemptions.open.aragonpm.eth`
 
@@ -67,7 +72,8 @@ aragon dao install <dao-address> redemptions.open.aragonpm.eth --app-init-args <
 
 The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`.
 
-## Using redemptions
+
+## Using Redemptions
 
 The redemptions app allows organizations to add and remove tokens from a list of eligible tokens. When a user choses to redeem tokens they will receive a proportional share of all eligible tokens in the `Vault`.
 
