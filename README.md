@@ -16,7 +16,7 @@ The code in this repo has not been audited.
 
 ## How to run Redemptions locally
 
-First make sure that you have node, npm, and the Aragon CLI installed and working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html).
+First make sure that you have node, npm, and the Aragon CLI installed and working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html). You'll also need to have [Metamask](https://metamask.io) or some kind of web wallet enabled to sign transactions in the browser.
 
 Git clone this repo.
 
@@ -51,14 +51,29 @@ You will also see the configuration for your local deployment in the terminal. I
     Ethereum Node: ws://localhost:8545
     ENS registry: 0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1
     APM registry: aragonpm.eth
-    DAO address: <dao-address>
+    DAO address: YOUR-DAO-ADDRESS
 ```
 
-Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemption app. We need to run run a truffle script to deploy some token contracts to interact with.
+Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemption app. In a new terminal navigate to the `redemptions-app` directory. Then run this truffle script to deploy some token contracts to interact with.
 
 ```sh
-npm run deploy-tokens <dao-address>
+npm run deploy-tokens YOUR-DAO-ADDRESS
 ```
+
+If successful, you will have deployed contracts for ANT, DAI, OMG, and ETH to your local testnet. The terminal will then display the names of the tokens and their addresses on your local testnet. It should look something like this:
+
+```sh
+------------------------------------------------
+ANT 0x129711C337489538cCcbc0EFf52098a46bCF0705 Balance: 40
+DAI 0xBf61048590B6FAd46Fb446aA241fA33f7a22851b Balance: 100
+OMG 0xC56a94cB177B297A9f4fe11781CE4E2eD1829f8B Balance: 14189
+ETH 0x0000000000000000000000000000000000000000 Balance: 2
+------------------------------------------------
+```
+
+Now if you navigate back to your browser (http://localhost:3000/#/YOUR-DAO-ADDRESS) you'll be able to open the Redemptions app and add one of these tokens to your locally deployed Redemptions app. 
+
+
 
 ## How to deploy Redemptions to an organization
 
