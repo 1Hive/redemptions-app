@@ -15,16 +15,32 @@ The code in this repo has not been audited.
 
 ## How to run locally
 
-Install dependencies:
-- Make sure that node, npm, and the Aragon CLI are working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html)
+First make sure that you have node, npm, and the Aragon CLI installed and working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html).
 
-Run a testing dao with the redemptions app already deployed on your local envrionment:
+Git clone this repo.
 
+```sh
+git clone https://github.com/1Hive/redemptions-app.git
+```
+
+Navigate into the `redemptions-app` directory.
+
+```sh
+cd redemptions-app
+```
+
+Install npm dependencies.
+
+```sh
+npm i
+```
+
+Deploy a dao with Redemptions installed on your local environment.
 ```sh
 npm run start:template
 ```
 
-This command will output the configuration for deployment:
+If everything is working correctly, you will see the configuration for your local deployment.
 
 ```sh
     Ethereum Node: ws://localhost:8545
