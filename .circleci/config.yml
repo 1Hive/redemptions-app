@@ -24,7 +24,7 @@ jobs:
           keys:
             - redemptions-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
-            - redemptions-
+            # - redemptions-
 
       - run:
           name: Install dependencies
@@ -37,7 +37,11 @@ jobs:
 
       - run:
           name: Run tests
-          command: npm run ganache-cli:test
+          command: npm run coverage
+
+      - run:
+          name: Report Coverage
+          Command: npm run coveralls
 
 workflows:
   version: 2

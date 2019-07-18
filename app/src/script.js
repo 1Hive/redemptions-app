@@ -1,4 +1,5 @@
-import '@babel/polyfill'
+import 'core-js/stable'
+import 'regenerator-runtime/runtime'
 import { first, map, publishReplay } from 'rxjs/operators'
 import { of, forkJoin } from 'rxjs'
 import AragonApi from '@aragon/api'

@@ -1,7 +1,7 @@
 # Redemptions <img align="right" src="https://github.com/1Hive/website/blob/master/website/static/img/bee.png" height="80px" />
 
 [![CircleCI](https://circleci.com/gh/1Hive/redemptions-app.svg?style=svg)](https://circleci.com/gh/1Hive/redemptions-app)
-[![Coverage Status](https://coveralls.io/repos/github/1Hive/redemptions-app/badge.svg?branch=master)](https://coveralls.io/github/1Hive/redemptions-app?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/1Hive/redemptions-app/badge.svg?branch=master&service=github)](https://coveralls.io/github/1Hive/redemptions-app?branch=master&service=github)
 
 1Hive's Redemptions app allows Aragon organizations to grant their token holders the right to redeem tokens in exchange for a proportional share of the organizations treasury assets.
 
@@ -14,6 +14,9 @@ The Redemptions app has been published to `open.aragonpm.eth` on the Rinkeby tes
 The code in this repo has not been audited.
 
 ## How to run locally
+
+Install dependencies:
+- Make sure that node, npm, and the Aragon CLI are working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html)
 
 Run a testing dao with the redemptions app already deployed on your local envrionment:
 
