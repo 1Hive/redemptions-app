@@ -27,7 +27,7 @@ const BalanceToken = ({
 }) => (
   <Balance removable={removable}>
     <Top>
-      <Token title={symbol || 'Unknown symbol'}>
+      <Token id= {`${symbol}Title`} title={symbol || 'Unknown symbol'}>
         {verified && symbol && (
           <img
             alt=""
@@ -43,7 +43,7 @@ const BalanceToken = ({
       </Remove>
     </Top>
     <Bottom>
-      <Amount>{splitAmount(amount, decimals)}</Amount>
+      <Amount id= {`${symbol}Amount`}>{splitAmount(amount, decimals)}</Amount>
     </Bottom>
   </Balance>
 )

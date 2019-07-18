@@ -6,6 +6,7 @@ import puppeteer from 'puppeteer'
 test.beforeEach(async t => {
   const browser = await dappeteer.launch(puppeteer, {
     headless: false,
+    defaultViewport: null,
     args: ['--start-maximized', '--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security'],
   })
   const page = await browser.newPage()
@@ -24,18 +25,18 @@ test.beforeEach(async t => {
 
   // finding the DAO address
   const daoAddress = stdout.match(/DAO address: (0x[a-fA-F0-9]{40})/)[1]
+
+  const { stdoutScript, exitScript } = await startBackgroundProcess({
+    cmd: 'npm',
+    args: ['run', 'deploy-tokens', daoAddress],
+    execaOpts: {
+      cwd: `./`,
+    },
+    readyOutput: 'ETH 0x0000000000000000000000000000000000000000',
+  })
   await metamask.switchNetwork('localhost')
   await metamask.importPK('a8a54b2d8197bc0b19bb8a084031be71835580a01e70a45a13babd16c9bc1563')
   await metamask.switchAccount(2)
-
-  // const { stdoutScript, exitScript } = await startBackgroundProcess({
-  //   cmd: 'npm',
-  //   args: ['run', 'start:template'],
-  //   execaOpts: {
-  //     cwd: `./`,
-  //   },
-  //   readyOutput: 'Opening http://localhost:3000/#/',
-  // })
 
   t.context = {
     browser: browser,
@@ -46,53 +47,112 @@ test.beforeEach(async t => {
   }
 })
 
-test('should run an aragon app successfully', async t => {
-  // let frameH1
+test('should add a token', async t => {
+  const redemptionsText = 'Redemptions'
+  const votingText = 'Voting'
+  let RedemptionsListTitle
+  let ETHDiv
+  let ETHTitle
+  let frame
 
-  // try {
-  //   const url = `http://localhost:3000/#/${t.context.daoAddress}`
-  //   await t.context.page.goto(url)
-  //   const text = 'Counter'
+  try {
+    const url = `http://localhost:3000/#/${t.context.daoAddress}`
+    await t.context.page.goto(url)
+    await t.context.page.reload()
+    await t.context.page.bringToFront()
+    await t.context.page.waitForFunction(
+      redemptionsText => document.querySelector('body').innerText.includes(redemptionsText),
+      {},
+      redemptionsText
+    )
+    const RedemptionsAppSpan = await t.context.page.$x("//span[contains(text(), 'Redemptions')]")
+    if (RedemptionsAppSpan.length > 0) {
+      await RedemptionsAppSpan[0].click()
 
-  //   await t.context.page.reload()
-  //   await t.context.page.bringToFront()
-  //   await t.context.page.waitForFunction(text => document.querySelector('body').innerText.includes(text), {}, text)
-  //   const CounterAppSpan = await t.context.page.$x("//span[contains(text(), 'Counter')]")
-  //   if (CounterAppSpan.length > 0) {
-  //     await CounterAppSpan[0].click()
+      await t.context.page.waitFor(3000)
 
-  //     await new Promise(resolve => setTimeout(resolve, 3 * 1000))
+      frame = await t.context.page.frames().find(f => f.name() === 'AppIFrame')
+      const addTokenButton = await frame.$x("//button[contains(text(), 'Add token')]")
 
-  //     const frame = await t.context.page.frames().find(f => f.name() === 'AppIFrame')
-  //     await frame.waitForSelector('#IncrementButton')
-  //     const incrementButton = await frame.$('#IncrementButton')
-  //     await incrementButton.click()
+      if (addTokenButton.length > 0) {
+        await addTokenButton[0].click()
+        await frame.type('input[name=address]', '0x0000000000000000000000000000000000000000', { delay: 20 })
+        await frame.waitForSelector('#SidePanelButton')
+        const AddTokenSidePanelButton = await frame.$('#SidePanelButton')
+        await AddTokenSidePanelButton.click()
+        await t.context.page.waitFor(4000)
+        const createTransaction = await t.context.page.$x("//button[contains(text(), 'Create transaction')]")
 
-  //     await new Promise(resolve => setTimeout(resolve, 3 * 1000))
+        if (createTransaction.length > 0) {
+          await createTransaction[0].click()
+          await t.context.metamask.confirmTransaction()
+          await t.context.page.waitFor(3000)
+          await t.context.page.bringToFront()
+          await t.context.page.waitForFunction(
+            votingText => document.querySelector('body').innerText.includes(votingText),
+            {},
+            votingText
+          )
+          const votingAppSpan = await t.context.page.$x("//span[contains(text(), 'Voting')]")
 
-  //     const confirmTransaction = await t.context.page.$x("//button[contains(text(), 'Create transaction')]")
+          if (votingAppSpan.length > 0) {
+            await votingAppSpan[0].click()
+            await t.context.page.waitFor(3000)
+            const votingFrame = await t.context.page.frames().find(f => f.name() === 'AppIFrame')
+            const viewVote = await votingFrame.$x("//button[contains(text(), 'View vote')]")
 
-  //     if (confirmTransaction.length > 0) {
-  //       await confirmTransaction[0].click()
-  //       await t.context.metamask.confirmTransaction()
+            if (viewVote.length > 0) {
+              await viewVote[0].click()
+              await t.context.page.waitFor(3000)
+              const voteYes = await votingFrame.$x("//button[contains(text(), 'Yes')]")
+              if (voteYes.length > 0) {
+                voteYes[0].click()
+                await t.context.page.waitFor(3000)
+                const createVotingTransaction = await t.context.page.$x(
+                  "//button[contains(text(), 'Create transaction')]"
+                )
 
-  //       await new Promise(resolve => setTimeout(resolve, 3 * 1000))
+                if (createVotingTransaction.length > 0) {
+                  await createVotingTransaction[0].click()
+                  await t.context.metamask.confirmTransaction()
+                  await t.context.page.waitFor(3000)
+                  await t.context.page.bringToFront()
 
-  //       frameH1 = await frame.evaluate(el => el.innerHTML, await frame.$('h1'))
-  //       await t.context.page.bringToFront()
+                  await RedemptionsAppSpan[0].click()
+                  await t.context.page.waitFor(3000)
+                  frame = await t.context.page.frames().find(f => f.name() === 'AppIFrame')
+                  // const TokenListTitle = await frame.waitForSelector('#ETHTitle')
+                  RedemptionsListTitle = await frame.evaluate(el => el.innerHTML, await frame.$('#TokensTitle'))
+                  ETHDiv = await frame.waitForSelector('#ETHTitle')
+                  ETHTitle = await frame.evaluate(ETHDiv => ETHDiv.textContent, ETHDiv)
+                  t.is(RedemptionsListTitle, 'Tokens for redemption')
+                  t.is(ETHTitle, 'ETH')
+                } else {
+                  throw new Error('Create transaction not found')
+                }
+              } else {
+                throw new Error('Vote Yes button  not found')
+              }
+            } else {
+              throw new Error('View vote button  not found')
+            }
+          } else {
+            throw new Error('Voting app  not found')
+          }
+          await new Promise(resolve => setTimeout(resolve, 3 * 1000))
+        } else {
+          throw new Error('Create transaction not found')
+        }
+      } else {
+        throw new Error('Add token button not found')
+      }
 
-  //       await new Promise(resolve => setTimeout(resolve, 3 * 1000))
-  //     } else {
-  //       throw new Error('confirmTransaction not found')
-  //     }
-  //   } else {
-  //     throw new Error('CounterApp not found')
-  //   }
-  // } catch (e) {
-  //   console.log(e)
-  // }
+      await new Promise(resolve => setTimeout(resolve, 3 * 1000))
+    }
+  } catch (e) {
+    console.log(e)
+  }
 
-  t.is('Count: 1', 'Count: 1')
   // cleanup
-  //  await t.context.exit();
+  await t.context.exit()
 })

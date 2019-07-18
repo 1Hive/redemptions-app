@@ -6,14 +6,12 @@ import { capitalizeFirst } from '../../lib/utils'
 import { ErrorMessage, InfoMessage } from './Message'
 
 const validate = (mode, address, tokens) => {
-  if (!isAddress(address))
-    return 'Token address is not a valid Ethereum address'
+  if (!isAddress(address)) return 'Token address is not a valid Ethereum address'
 
   const exists = tokens.some(t => addressesEqual(t.address, address))
   if (mode === 'add' && exists) return 'Token already added to redemption list'
 
-  if (mode === 'remove' && !exists)
-    return 'Token is not added to redemption list'
+  if (mode === 'remove' && !exists) return 'Token is not added to redemption list'
 
   return null
 }
@@ -37,9 +35,7 @@ class UpdateTokens extends Component {
     if (!opened && this.props.opened) {
       // setTimeout is needed as a small hack to wait until the input's on
       // screen until we call focus
-      this.props.mode === 'add' &&
-        this.addressRef &&
-        setTimeout(() => this.addressRef.focus(), 100)
+      this.props.mode === 'add' && this.addressRef && setTimeout(() => this.addressRef.focus(), 100)
 
       this.setState(({ address }) => ({
         address: { ...address, value: this.props.tokenAddress },
@@ -81,8 +77,7 @@ class UpdateTokens extends Component {
   render() {
     const { address } = this.state
     const { mode, tokens } = this.props
-    let token =
-      mode === 'remove' ? tokens.find(t => t.address === address.value) : {}
+    let token = mode === 'remove' ? tokens.find(t => t.address === address.value) : {}
     let { name, symbol } = token || {}
 
     const errorMessage = address.error
@@ -108,16 +103,10 @@ class UpdateTokens extends Component {
                 ref={address => (this.addressRef = address)}
               />
             ) : (
-              address.value && (
-                <TokenBadge
-                  address={address.value}
-                  name={name}
-                  symbol={symbol}
-                />
-              )
+              address.value && <TokenBadge address={address.value} name={name} symbol={symbol} />
             )}
           </Field>
-          <Button mode="strong" wide={true} type="submit">
+          <Button id="SidePanelButton" mode="strong" wide={true} type="submit">
             {`${capitalizeFirst(mode)} token`}
           </Button>
           {errorMessage && <ErrorMessage message={errorMessage} />}
