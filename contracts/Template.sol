@@ -68,7 +68,7 @@ contract Template is TemplateBase {
         acl.createPermission(this, dao, dao.APP_MANAGER_ROLE(), this);
 
         address root = msg.sender;
-        bytes32 appId = keccak256(abi.encodePacked(apmNamehash("open"), keccak256("redemptions")));
+        bytes32 redemptionsAppId = keccak256(abi.encodePacked(apmNamehash("open"), keccak256("redemptions")));
         bytes32 votingAppId = apmNamehash("voting");
         bytes32 tokenManagerAppId = apmNamehash("token-manager");
         bytes32 vaultAppId = apmNamehash("vault");
