@@ -278,7 +278,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           })
 
           const NOW = getSeconds()
-          const start = NOW 
+          const start = NOW
           const cliff = start + 2
           const vesting = start + 4
 
@@ -315,7 +315,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         })
 
         it('should redeem partial amount of vested tokens after cliff', async () => {
-          const timeout = TIME_TO_CLIFF 
+          const timeout = TIME_TO_CLIFF + 1
 
           const amountToRedeem = redeemerAmount + 1
           const redeem = new Promise((resolve, reject) => {
