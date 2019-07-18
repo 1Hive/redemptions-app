@@ -43,7 +43,7 @@ npm run start:template
 
 If everything is working correctly, your new DAO will be deployed and your browser will open http://localhost:3000/#/YOUR-DAO-ADDRESS. It should look something like this: 
 
-![newly deployed dao with Redemptions](assets/newly-deployed-dao.png)
+![newly deployed dao with Redemptions](https://i.imgur.com/Kixxqr0.png)
 
 You will also see the configuration for your local deployment in the terminal. It should look something like this:
 
