@@ -54,7 +54,7 @@ You will also see the configuration for your local deployment in the terminal. I
     DAO address: YOUR-DAO-ADDRESS
 ```
 
-Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemption app. In a new terminal navigate to the `redemptions-app` directory. Then run this script to deploy some token contracts on your local testnet to interact with.
+Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemptions app. In a new terminal navigate to the `redemptions-app` directory. Then run this script to deploy some token contracts on your local testnet to interact with.
 
 ```sh
 npm run deploy-tokens YOUR-DAO-ADDRESS
@@ -80,7 +80,7 @@ The redemptions app allows organizations to add and remove tokens from a list of
 
 The tokens you can add to the Redemptions app are dependent on the blockchain you're on. If you're on the Ethereum mainnet you can add any erc-20 token contract. If you're on a local testnet you can add any token contracts that have been deployed locally. 
 
-Who/what is allowed to control the Redemptions app is determined by the DAO's permissions. You can check the permissions for your DAO in the `Permissions` tab of the Aragon client. Every app currently installed should be list. Click on an app to view it's permissions. 
+Who/what is allowed to control the Redemptions app is determined by the DAO's permissions. You can check the permissions for your DAO in the `Permissions` tab of the Aragon client. Every app currently installed should be listed. Click on an app to view it's permissions. 
 - Note: the section you're looking for is "Permissions set on this app", not the permissions available or permissions granted. The "Permissions set on this app" section will tell you who/what can do stuff with the app currently.
 
 <p align="center">
