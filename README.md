@@ -54,7 +54,7 @@ You will also see the configuration for your local deployment in the terminal. I
     DAO address: YOUR-DAO-ADDRESS
 ```
 
-Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemption app. In a new terminal navigate to the `redemptions-app` directory. Then run this script to deploy some token contracts on your local testnet to interact with.
+Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemptions app. In a new terminal navigate to the `redemptions-app` directory. Then run this script to deploy some token contracts on your local testnet to interact with.
 
 ```sh
 npm run deploy-tokens YOUR-DAO-ADDRESS
