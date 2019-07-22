@@ -1,4 +1,5 @@
-import '@babel/polyfill'
+import 'core-js/stable'
+import 'regenerator-runtime/runtime'
 import { first, map, publishReplay } from 'rxjs/operators'
 import { of, forkJoin } from 'rxjs'
 import AragonApi from '@aragon/api'
@@ -53,7 +54,7 @@ async function initialize(vaultAddress, tmAddress, ethAddress) {
   const minimeContract = api.external(minimeAddress, minimeTokenAbi)
 
   const minimeData = await getMinimeTokenData(minimeContract)
-  api.identify(`Rdemptions ${minimeData.symbol}`)
+  api.identify(`Redemptions ${minimeData.symbol}`)
 
   const network = await api
     .network()

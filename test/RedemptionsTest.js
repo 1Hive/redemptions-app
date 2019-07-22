@@ -6,15 +6,16 @@ const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('ERC20Token')
 
-const { assertRevert, deployedContract } = require('./helpers/helpers')
+const { assertRevert, deployedContract, getSeconds } = require('./helpers/helpers')
 const { getSignatureFields, sha3, sign } = require('./helpers/web3-helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
-contract('Redemptions', ([rootAccount, ...accounts]) => {
+contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
   let daoDeployment = new DaoDeployment()
-  let APP_MANAGER_ROLE, REDEEM_ROLE, ADD_TOKEN_ROLE, REMOVE_TOKEN_ROLE, TRANSFER_ROLE, MINT_ROLE, BURN_ROLE
+  let APP_MANAGER_ROLE, REDEEM_ROLE, ADD_TOKEN_ROLE, REMOVE_TOKEN_ROLE
+  let TRANSFER_ROLE, MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
   let vaultBase, vault, redeemableToken, redemptionsBase, redemptions, tokenManagerBase, tokenManager
 
   before(async () => {
@@ -30,6 +31,9 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
     REMOVE_TOKEN_ROLE = await redemptionsBase.REMOVE_TOKEN_ROLE()
 
     MINT_ROLE = await tokenManagerBase.MINT_ROLE()
+    ISSUE_ROLE = await tokenManagerBase.ISSUE_ROLE()
+    ASSIGN_ROLE = await tokenManagerBase.ASSIGN_ROLE()
+    REVOKE_VESTINGS_ROLE = await tokenManagerBase.REVOKE_VESTINGS_ROLE()
     BURN_ROLE = await tokenManagerBase.BURN_ROLE()
     TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
   })
@@ -99,8 +103,8 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
     it('should set initial values correctly', async () => {
       const actualVaultAddress = await redemptions.vault()
       const actualTokenManager = await redemptions.tokenManager()
-
       const actualTokenAddresses = await redemptions.getTokens()
+
       assert.strictEqual(actualVaultAddress, vault.address)
       assert.strictEqual(actualTokenManager, tokenManager.address)
       assert.deepStrictEqual(actualTokenAddresses, [])
@@ -122,16 +126,16 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       })
 
       it('reverts if adding token manager', async () => {
-        await assertRevert(redemptions.addToken(tokenManager.address))
+        await assertRevert(redemptions.addToken(tokenManager.address), 'REDEMPTIONS_CANNOT_ADD_TOKEN_MANAGER')
       })
 
       it('reverts if adding already added token', async () => {
         await redemptions.addToken(token0.address)
-        await assertRevert(redemptions.addToken(token0.address))
+        await assertRevert(redemptions.addToken(token0.address), 'REDEMPTIONS_TOKEN_ALREADY_ADDED')
       })
 
       it('reverts if adding non-contract address', async () => {
-        await assertRevert(redemptions.addToken(accounts[0]))
+        await assertRevert(redemptions.addToken(accounts[0]), 'REDEMPTIONS_TOKEN_NOT_CONTRACT')
       })
     })
 
@@ -146,27 +150,26 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
       })
       it('Should remove token address', async () => {
         expectedTokenAddresses = expectedTokenAddresses.slice(1)
+
         await redemptions.removeToken(token0.address)
 
         const actualTokenAddresses = await redemptions.getTokens()
-
         const actualTokenAddedToken = await redemptions.tokenAdded(token0.address)
         assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
         assert.isFalse(actualTokenAddedToken)
       })
 
       it('reverts if removing token not present', async () => {
-        await assertRevert(redemptions.removeToken(accounts[0]))
+        await assertRevert(redemptions.removeToken(accounts[0]), 'REDEMPTIONS_NOT_VAULT_TOKEN')
       })
     })
 
     context('redeem(uint256 _amount)', () => {
       let token0, token1
 
-      const redeemer = accounts[0]
-
-      const rootAccountRedeemableTokenAmount = 80000
+      const rootAccountAmount = 80000
       const redeemerAmount = 20000
+
       const vaultToken0Amount = 45231
       const vaultToken1Amount = 20001
 
@@ -175,6 +178,14 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
 
       const INCORRECTMSG = sha3('REDEEM PLEASE')
       let incorrectSignature, incorrectValues
+
+      before(async () => {
+        // get hash signatures
+        correctSignature = await sign(CORRECTMSG, redeemer)
+        correctValues = Object.values(getSignatureFields(correctSignature))
+        incorrectSignature = await sign(INCORRECTMSG, redeemer)
+        incorrectValues = Object.values(getSignatureFields(incorrectSignature))
+      })
 
       beforeEach(async () => {
         // set permissions
@@ -198,58 +209,148 @@ contract('Redemptions', ([rootAccount, ...accounts]) => {
         await token1.transfer(vault.address, vaultToken1Amount)
 
         // mint redeemableTokens to first two accounts
+        await tokenManager.mint(rootAccount, rootAccountAmount)
         await tokenManager.mint(redeemer, redeemerAmount)
-        await tokenManager.mint(rootAccount, rootAccountRedeemableTokenAmount)
-
-        // get hash signatures
-        correctSignature = await sign(CORRECTMSG, redeemer)
-        correctValues = getSignatureFields(correctSignature)
-        incorrectSignature = await sign(INCORRECTMSG, redeemer)
-        incorrectValues = getSignatureFields(incorrectSignature)
       })
 
       it('Should redeem tokens as expected', async () => {
         const redeemableTokenTotalSupply = await redeemableToken.totalSupply()
-        const expectedRedeemAmountToken0 = parseInt((redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply)
-        const expectedRedeemAmountToken1 = parseInt((redeemerAmount * vaultToken1Amount) / redeemableTokenTotalSupply)
+        const expectedRedeemableBalance = 0
+        const expectedRedemptionToken0 = parseInt((redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply)
+        const expectedRedemptionToken1 = parseInt((redeemerAmount * vaultToken1Amount) / redeemableTokenTotalSupply)
 
         const values = Object.values(correctValues)
         await redemptions.redeem(redeemerAmount, CORRECTMSG, ...values, {
           from: redeemer,
         })
 
-        const token0Balance = await token0.balanceOf(redeemer)
-        const token1Balance = await token1.balanceOf(redeemer)
+        const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
+        const actualRedemptionToken0 = await token0.balanceOf(redeemer)
+        const actualRedemptionToken1 = await token1.balanceOf(redeemer)
 
-        assert.equal(token0Balance.toNumber(), expectedRedeemAmountToken0)
-        assert.equal(token1Balance.toNumber(), expectedRedeemAmountToken1)
+        assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
+        assert.equal(actualRedemptionToken0, expectedRedemptionToken0)
+        assert.equal(actualRedemptionToken1, expectedRedemptionToken1)
       })
 
       it('reverts if amount to redeem is zero', async () => {
-        const values = Object.values(correctValues)
         await assertRevert(
-          redemptions.redeem(0, CORRECTMSG, ...values, {
+          redemptions.redeem(0, CORRECTMSG, ...correctValues, {
             from: redeemer,
-          })
+          }),
+          'REDEMPTIONS_CANNOT_REDEEM_ZERO'
         )
       })
 
       it("reverts if amount to redeem exceeds account's balance", async () => {
-        const values = Object.values(correctValues)
         await assertRevert(
-          redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...values, {
+          redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
             from: redeemer,
-          })
+          }),
+          'REDEMPTIONS_INSUFFICIENT_BALANCE'
         )
       })
 
       it('reverts if incorrect signed message ', async () => {
-        const values = Object.values(incorrectValues)
         await assertRevert(
-          redemptions.redeem(redeemerAmount, INCORRECTMSG, ...values, {
+          redemptions.redeem(redeemerAmount, INCORRECTMSG, ...incorrectValues, {
             from: redeemer,
-          })
+          }),
+          'REDEMPTIONS_INCORRECT_MESSAGE'
         )
+      })
+
+      context('respect vesting', () => {
+        const vestingAmount = 200
+
+        let TIME_TO_CLIFF
+        let TIME_TO_VESTING
+
+        beforeEach(async () => {
+          await daoDeployment.acl.createPermission(ANY_ADDRESS, tokenManager.address, ISSUE_ROLE, rootAccount, {
+            from: rootAccount,
+          })
+          await daoDeployment.acl.createPermission(ANY_ADDRESS, tokenManager.address, ASSIGN_ROLE, rootAccount, {
+            from: rootAccount,
+          })
+          await daoDeployment.acl.createPermission(ANY_ADDRESS, vault.address, REVOKE_VESTINGS_ROLE, rootAccount, {
+            from: rootAccount,
+          })
+
+          const NOW = getSeconds()
+          const start = NOW
+          const cliff = start + 2
+          const vesting = start + 4
+
+          TIME_TO_CLIFF = cliff - NOW
+          TIME_TO_VESTING = vesting - NOW
+
+          await tokenManager.issue(vestingAmount)
+          await tokenManager.assignVested(redeemer, vestingAmount, start, cliff, vesting, true)
+        })
+
+        // next tests will use setTimeout()
+        // we cannot use mock contract in this case because the contract we want to fake its time is not the main one
+        it('reverts when redeeming tokens before vesting starts', async () => {
+          await assertRevert(
+            redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
+              from: redeemer,
+            }),
+            'REDEMPTIONS_INSUFFICIENT_BALANCE'
+          )
+        })
+
+        it('reverts when redeeming tokens before cliff', done => {
+          const timeout = TIME_TO_CLIFF - 1
+
+          setTimeout(async () => {
+            await assertRevert(
+              redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
+                from: redeemer,
+              }),
+              'REDEMPTIONS_INSUFFICIENT_BALANCE'
+            )
+            done()
+          }, timeout * 1000)
+        })
+
+        it('should redeem partial amount of vested tokens after cliff', async () => {
+          const timeout = TIME_TO_CLIFF + 1
+
+          const amountToRedeem = redeemerAmount + 1
+          const redeem = new Promise((resolve, reject) => {
+            setTimeout(async () => {
+              await redemptions.redeem(amountToRedeem, CORRECTMSG, ...correctValues, {
+                from: redeemer,
+              })
+              resolve()
+            }, timeout * 1000)
+          })
+
+          await redeem
+
+          const redeemerBalance = await tokenManager.spendableBalanceOf(redeemer)
+          assert(redeemerBalance < amountToRedeem)
+        })
+
+        it('should redeem all tokens after vesting', async () => {
+          const timeout = TIME_TO_VESTING + 1
+
+          const redeem = new Promise((resolve, reject) => {
+            setTimeout(async () => {
+              await redemptions.redeem(redeemerAmount + vestingAmount, CORRECTMSG, ...correctValues, {
+                from: redeemer,
+              })
+              resolve()
+            }, timeout * 1000)
+          })
+
+          const expectedRedeemableBalance = 0
+          await redeem
+
+          const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
+          assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
+        })
       })
     })
   })
