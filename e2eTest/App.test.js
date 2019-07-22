@@ -17,7 +17,7 @@ test.before(async t => {
     execaOpts: {
       cwd: `./`,
     },
-    readyOutput: 'Opening http://localhost:3000/#/',
+    readyOutput: 'Opening http://localhost:3000/#/'
   })
 
   // hack so the wrapper has time to start
@@ -154,6 +154,29 @@ test.serial('should confirm create transaction and vote', async t => {
     }
   }
   t.is(viewVoteText, 'View vote')
+})
+
+test.serial('should add the token ', async t => {
+  let RedemptionsListTitle
+  let ETHDiv
+  let ETHTitle
+  const RedemptionsAppSpan = await t.context.page.$x("//span[contains(text(), 'Redemptions')]")
+
+  if (RedemptionsAppSpan.length > 0) {
+    await RedemptionsAppSpan[0].click()
+    await t.context.page.waitFor(3000)
+    const frame = await t.context.page.frames().find(f => f.name() === 'AppIFrame')
+    RedemptionsListTitle = await frame.evaluate(el => el.innerHTML, await frame.$('#TokensTitle'))
+    ETHDiv = await frame.waitForSelector('#ETHTitle')
+    ETHTitle = await frame.evaluate(ETHDiv => ETHDiv.textContent, ETHDiv)
+
+  } else {
+    throw new Error('Redemptions app not found')
+  }
+
+  t.is(RedemptionsListTitle, 'Tokens for redemption')
+  t.is(ETHTitle, 'ETH')
+  await t.context.exit()
 })
 
 test.serial('should add a token', async t => {
