@@ -25,6 +25,9 @@ jobs:
             - redemptions-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
             # - redemptions-
+      - run: git submodule sync
+      
+      - run: git submodule update --init
 
       - run:
           name: Install dependencies
