@@ -30,6 +30,8 @@ jobs:
             - node_modules
           key: redemptions-dependencies-{{ checksum "package.json" }}
 
+      - run: sudo apt install rsync
+      
       - run:
           name: Run tests
           command: npm run coverage
