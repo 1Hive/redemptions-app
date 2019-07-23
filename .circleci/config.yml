@@ -46,7 +46,7 @@ jobs:
   visualTests:
     docker:
       # specify the version you desire here
-      - image: circleci/node:10.16.0-latest-browsers
+      - image: circleci/node:lts-browsers
 
     working_directory: ~/repo
 
