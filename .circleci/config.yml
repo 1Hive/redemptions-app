@@ -36,12 +36,12 @@ jobs:
           key: redemptions-{{ checksum "package.json" }}
 
       - run:
-      name: Run tests
-      command: npm run coverage
+          name: Run tests
+          command: npm run coverage
 
       - run:
-      name: Report Coverage
-      Command: npm run coveralls 
+          name: Report Coverage
+          Command: npm run coveralls
 
   visualTests:
     docker:
