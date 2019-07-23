@@ -36,6 +36,10 @@ jobs:
           key: redemptions-dependencies-{{ checksum "package.json" }}
 
       - run:
+          name: Install IPFS
+          command: npx aragon ipfs install
+
+      - run:
           name: Run tests
           command: npm run coverage
 
