@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - checkout
-      
+
       # Download and cache dependencies
 
       - run:
@@ -29,10 +29,6 @@ jobs:
           paths:
             - node_modules
           key: redemptions-dependencies-{{ checksum "package.json" }}
-
-      - run:
-          name: Install IPFS
-          command: npx aragon ipfs install
 
       - run:
           name: Run tests
