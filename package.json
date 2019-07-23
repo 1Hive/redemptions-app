@@ -57,7 +57,7 @@
     "prepare": "cd app && npm install && cd ..",
     "start:app": "cd app && npm start && cd ..",
     "test": "cross-env TRUFFLE_TEST=true npm run ganache-cli:test",
-    "test:e2e": "ava",
+    "test:e2e": "percy exec -- ava",
     "compile": "aragon contracts compile",
     "build": "cd app && npm run build && cd ..",
     "publish:patch": "aragon apm publish patch",

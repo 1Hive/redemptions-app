@@ -2,6 +2,7 @@ import test from 'ava'
 import { startBackgroundProcess } from './util'
 const dappeteer = require('dappeteer')
 import puppeteer from 'puppeteer'
+const { percySnapshot } = require('@percy/puppeteer')
 
 test.before(async t => {
   const browser = await dappeteer.launch(puppeteer, {
@@ -73,7 +74,7 @@ test.serial('should display initial screen ', async t => {
     const button = addTokenButton[0]
     addTokenText = await frame.evaluate(button => button.textContent, button)
   }
-
+  await percySnapshot(frame, 'Initial Screen')
   t.is(addTokenText, 'Add token')
 })
 
@@ -92,6 +93,7 @@ test.serial('should display add token side panel and create transaction', async 
       AddTokenSidePanelButton
     )
     //Percy
+    await percySnapshot(frame, 'Side Panel')
     await AddTokenSidePanelButton.click()
     await t.context.page.waitFor(4000)
   } else {
@@ -160,12 +162,13 @@ test.serial('should add the token ', async t => {
   let RedemptionsListTitle
   let ETHDiv
   let ETHTitle
+  let frame
   const RedemptionsAppSpan = await t.context.page.$x("//span[contains(text(), 'Redemptions')]")
 
   if (RedemptionsAppSpan.length > 0) {
     await RedemptionsAppSpan[0].click()
     await t.context.page.waitFor(3000)
-    const frame = await t.context.page.frames().find(f => f.name() === 'AppIFrame')
+    frame = await t.context.page.frames().find(f => f.name() === 'AppIFrame')
     RedemptionsListTitle = await frame.evaluate(el => el.innerHTML, await frame.$('#TokensTitle'))
     ETHDiv = await frame.waitForSelector('#ETHTitle')
     ETHTitle = await frame.evaluate(ETHDiv => ETHDiv.textContent, ETHDiv)
@@ -174,6 +177,7 @@ test.serial('should add the token ', async t => {
     throw new Error('Redemptions app not found')
   }
 
+  await percySnapshot(frame, 'Token List')
   t.is(RedemptionsListTitle, 'Tokens for redemption')
   t.is(ETHTitle, 'ETH')
   await t.context.exit()
