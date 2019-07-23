@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:8.15.1
+      - image: circleci/node:lts-browsers
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -44,8 +44,8 @@ jobs:
           Command: npm run coveralls
       
       - run:
-      name: Visual Tests
-      command: npm run test:e2e
+          name: Visual Tests
+          command: npm run test:e2e
 
 workflows:
   version: 2
