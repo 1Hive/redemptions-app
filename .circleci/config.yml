@@ -42,6 +42,10 @@ jobs:
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+            - redemptions-{{ checksum "package.json" }}
+
       - run:
           name: Run tests
           command: npm run coverage
@@ -60,6 +64,10 @@ jobs:
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+            - redemptions-{{ checksum "package.json" }}
+            
       - run:
           name: Visual Tests
           command: npm run test:e2e
