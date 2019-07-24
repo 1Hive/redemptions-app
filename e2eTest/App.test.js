@@ -1,12 +1,12 @@
 import test from 'ava'
 import { startBackgroundProcess } from './util'
 const dappeteer = require('dappeteer')
-import puppeteer from 'puppeteer'
-const { percySnapshot } = require('@percy/puppeteer')
+import puppeteer from 'puppeteer-core'
 
 test.before(async t => {
   const browser = await dappeteer.launch(puppeteer, {
     headless: false,
+    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     defaultViewport: null,
     args: ['--start-maximized', '--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security'],
   })
@@ -18,7 +18,7 @@ test.before(async t => {
     execaOpts: {
       cwd: `./`,
     },
-    readyOutput: 'Opening http://localhost:3000/#/'
+    readyOutput: 'Opening http://localhost:3000/#/',
   })
 
   // hack so the wrapper has time to start
@@ -74,7 +74,6 @@ test.serial('should display initial screen ', async t => {
     const button = addTokenButton[0]
     addTokenText = await frame.evaluate(button => button.textContent, button)
   }
-  await percySnapshot(frame, 'Initial Screen')
   t.is(addTokenText, 'Add token')
 })
 
@@ -92,8 +91,7 @@ test.serial('should display add token side panel and create transaction', async 
       AddTokenSidePanelButton => AddTokenSidePanelButton.textContent,
       AddTokenSidePanelButton
     )
-    //Percy
-    await percySnapshot(frame, 'Side Panel')
+
     await AddTokenSidePanelButton.click()
     await t.context.page.waitFor(4000)
   } else {
@@ -172,12 +170,10 @@ test.serial('should add the token ', async t => {
     RedemptionsListTitle = await frame.evaluate(el => el.innerHTML, await frame.$('#TokensTitle'))
     ETHDiv = await frame.waitForSelector('#ETHTitle')
     ETHTitle = await frame.evaluate(ETHDiv => ETHDiv.textContent, ETHDiv)
-
   } else {
     throw new Error('Redemptions app not found')
   }
 
-  await percySnapshot(frame, 'Token List')
   t.is(RedemptionsListTitle, 'Tokens for redemption')
   t.is(ETHTitle, 'ETH')
   await t.context.exit()
