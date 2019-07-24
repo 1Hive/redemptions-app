@@ -117,7 +117,6 @@ async function createStore(settings) {
       const { vault, minimeToken } = settings
       const { address: eventAddress, event: eventName, blockNumber } = event
 
-      console.log('event', event)
       //dont want to listen for past events for now
       //(our app state can be obtained from smart contract vars)
       if (blockNumber && blockNumber <= currentBlock) return state
