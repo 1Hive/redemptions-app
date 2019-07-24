@@ -36,6 +36,11 @@ class RedeemTokens extends Component {
   //react to account balance changes
   componentDidUpdate(prevProps) {
     if (prevProps.balance != this.props.balance) {
+
+      this.setState(({ amount }) => ({
+        amount: { ...amount, max: this.props.balance }
+      }))
+      
       //recalculate new amount based on same progress and new balance
       this.handleSliderChange(this.state.progress)
     }
@@ -56,8 +61,8 @@ class RedeemTokens extends Component {
     const formattedBalance = formatAmount(balance, decimals)
 
     const rounding = Math.min(MAX_INPUT_DECIMAL_BASE, decimals)
-
     const amount = round(progress * formattedBalance, rounding)
+
     this.updateAmount(amount, progress)
   }
 
