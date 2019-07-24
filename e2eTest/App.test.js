@@ -4,9 +4,11 @@ const dappeteer = require('dappeteer')
 import puppeteer from 'puppeteer-core'
 
 test.before(async t => {
+  const chromePath = process.env.CHROME_PATH
+
   const browser = await dappeteer.launch(puppeteer, {
     headless: false,
-    executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    executablePath: chromePath,
     defaultViewport: null,
     args: ['--start-maximized', '--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security'],
   })
