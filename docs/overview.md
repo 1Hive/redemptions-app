@@ -12,6 +12,10 @@ The Redemptions [userguide](docs/user-guide.md) explains how an end user can int
 
 The Redemptions [documentation](technical-documentation.md) explains every solidity function of the app in detail. 
 
+## Code
+
+All the code and build instructions are on our [GitHub](https://github.com/1Hive/redemptions-app).
+
 ## Contributing
 
 We ❤️  contributors! Please take a look at our [open Issues](https://github.com/1Hive/redemptions-app/issues) to get started.
