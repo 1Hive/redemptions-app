@@ -12,7 +12,7 @@ class Balances extends Component {
       <Viewport>
         {({ below }) => (
           <section>
-            <Title>Tokens for redemption</Title>
+            <Title id="TokensTitle">Tokens for redemption</Title>
             <ScrollView>
               <List>
                 {tokens.length > 0 ? (

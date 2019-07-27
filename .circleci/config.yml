@@ -1,30 +1,27 @@
-# Javascript Node CircleCI 2.0 configuration file
+# Javascript Node CircleCI 2.1 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-javascript/ for more details
 #
-version: 2
+version: 2.1
+
+references:
+  node_modules_key: &node_modules_key redemptions-dependencies-v3-{{ checksum "package.json" }}
+
+  restore_node_modules: &restore_node_modules
+    restore_cache:
+      keys:
+        - *node_modules_key
+
 jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:8.15.1
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/mongo:3.4.4
+      - image: circleci/node:lts
 
     working_directory: ~/repo
 
     steps:
       - checkout
-
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - redemptions-{{ checksum "package.json" }}
-            # fallback to using the latest cache if no exact match is found
-            # - redemptions-
 
       - run:
           name: Install dependencies
@@ -33,7 +30,19 @@ jobs:
       - save_cache:
           paths:
             - node_modules
-          key: redemptions-{{ checksum "package.json" }}
+          key: *node_modules_key
+
+  coverage:
+    docker:
+      # specify the version you desire here
+      - image: circleci/node:lts
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - *restore_node_modules
 
       - run:
           name: Run tests
@@ -41,10 +50,13 @@ jobs:
 
       - run:
           name: Report Coverage
-          Command: npm run coveralls
+          command: npm run coveralls
 
 workflows:
   version: 2
   build_and_test:
     jobs:
       - build
+      - coverage:
+          requires:
+            - build
