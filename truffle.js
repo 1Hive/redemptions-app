@@ -55,6 +55,13 @@ module.exports = {
       port: 8545,
       network_id: '15',
     },
+    coverage: {
+      host: 'localhost',
+      network_id: '*',
+      port: 8555,
+      gas: 0xffffffffff,
+      gasPrice: 0x01,
+    },
     mainnet: {
       network_id: 1,
       provider: providerForNetwork('mainnet'),
@@ -62,13 +69,6 @@ module.exports = {
     rinkeby: {
       network_id: 4,
       provider: providerForNetwork('rinkeby'),
-    },
-    coverage: {
-      host: 'localhost',
-      network_id: '*',
-      port: 8555,
-      gas: 0xffffffffff,
-      gasPrice: 0x01,
     },
   },
   // Configure your compilers
