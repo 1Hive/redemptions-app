@@ -1,8 +1,8 @@
 import React from 'react'
-import { Text } from '@aragon/ui'
+import { Text, breakpoint } from '@aragon/ui'
 import styled from 'styled-components'
 
-import BalanceToken from '../BalanceToken'
+import BalanceToken from './BalanceToken'
 
 export default function RedeemTokenList(props) {
   const { tokens, youGet } = props
@@ -37,9 +37,15 @@ const Wrap = styled.div`
 const List = styled.ul`
   list-style: none;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   column-gap: 15px;
   row-gap: 15px;
+  ${breakpoint(
+    'small',
+    `
+    grid-template-columns: 1fr 1fr;
+ `
+  )}
 `
 
 const ListItem = styled.li`

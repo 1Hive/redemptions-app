@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { useAragonApi } from '@aragon/api-react'
-import { Main, Badge, SidePanel } from '@aragon/ui'
+import { Main, Badge, SidePanel, SyncIndicator } from '@aragon/ui'
 import { capitalizeFirst } from './lib/utils'
 import { getSignatureFields, soliditySha3 } from './lib/web3-utils'
 
@@ -9,8 +9,8 @@ import redeemIcon from './assets/icono.svg'
 import Balances from './components/Balances'
 import AppLayout from './components/AppLayout'
 import EmptyState from './screens/EmptyState'
-import UpdateTokens from './components/Forms/UpdateTokens'
-import RedeemTokens from './components/Forms/RedeemTokens'
+import UpdateTokens from './components/Panels/UpdateTokens'
+import RedeemTokens from './components/Panels/RedeemTokens'
 
 const hashMessage = soliditySha3('I WOULD LIKE TO REDEEM SOME TOKENS PLEASE')
 
@@ -27,7 +27,7 @@ class App extends React.Component {
   }
 
   handleLaunchAddToken = () => {
-    this.handleLaunchToken('add', '', '')
+    this.handleLaunchToken('add', '')
   }
 
   handleLaunchRemoveToken = address => {
@@ -55,9 +55,8 @@ class App extends React.Component {
 
   handleUpdateTokens = (mode, address) => {
     const { api } = this.props
-
-    if (mode === 'add') api.addToken(address)
-    if (mode === 'remove') api.removeToken(address)
+    if (mode === 'add') api.addToken(address).toPromise()
+    if (mode === 'remove') api.removeToken(address).toPromise()
 
     this.handleSidePanelClose()
   }
@@ -68,10 +67,10 @@ class App extends React.Component {
     api.requestSignMessage(hashMessage).subscribe(
       signature => {
         const signFields = Object.values(getSignatureFields(signature))
-        api.redeem(amount, hashMessage, ...signFields)
+        api.redeem(amount, hashMessage, ...signFields).toPromise()
       },
       err => {
-        console.log(err)
+        console.error(err)
       }
     )
 
@@ -79,8 +78,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { appState } = this.props
-    const { tokens, redeemableToken: rdt } = appState
+    const { tokens, redeemableToken: rdt, isSyncing, api } = this.props
     const { mode, sidePanelOpened, tokenAddress } = this.state
 
     const modeStr = capitalizeFirst(mode)
@@ -96,6 +94,7 @@ class App extends React.Component {
 
     return (
       <Main>
+        <SyncIndicator visible={isSyncing} />
         <AppLayout
           title="Redemptions"
           afterTitle={rdt && <Badge.App>{rdt.symbol}</Badge.App>}
@@ -111,20 +110,26 @@ class App extends React.Component {
           smallViewPadding={0}
         >
           {showTokens ? (
-            <Balances tokens={tokens} onAddToken={this.handleLaunchAddToken} onRemoveToken={this.handleLaunchRemoveToken} />
+            <Balances
+              tokens={tokens}
+              onAddToken={this.handleLaunchAddToken}
+              onRemoveToken={this.handleLaunchRemoveToken}
+            />
           ) : (
-            <EmptyState onActivate={this.handleLaunchAddToken} />
+            !isSyncing && <EmptyState onActivate={this.handleLaunchAddToken} />
           )}
         </AppLayout>
         <SidePanel {...sidePanelProps}>
           {mode === 'redeem' ? (
             <RedeemTokens
+              appi={api}
               balance={rdt.balance}
               symbol={rdt.symbol}
               decimals={rdt.numData.decimals}
               totalSupply={rdt.totalSupply}
               tokens={redeemables}
               onRedeemTokens={this.handleRedeemTokens}
+              opened={sidePanelProps.opened}
             />
           ) : (
             <UpdateTokens
@@ -143,5 +148,5 @@ class App extends React.Component {
 
 export default () => {
   const { api, appState } = useAragonApi()
-  return <App api={api} appState={appState} />
+  return <App api={api} {...appState} />
 }
