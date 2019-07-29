@@ -1,5 +1,5 @@
 module.exports = {
   norpc: true,
   copyPackages: [],
-  skipFiles: ['test', 'lib', 'misc', 'Template.sol'],
+  skipFiles: ['examples', 'test', 'lib', 'misc'],
 }
