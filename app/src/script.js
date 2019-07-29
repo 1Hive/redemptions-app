@@ -1,8 +1,8 @@
 import 'core-js/stable'
 import 'regenerator-runtime/runtime'
-import { first, map, publishReplay } from 'rxjs/operators'
-import { of, forkJoin } from 'rxjs'
-import AragonApi from '@aragon/api'
+import { first } from 'rxjs/operators'
+import { forkJoin } from 'rxjs'
+import Aragon, { events } from '@aragon/api'
 
 import {
   ETHER_TOKEN_FAKE_ADDRESS,
@@ -22,9 +22,6 @@ import tmAbi from './abi/tokenManager.json'
 import vaultAbi from './abi/vault.json'
 
 const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi, tokenSupplyAbi)
-
-const INITIALIZATION_TRIGGER = Symbol('INITIALIZATION_TRIGGER')
-const ACCOUNTS_TRIGGER = Symbol('ACCOUNTS_TRIGGER')
 const ZERO_ADDRESS = ETHER_TOKEN_FAKE_ADDRESS
 
 const tokenContracts = new Map() // Addr -> External contract
@@ -34,10 +31,10 @@ const tokenSymbols = new Map() // External contract -> symbol
 
 const ETH_CONTRACT = Symbol('ETH_CONTRACT')
 
-const api = new AragonApi()
+const app = new Aragon()
 
 try {
-  forkJoin(api.call('vault'), api.call('tokenManager')).subscribe(
+  forkJoin(app.call('vault'), app.call('tokenManager')).subscribe(
     adresses => initialize(...adresses, ETHER_TOKEN_FAKE_ADDRESS),
     err =>
       console.error('Could not start background script execution due to the contract not loading vault or tokenManager')
@@ -47,16 +44,16 @@ try {
 }
 
 async function initialize(vaultAddress, tmAddress, ethAddress) {
-  const vaultContract = api.external(vaultAddress, vaultAbi)
-  const tmContract = api.external(tmAddress, tmAbi)
+  const vaultContract = app.external(vaultAddress, vaultAbi)
+  const tmContract = app.external(tmAddress, tmAbi)
 
   const minimeAddress = await tmContract.token().toPromise()
-  const minimeContract = api.external(minimeAddress, minimeTokenAbi)
+  const minimeContract = app.external(minimeAddress, minimeTokenAbi)
 
   const minimeData = await getMinimeTokenData(minimeContract)
-  api.identify(`Redemptions ${minimeData.symbol}`)
+  app.identify(`Redemptions ${minimeData.symbol}`)
 
-  const network = await api
+  const network = await app
     .network()
     .pipe(first())
     .toPromise()
@@ -97,71 +94,62 @@ async function createStore(settings) {
     console.error("Could not get attached vault's initialization block:", err)
   }
 
-  // Hot observable which emits an web3.js event-like object with an account string of the current active account.
-  const accounts$ = api.accounts().pipe(
-    map(accounts => {
-      return {
-        event: ACCOUNTS_TRIGGER,
-        account: accounts[0],
-      }
-    }),
-    publishReplay(1)
-  )
-
-  accounts$.connect()
-
   const currentBlock = await getBlockNumber()
 
-  return api.store(
-    async (state, event) => {
-      const { vault, minimeToken } = settings
-      const { address: eventAddress, event: eventName, blockNumber } = event
+  const storeOptions = {
+    init: initializeState({}, settings),
+    externals: [
+      {
+        contract: settings.vault.contract,
+        initializationBlock: vaultInitializationBlock,
+      },
+      {
+        contract: settings.minimeToken.contract,
+      },
+    ],
+  }
 
-      //dont want to listen for past events for now
-      //(our app state can be obtained from smart contract vars)
-      if (blockNumber && blockNumber <= currentBlock) return state
+  return app.store((state, { event, address, returnValues, blockNumber }) => {
+    const { vault, minimeToken } = settings
 
-      let nextState = {
-        ...state,
+    //dont want to listen for past events for now
+    //(our app state can be obtained from smart contract vars)
+    if (blockNumber && blockNumber <= currentBlock) return state
+
+    let nextState = {
+      ...state,
+    }
+
+    //default events
+    switch (event) {
+      case events.ACCOUNTS_TRIGGER:
+        return updateConnectedAccount(nextState, returnValues, settings)
+      case events.SYNC_STATUS_SYNCING:
+        return { ...nextState, isSyncing: true }
+      case events.SYNC_STATUS_SYNCED:
+        return { ...nextState, isSyncing: false }
+    }
+
+    if (addressesEqual(address, vault.address)) {
+      // Vault event
+      return vaultEvent(nextState, returnValues, settings)
+    } else if (addressesEqual(address, minimeToken.address)) {
+      //minimeTokenEvent
+      return minimeTokenEvent(nextState, returnValues, settings)
+    } else {
+      // Redemptions event
+      switch (event) {
+        case 'AddToken':
+          return addedToken(nextState, returnValues, settings)
+        case 'RemoveToken':
+          return removedToken(nextState, returnValues)
+        case 'Redeem':
+          return newRedemption(nextState, settings)
+        default:
+          return state
       }
-
-      if (eventName === INITIALIZATION_TRIGGER) {
-        nextState = await initializeState(nextState, settings)
-      } else if (eventName === ACCOUNTS_TRIGGER) {
-        nextState = await updateConnectedAccount(nextState, event, settings)
-      } else if (addressesEqual(eventAddress, vault.address)) {
-        // Vault event
-        nextState = await vaultEvent(nextState, event, settings)
-      } else if (addressesEqual(eventAddress, minimeToken.address)) {
-        //minimeTokenEvent
-        nextState = await minimeTokenEvent(nextState, event, settings)
-      } else {
-        // Redemptions event
-        switch (eventName) {
-          case 'AddToken':
-            nextState = await addedToken(nextState, event, settings)
-            break
-          case 'RemoveToken':
-            nextState = await removedToken(nextState, event)
-            break
-          case 'Redeem':
-            nextState = await newRedemption(nextState, settings)
-            break
-          default:
-            break
-        }
-      }
-      return nextState
-    },
-    [
-      // Always initialize the store with our own home-made event
-      of({ event: INITIALIZATION_TRIGGER }),
-      accounts$,
-      // Handle Vault events
-      settings.vault.contract.events(vaultInitializationBlock),
-      settings.minimeToken.contract.events(),
-    ]
-  )
+    }
+  }, storeOptions)
 }
 
 /***********************
@@ -170,17 +158,24 @@ async function createStore(settings) {
  *                     *
  ***********************/
 
-async function initializeState(state, settings) {
-  let nextState = {
-    ...state,
-    redeemableToken: {
-      ...settings.minimeToken.data,
-      totalSupply: await getMinimeTokenTotalSupply(settings),
-    },
-    tokens: await updateTokens(settings),
-  }
+function initializeState(state, settings) {
+  return async cachedState => {
+    try {
+      let nextState = {
+        ...state,
+        isSyncing: true,
+        redeemableToken: {
+          ...settings.minimeToken.data,
+          totalSupply: await getMinimeTokenTotalSupply(settings),
+        },
+        tokens: await updateTokens(settings),
+      }
 
-  return nextState
+      return nextState
+    } catch (err) {
+      console.error('Error initializing state: ', err)
+    }
+  }
 }
 
 async function updateConnectedAccount(state, { account }, settings) {
@@ -196,7 +191,7 @@ async function updateConnectedAccount(state, { account }, settings) {
 }
 
 /** called when token is withdrawn from or deposited to the vault */
-async function vaultEvent(state, { returnValues: { token } }, settings) {
+async function vaultEvent(state, { token }, settings) {
   const { tokens } = state
   const index = tokens.findIndex(t => addressesEqual(t.address, token))
 
@@ -215,7 +210,7 @@ async function vaultEvent(state, { returnValues: { token } }, settings) {
 }
 
 /** called when minimeToken balance has increased/decreased or has been transfered between accounts*/
-async function minimeTokenEvent(state, { returnValues: { _from, _to } }, settings) {
+async function minimeTokenEvent(state, { _from, _to }, settings) {
   const { redeemableToken, account } = state
   const newRedeemableToken = { ...redeemableToken }
   //tokens minted or burned
@@ -233,7 +228,7 @@ async function minimeTokenEvent(state, { returnValues: { _from, _to } }, setting
 }
 
 /** new token has been added to redemptions list*/
-async function addedToken(state, { returnValues: { token } }, settings) {
+async function addedToken(state, { token }, settings) {
   return {
     ...state,
     tokens: [...state.tokens, ...(await getVaultBalances([token], settings))],
@@ -241,7 +236,7 @@ async function addedToken(state, { returnValues: { token } }, settings) {
 }
 
 /** token has been removed from redemptions list*/
-async function removedToken(state, { returnValues: { token } }) {
+async function removedToken(state, { token }) {
   const { tokens } = state
 
   let nextState = {
@@ -294,7 +289,7 @@ function spendableBalanceOf({ tokenManager: { contract } }, account) {
 
 /** called when redemption has been made (refresh of all tokens balances)  */
 async function updateTokens(settings) {
-  const tokens = await api.call('getTokens').toPromise()
+  const tokens = await app.call('getTokens').toPromise()
   return getVaultBalances(tokens, settings)
 }
 
@@ -304,7 +299,7 @@ async function getVaultBalances(tokens = [], settings) {
   for (let tokenAddress of tokens) {
     const tokenContract = tokenContracts.has(tokenAddress)
       ? tokenContracts.get(tokenAddress)
-      : api.external(tokenAddress, tokenAbi)
+      : app.external(tokenAddress, tokenAbi)
     tokenContracts.set(tokenAddress, tokenContract)
     balances = [...balances, await newBalanceEntry(tokenContract, tokenAddress, settings)]
   }
@@ -360,7 +355,7 @@ async function loadTokenName(tokenContract, tokenAddress, { network }) {
 
   let name
   try {
-    name = (await getTokenName(api, tokenAddress)) || fallback
+    name = (await getTokenName(app, tokenAddress)) || fallback
     tokenNames.set(tokenContract, name)
   } catch (err) {
     // name is optional
@@ -377,7 +372,7 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
 
   let symbol
   try {
-    symbol = (await getTokenSymbol(api, tokenAddress)) || fallback
+    symbol = (await getTokenSymbol(app, tokenAddress)) || fallback
     tokenSymbols.set(tokenContract, symbol)
   } catch (err) {
     // symbol is optional
@@ -387,5 +382,5 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
 }
 
 function getBlockNumber() {
-  return new Promise((resolve, reject) => api.web3Eth('getBlockNumber').subscribe(resolve, reject))
+  return new Promise((resolve, reject) => app.web3Eth('getBlockNumber').subscribe(resolve, reject))
 }
