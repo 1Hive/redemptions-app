@@ -2,7 +2,7 @@
 
 ## Initialization
 
-The Redemptions app is initialized by passing a `Vault _vault`, `TokenManager _tokenManager`, and `address[] _redemptionTokenList`. Users are able to redeem tokens associated to the `_tokenManager` in exchange for a proportional share of each token on the `_redemptionTokenList` held in the `_vault` address.
+The Redemptions app is initialized by passing a `Vault _vault` and `TokenManager _tokenManager` parameters. Users are then able to add tokens to Redemptions via the GUI in the DAO. This passes an Ethereum contract address to the `address[] _redemptionTokenList`array. This then allows users to redeem tokens associated to the `_tokenManager` in exchange for a proportional share of each token on the `_redemptionTokenList` held in the `_vault` address.
 
 The Redemptions app must have the `TRANSFER_ROLE` permission on `_vault` and the `BURN_ROLE` permission on the `_tokenManager`.
 
@@ -10,7 +10,7 @@ The Redemptions app must have the `TRANSFER_ROLE` permission on `_vault` and the
 
 ## Adding Tokens
 
-Adding tokens to the Redemptions app is done by passing an address `_token` to the addToken() function. This must be the address of a token contract.  
+Adding tokens to the Redemptions app is done by passing an address `_token` to the addToken() function. This must be the address of a token contract.
 ```
 function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
 	require(_token != address(tokenManager), ERROR_CANNOT_ADD_TOKEN_MANAGER);
@@ -20,8 +20,8 @@ function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
 	}
 ```
 
-Adding the address to the Redemptions app does not transfer any tokens. What this does do is add a token contract address to the Redemptions app and make it elligible for redemption. If that token is in the `Vault` a user will then be able to redeem their tokens for a percentage of those tokens in the `Vault`. Concretely this looks like:
-- adding the contract address to the `_redemptionTokenList` array 
+Adding the address to the Redemptions app does not transfer any tokens. What this does do is add a token contract address to the Redemptions app and make it eligible for redemption. If that token is in the `Vault` a user will then be able to redeem their tokens for a percentage of those tokens in the `Vault`. Concretely this looks like:
+- adding the contract address to the `_redemptionTokenList` array
 - mapping the token contract address to a boolean (`true`)
 - emitting an event that the token has been added to the Redemptions app
 ```
@@ -34,14 +34,14 @@ emit AddToken(_token);
 
 ## Removing Tokens
 
-Removing tokens from the Redemptions app is done by passing an address `_token` to the removeToken() function. This must be an address that is already added to the Redemptions `tokenAdded[]` array. 
+Removing tokens from the Redemptions app is done by passing an address `_token` to the removeToken() function. This must be an address that is already added to the Redemptions `tokenAdded[]` array.
 ```
 function removeToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
 	require(tokenAdded[_token], ERROR_NOT_VAULT_TOKEN);
 ```
 
-Removing an address from the Redemptions app does not transfer any tokens. If a token is in the `Vault` and you remove it from the Redemptions app, it will stay in the `Vault`. It will, however, no longer be eligible for redemption and will no longer show up in the Redemption app UI. Concretely this looks like: 
-- removing the contract address from the `_redemptionTokenList` array 
+Removing an address from the Redemptions app does not transfer any tokens. If a token is in the `Vault` and you remove it from the Redemptions app, it will stay in the `Vault`. It will, however, no longer be eligible for redemption and will no longer show up in the Redemption app UI. Concretely this looks like:
+- removing the contract address from the `_redemptionTokenList` array
 - mapping the token contract address to a boolean (`false`)
 - emitting an event that the token has been removed from the Redemptions app
 ```
@@ -106,7 +106,7 @@ Anyone can view the token contract addresses that are stored in `redemptionToken
 
 ## Recover Address
 
-The way Aragon DAOs are structured, the Access Control List forwards messages between various Aragon apps. This means that the EOA/contract that signed a message is likely not to be the address that delivers it to it's destination. As such, we need to manually recover the signature from the message to determine who sent it. 
+The way Aragon DAOs are structured, the Access Control List forwards messages between various Aragon apps. This means that the EOA/contract that signed a message is likely not to be the address that delivers it to it's destination. As such, we need to manually recover the signature from the message to determine who sent it.
 
 ```
 function recoverAddr(bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
