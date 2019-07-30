@@ -23,7 +23,7 @@ Who/what is allowed to control the Redemptions app is determined by the DAO's pe
 ### Adding tokens:
 
 The default recommendation is for the Voting app to control adding and removing tokens from the Redemptions app. This way your community can collectively manage the state of Redemptions. Adding tokens to Redemptions via the voting app requires two steps:
-- creating a vote to add the token to the Redeptions app
+- creating a vote to add the token to the Redemptions app
 - approving the vote to add the token to the Redemptions app
 
 <p align="center">
