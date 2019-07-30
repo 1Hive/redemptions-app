@@ -32,7 +32,7 @@ The default recommendation is for the Voting app to control adding and removing 
 
 ### Removing tokens:
 
-To remove a token from the Redemptions app UI, open the Redmpetions app in your DAO. Then hover your cursor over the token symbol you would like to remove. You should see the name and amount of the token turn red and display the word "Remove." If you have the Voting app configured to manage token removals (and we recommend this), clicking "Remove" will create a vote to remove the token from Redemptions app UI. Your community will then need to approve this change for it to pass. 
+To remove a token from the Redemptions app UI, open the Redemptions app in your DAO. Then hover your cursor over the token symbol you would like to remove. You should see the name and amount of the token turn red and display the word "Remove." If you have the Voting app configured to manage token removals (and we recommend this), clicking "Remove" will create a vote to remove the token from Redemptions app UI. Your community will then need to approve this change for it to pass. 
 - Note: Redemptions app is a Vault. More details on the Aragon Vault app can be found [here](ttps://wiki.aragon.org/dev/apps/vault/). TL;DR: The vault holds the tokens. If you remove a token from the Redemptions app UI with the process above, you will not remove tokens from the Vault. At any time you can add the token contract back to the Redemptions app to display that tokens balance. This feature is to prevent tokens with very small balances from polluting the Redemptions token list. 
 
 <p align="center">
