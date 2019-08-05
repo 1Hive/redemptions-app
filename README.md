@@ -5,11 +5,11 @@
 
 1Hive's Redemptions app allows Aragon organizations to grant their token holders the right to redeem tokens in exchange for a proportional share of the organizations treasury assets.
 
-#### 🐲 Project stage: Rinkeby
+#### 🐲 Project Stage: Rinkeby
 
 The Redemptions app has been published to `open.aragonpm.eth` on the Rinkeby test network. If you experience any issues or are interested in contributing please see review our open [issues](https://github.com/1hive/redemptions/issues).
 
-#### 🚨 Security review status: pre-audit
+#### 🚨 Security Review Status: pre-audit
 
 The code in this repo has not been audited.
 
@@ -54,7 +54,7 @@ You will also see the configuration for your local deployment in the terminal. I
     DAO address: YOUR-DAO-ADDRESS
 ```
 
-Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemption app. In a new terminal navigate to the `redemptions-app` directory. Then run this truffle script to deploy some token contracts to interact with.
+Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemptions app. In a new terminal navigate to the `redemptions-app` directory. Then run this script to deploy some token contracts on your local testnet to interact with.
 
 ```sh
 npm run deploy-tokens YOUR-DAO-ADDRESS
@@ -74,7 +74,6 @@ ETH 0x0000000000000000000000000000000000000000 Balance: 2
 Now if you navigate back to your browser (http://localhost:3000/#/YOUR-DAO-ADDRESS) you'll be able to open the Redemptions app and add one of these tokens to your locally deployed Redemptions app. 
 
 
-
 ## How to deploy Redemptions to an organization
 
 Redemptions has been published to APM on rinkeby at `redemptions.open.aragonpm.eth`
@@ -88,22 +87,10 @@ aragon dao install <dao-address> redemptions.open.aragonpm.eth --app-init-args <
 The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`.
 
 
-## Using Redemptions
+## Contributing
 
-The redemptions app allows organizations to add and remove tokens from a list of eligible tokens. When a user choses to redeem tokens they will receive a proportional share of all eligible tokens in the `Vault`.
+We welcome community contributions! 
 
-### Redeeming tokens:
+Please check out our [open Issues]() to get started.
 
-To redeem tokens, click on the redeem then use the slider to select how many tokens you would like to redeem. When satified with the amount, click redeem to confirm. You will be prompted to sign a message, then you will be able to confirm the transaction.
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redeem.gif" width="600" />
-</p>
-
-### Adding eligible vault token:
-
-To add an eligble token click "Add Token", then enter the address of the token contract you would like to add.
-
-### Removing eligible vault token:
-
-To remove an eligble token, hover over the token you want to remove and click "Remove Token", then enter the address of the token contract you would like to remove.
+If you discover something that could potentially impact security, please notify us immediately. The quickest way to reach us is via the #dev channel in our [team Keybase chat](https://1hive.org/contribute/keybase). Just say hi and that you discovered a potential security vulnerability and we'll DM you to discuss details.
