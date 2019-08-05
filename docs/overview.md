@@ -6,11 +6,11 @@ The redemptions app allows your organization to create a vault that exchanges yo
 
 ## User Guide
 
-The Redemptions [userguide](docs/user-guide.md) explains how an end user can interact with Redemptions to ad, remove, and redeem tokens.
+The Redemptions [userguide](docs/user-guide.md) explains how an end user can interact with Redemptions to add, remove, and redeem tokens.
 
 ## Docs
 
-The Redemptions [documentation](technical-documentation.md) explains every solidity function of the app in detail. 
+The Redemptions [documentation](technical-documentation.md) explains every solidity function of the app in detail.
 
 ## Code
 

@@ -2,7 +2,9 @@
 
 ## Initialization
 
-The Redemptions app is initialized by passing a `Vault _vault` and `TokenManager _tokenManager` parameters. Users are then able to add tokens to Redemptions via the GUI in the DAO. This passes an Ethereum contract address to the `address[] _redemptionTokenList`array. This then allows users to redeem tokens associated to the `_tokenManager` in exchange for a proportional share of each token on the `_redemptionTokenList` held in the `_vault` address.
+The Redemptions app is initialized by passing a `Vault _vault` and `TokenManager _tokenManager` parameters.
+- `_vault` is an [Aragon Vault](https://wiki.aragon.org/dev/apps/vault/) contract
+- `_tokenManager` is an [Aragon Token Manager](https://wiki.aragon.org/dev/apps/token-manager/) contract
 
 The Redemptions app must have the `TRANSFER_ROLE` permission on `_vault` and the `BURN_ROLE` permission on the `_tokenManager`.
 
@@ -54,7 +56,7 @@ emit RemoveToken(_token);
 
 ## Redeeming Tokens
 
-Anyone account that holds redemption tokens can call the `redeem(uint256 _amount)` function. This will:
+Accounts that hold redemption tokens can call the `redeem(uint256 _amount)` function. This will:
 
 1. check that the `_amount` is greater than 0
 ```
