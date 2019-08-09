@@ -10,6 +10,7 @@ const { assertRevert, deployedContract, getSeconds } = require('./helpers/helper
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+const ETHER_FAKE_ADDRESS = ZERO_ADDRESS
 
 contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
   let daoDeployment = new DaoDeployment()
@@ -122,6 +123,13 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         const actualTokenAddedToken = await redemptions.tokenAdded(token0.address)
         assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
         assert.isTrue(actualTokenAddedToken)
+      })
+
+      it('should add ether fake address to the vault tokens', async () => {
+        await redemptions.addToken(ETHER_FAKE_ADDRESS)
+
+        const etherAdded = await redemptions.tokenAdded(ETHER_FAKE_ADDRESS)
+        assert.isTrue(etherAdded)
       })
 
       it('reverts if adding token manager', async () => {
@@ -339,6 +347,18 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
         })
       })
+    })
+  })
+
+  context('app not initialized', () => {
+    it('reverts on adding token ', async () => {
+      await assertRevert(redemptions.addToken())
+    })
+    it('reverts on removing token ', async () => {
+      await assertRevert(redemptions.removeToken())
+    })
+    it('reverts on redeeming tokens ', async () => {
+      await assertRevert(redemptions.redeem(1))
     })
   })
 })
