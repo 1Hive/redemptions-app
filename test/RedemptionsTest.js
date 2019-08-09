@@ -7,7 +7,6 @@ const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('ERC20Token')
 
 const { assertRevert, deployedContract, getSeconds } = require('./helpers/helpers')
-const { getSignatureFields, sha3, sign } = require('./helpers/web3-helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -173,19 +172,19 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
       const vaultToken0Amount = 45231
       const vaultToken1Amount = 20001
 
-      const CORRECTMSG = sha3('I WOULD LIKE TO REDEEM SOME TOKENS PLEASE')
-      let correctSignature, correctValues
+      // const CORRECTMSG = sha3('I WOULD LIKE TO REDEEM SOME TOKENS PLEASE')
+      // let correctSignature, correctValues
 
-      const INCORRECTMSG = sha3('REDEEM PLEASE')
-      let incorrectSignature, incorrectValues
+      // const INCORRECTMSG = sha3('REDEEM PLEASE')
+      // let incorrectSignature, incorrectValues
 
-      before(async () => {
-        // get hash signatures
-        correctSignature = await sign(CORRECTMSG, redeemer)
-        correctValues = Object.values(getSignatureFields(correctSignature))
-        incorrectSignature = await sign(INCORRECTMSG, redeemer)
-        incorrectValues = Object.values(getSignatureFields(incorrectSignature))
-      })
+      // before(async () => {
+      //   // get hash signatures
+      //   correctSignature = await sign(CORRECTMSG, redeemer)
+      //   correctValues = Object.values(getSignatureFields(correctSignature))
+      //   incorrectSignature = await sign(INCORRECTMSG, redeemer)
+      //   incorrectValues = Object.values(getSignatureFields(incorrectSignature))
+      // })
 
       beforeEach(async () => {
         // set permissions
@@ -219,8 +218,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         const expectedRedemptionToken0 = parseInt((redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply)
         const expectedRedemptionToken1 = parseInt((redeemerAmount * vaultToken1Amount) / redeemableTokenTotalSupply)
 
-        const values = Object.values(correctValues)
-        await redemptions.redeem(redeemerAmount, CORRECTMSG, ...values, {
+        await redemptions.redeem(redeemerAmount, {
           from: redeemer,
         })
 
@@ -235,7 +233,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
       it('reverts if amount to redeem is zero', async () => {
         await assertRevert(
-          redemptions.redeem(0, CORRECTMSG, ...correctValues, {
+          redemptions.redeem(0, {
             from: redeemer,
           }),
           'REDEMPTIONS_CANNOT_REDEEM_ZERO'
@@ -244,19 +242,8 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
       it("reverts if amount to redeem exceeds account's balance", async () => {
         await assertRevert(
-          redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
-            from: redeemer,
-          }),
+          redemptions.redeem(redeemerAmount + 1, { from: redeemer }),
           'REDEMPTIONS_INSUFFICIENT_BALANCE'
-        )
-      })
-
-      it('reverts if incorrect signed message ', async () => {
-        await assertRevert(
-          redemptions.redeem(redeemerAmount, INCORRECTMSG, ...incorrectValues, {
-            from: redeemer,
-          }),
-          'REDEMPTIONS_INCORRECT_MESSAGE'
         )
       })
 
@@ -293,7 +280,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         // we cannot use mock contract in this case because the contract we want to fake its time is not the main one
         it('reverts when redeeming tokens before vesting starts', async () => {
           await assertRevert(
-            redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
+            redemptions.redeem(redeemerAmount + 1, {
               from: redeemer,
             }),
             'REDEMPTIONS_INSUFFICIENT_BALANCE'
@@ -305,7 +292,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
           setTimeout(async () => {
             await assertRevert(
-              redemptions.redeem(redeemerAmount + 1, CORRECTMSG, ...correctValues, {
+              redemptions.redeem(redeemerAmount + 1, {
                 from: redeemer,
               }),
               'REDEMPTIONS_INSUFFICIENT_BALANCE'
@@ -320,7 +307,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           const amountToRedeem = redeemerAmount + 1
           const redeem = new Promise((resolve, reject) => {
             setTimeout(async () => {
-              await redemptions.redeem(amountToRedeem, CORRECTMSG, ...correctValues, {
+              await redemptions.redeem(amountToRedeem, {
                 from: redeemer,
               })
               resolve()
@@ -338,7 +325,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
           const redeem = new Promise((resolve, reject) => {
             setTimeout(async () => {
-              await redemptions.redeem(redeemerAmount + vestingAmount, CORRECTMSG, ...correctValues, {
+              await redemptions.redeem(redeemerAmount + vestingAmount, {
                 from: redeemer,
               })
               resolve()
