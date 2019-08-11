@@ -8,6 +8,7 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "./lib/ArrayUtils.sol";
 
+
 contract Redemptions is AragonApp {
     using SafeMath for uint256;
     using ArrayUtils for address[];
@@ -95,7 +96,7 @@ contract Redemptions is AragonApp {
     function redeem(uint256 _amount,bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) external auth(REDEEM_ROLE) {
         require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
         require(REDEEM_MESSAGE == msgHash, ERROR_INCORRECT_MESSAGE);
-        
+
         //get address that signed message
         address redeemer = recoverAddr(msgHash, v, r, s);
         require(tokenManager.spendableBalanceOf(redeemer) >= _amount, ERROR_INSUFFICIENT_BALANCE);

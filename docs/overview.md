@@ -1,30 +1,29 @@
-### What is the Redemptions app?
+<br />
 
-An Aragon app that enables redeeming organizations tokens for organization assets.
+Redemptions is an Aragon app that enables redeeming organizations tokens for organization assets.
 
 The redemptions app allows your organization to create a vault that exchanges your native token for an underlying asset. For example, the 1Hive native token is HONEY, but often times organization members will want DAI or ETH. The redemptions vault allows BEEs to exchange the HONEY they earn by contributing to the hive for the underlying asset of the vault.
 
-<br>
+## User Guide
 
-### Maintainer 🚧
-- [1Hive Workers](https://1hive.org/docs/contribute/projects-tasks.html#expectations-of-workers)
+The Redemptions [userguide](docs/user-guide.md) explains how an end user can interact with Redemptions to add, remove, and redeem tokens.
 
-<br>
+## Docs
 
-### Project Repo 🗃️
-- https://github.com/1Hive/redemptions-app
+The Redemptions [documentation](technical-documentation.md) explains every solidity function of the app in detail.
 
-<br>
+## Code
 
-### Security Review Status 🚨
-- The code in this repo has not been audited.
+All the code and build instructions are on our [GitHub](https://github.com/1Hive/redemptions-app).
 
-<br>
+## Contributing
 
-### Availability 🐲
-We are currently developing the Redemptions app. If you want to contribute please [checkout the latest status on GitHub](https://github.com/1Hive/redemptions)! :)
-- public beta: ✔
-- rinkeby: TBD
-- mainnet: TBD
+We ❤️  contributors! Please take a look at our [open Issues](https://github.com/1Hive/redemptions-app/issues) to get started.
 
-<br>
+If you find a bug, please let us know right away! We have an active [bug bounty program](https://1hive.org/contribute/bug-bounty) and are happy to work with you to resolve the error and get you a reward :)
+
+## Questions / Feedback
+
+If you have any questions or feedback on Redemptions, please reach out to us at the [1Hive Keybase chat](https://1hive.org/contribute/keybase).
+
+<br />
