@@ -85,7 +85,7 @@ To deploy to an organization you can use the [Aragon CLI](https://hack.aragon.or
 aragon dao install <dao-address> redemptions.open.aragonpm.eth --app-init-args <vault-address> <token-manager-address>
 ```
 
-The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`. You can also create these permissions using the Aragon CLI
+The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`. You can also create these permissions using the Aragon CLI.
 
 ```sh
 dao acl create <dao-address> <redemptions-address> TRANSFER_ROLE <vault-address> <voting-address> --environment aragon:rinkeby
