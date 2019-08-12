@@ -95,7 +95,7 @@ contract Template is TemplateBase {
 
         acl.createPermission(tokenManager, voting, voting.CREATE_VOTES_ROLE(), root);
         acl.createPermission(redemptions, vault, vault.TRANSFER_ROLE(), root);
-        acl.createPermission(tokenManager, redemptions, redemptions.REDEEM_ROLE(), root);
+        acl.createPermission(ANY_ENTITY, redemptions, redemptions.REDEEM_ROLE(), root);
         acl.createPermission(voting, redemptions, redemptions.ADD_TOKEN_ROLE(), root);
         acl.createPermission(voting, redemptions, redemptions.REMOVE_TOKEN_ROLE(), root);
 

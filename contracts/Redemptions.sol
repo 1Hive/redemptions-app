@@ -8,6 +8,7 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "./lib/ArrayUtils.sol";
 
+
 contract Redemptions is AragonApp {
     using SafeMath for uint256;
     using ArrayUtils for address[];
@@ -15,7 +16,7 @@ contract Redemptions is AragonApp {
     bytes32 constant public REDEEM_ROLE = keccak256("REDEEM_ROLE");
     bytes32 constant public ADD_TOKEN_ROLE = keccak256("ADD_TOKEN_ROLE");
     bytes32 constant public REMOVE_TOKEN_ROLE = keccak256("REMOVE_TOKEN_ROLE");
-    bytes32 constant private REDEEM_MESSAGE = keccak256("I WOULD LIKE TO REDEEM SOME TOKENS PLEASE");
+    // bytes32 constant private REDEEM_MESSAGE = keccak256("I WOULD LIKE TO REDEEM SOME TOKENS PLEASE");
 
     string private constant ERROR_VAULT_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
     string private constant ERROR_TOKEN_MANAGER_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
@@ -86,19 +87,13 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @dev As we cannot get origin sender address when using a forwarder such as token manager, the best solution
-    * we came up to is to make the redeemer to sign a message client side and get the signer address using ecrecover
+    * @dev Redeem function is intended to only be used directly, using a forwarder will not work see: https://github.com/1Hive/redemptions-app/issues/78
     * @notice Redeem `@tokenAmount(self.token(): address, _amount, false)` redeemable tokens
     * @param _amount amount of tokens
-    * @param msgHash message that was signed
     */
-    function redeem(uint256 _amount,bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) external auth(REDEEM_ROLE) {
+    function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
         require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
-        require(REDEEM_MESSAGE == msgHash, ERROR_INCORRECT_MESSAGE);
-        
-        //get address that signed message
-        address redeemer = recoverAddr(msgHash, v, r, s);
-        require(tokenManager.spendableBalanceOf(redeemer) >= _amount, ERROR_INSUFFICIENT_BALANCE);
+        require(tokenManager.spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
 
         uint256 redemptionAmount;
         uint256 tokenBalance;
@@ -109,13 +104,12 @@ contract Redemptions is AragonApp {
 
             redemptionAmount = _amount.mul(tokenBalance).div(totalSupply);
             if (redemptionAmount > 0)
-                vault.transfer(redemptionTokenList[i], redeemer, redemptionAmount);
+                vault.transfer(redemptionTokenList[i], msg.sender, redemptionAmount);
         }
 
-        //burn only if total sum of redemption amounts > 0 ?
-        tokenManager.burn(redeemer, _amount);
+        tokenManager.burn(msg.sender, _amount);
 
-        emit Redeem(redeemer, _amount);
+        emit Redeem(msg.sender, _amount);
     }
 
     /**
@@ -126,9 +120,9 @@ contract Redemptions is AragonApp {
         return redemptionTokenList;
     }
 
-    function recoverAddr(bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
-        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 prefixedHash = keccak256(abi.encodePacked(prefix,msgHash));
-        return ecrecover(prefixedHash, v, r, s);
-    }
+    // function recoverAddr(bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
+    //     bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+    //     bytes32 prefixedHash = keccak256(abi.encodePacked(prefix,msgHash));
+    //     return ecrecover(prefixedHash, v, r, s);
+    // }
 }

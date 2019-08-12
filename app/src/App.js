@@ -3,7 +3,6 @@ import PropTypes from 'prop-types'
 import { useAragonApi } from '@aragon/api-react'
 import { Main, Badge, SidePanel, SyncIndicator } from '@aragon/ui'
 import { capitalizeFirst } from './lib/utils'
-import { getSignatureFields, soliditySha3 } from './lib/web3-utils'
 
 import redeemIcon from './assets/icono.svg'
 import Balances from './components/Balances'
@@ -11,8 +10,6 @@ import AppLayout from './components/AppLayout'
 import EmptyState from './screens/EmptyState'
 import UpdateTokens from './components/Panels/UpdateTokens'
 import RedeemTokens from './components/Panels/RedeemTokens'
-
-const hashMessage = soliditySha3('I WOULD LIKE TO REDEEM SOME TOKENS PLEASE')
 
 class App extends React.Component {
   static propTypes = {
@@ -64,15 +61,7 @@ class App extends React.Component {
   handleRedeemTokens = async amount => {
     const { api } = this.props
 
-    api.requestSignMessage(hashMessage).subscribe(
-      signature => {
-        const signFields = Object.values(getSignatureFields(signature))
-        api.redeem(amount, hashMessage, ...signFields).toPromise()
-      },
-      err => {
-        console.error(err)
-      }
-    )
+    api.redeem(amount).toPromise()
 
     this.handleSidePanelClose()
   }
