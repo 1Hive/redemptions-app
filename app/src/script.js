@@ -229,6 +229,10 @@ async function minimeTokenEvent(state, { _from, _to }, settings) {
 
 /** new token has been added to redemptions list*/
 async function addedToken(state, { token }, settings) {
+  //fix to address issue where contract events randomly fire twice
+  const index = state.tokens.findIndex(t => addressesEqual(t.address, token))
+  if (index > -1) return state
+
   return {
     ...state,
     tokens: [...state.tokens, ...(await getVaultBalances([token], settings))],
