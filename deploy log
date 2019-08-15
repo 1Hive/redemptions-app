@@ -1,0 +1,40 @@
+# Setup
+
+### 1. Create DAO
+
+If you dont already have a organisation, head over to to the [DAO launcher](rinkeby.aragon.org) and follow the steps using the democracy template
+
+goto settings, copy addresses and create enviroment variables for the following apps:
+dao=0x6604f9fe9Db1D3F6a45d8F0ab79e8a4B05968816
+token=0x7F42cEB659B944cBB9F3D5ED637f66818C1bAcbf
+voting=0x41CA57d1e65Cdcd3A68A0e9f8E835F3a1FeDc655
+vault=0x04b46b9e0c1f893cA50Cb35F096d14dD946DEf95
+
+    install app
+
+`aragon dao install $dao redemptions.open.aragonpm.eth --app-init-args $vault $token --environment aragon:rinkeby`
+
+vote
+
+
+     get redemptions app address 
+
+`dao apps $dao --all --environment aragon:rinkeby` 
+
+copy the proxy address of the permissionless app and make it an enviroment variable
+
+redemptions=0x4dA76c5B30b5a289Cb8f673Ba71A1A20bd37a00c
+
+    create permission on redemption
+
+
+`dao acl create $dao $redemptions REDEEM_ROLE $token $voting --environment aragon:rinkeby` // <-- because first time granting
+
+`dao acl create $dao $redemptions ADD_TOKEN_ROLE $token $voting --environment aragon:rinkeby`
+`
+
+`dao acl create $dao $redemptions REMOVE_TOKEN_ROLE $token $voting --environment aragon:rinkeby`
+
+    create permission on vault
+
+`dao acl create $dao $vault BURN_ROLE $redemptions $voting --environment aragon:rinkeby`
