@@ -6,7 +6,7 @@ This guide will walk you though everything you need to add Redemptions to an exi
 
 ## TL;DR
 
-Redemptions has been published to APM on rinkeby at `redemptions.open.aragonpm.eth`
+Redemptions has been published to APM on Rinkeby at `redemptions.open.aragonpm.eth`
 
 To deploy to an organization you can use the [Aragon CLI](https://hack.aragon.org/docs/cli-intro.html).
 
@@ -26,7 +26,7 @@ The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the 
 
 This step is if don't already have a DAO to install Redemptions on, or want to test it on a demo first.
 
-First, make sure that you have the [Aragon CLI](https://hack.aragon.org/docs/cli-intro.html) installed. Then run `aragon devchain` in a terminal. This should show you two Ethereum addresses. The first one has the most permissions and is used to execute commands on the Aragon CLI. Import the private key of that account into Metamask. Then head over to the [rinkeby DAO launcher](rinkeby.aragon.org) and create a DAO with the democracy kit. Make sure that the Metamask account that is active is the first account created by your `aragon devchain`.
+First, make sure that you have the [Aragon CLI](https://hack.aragon.org/docs/cli-intro.html) installed. Then run `aragon devchain` in a terminal. This should show you two Ethereum addresses. The first one has the most permissions and is used to execute commands on the Aragon CLI. Import the private key of that account into Metamask. Then head over to the [Rinkeby DAO launcher](rinkeby.aragon.org) and create a DAO with the democracy kit. Make sure that the Metamask account that is active is the first account created by your `aragon devchain`.
 
 Once your Democracy DAO is deployed (the voting params don't matter as you'll be the only one voting right now), go to the settings tab where you will find the addresses for the DAO and its apps. For legibility of subsequent commands will set bash environment variable for these addresses:
 
@@ -41,7 +41,7 @@ vault=0x04b46b9e0c1f893cA50Cb35F096d14dD946DEf95
 
 ### 2. Install Redemptions App
 
-Redemptions has been published to APM on rinkeby at `redemptions.open.aragonpm.eth`
+Redemptions has been published to APM on Rinkeby at `redemptions.open.aragonpm.eth`
 
 
 ```sh
@@ -92,14 +92,14 @@ dao acl create $dao $redemptions REMOVE_TOKEN_ROLE $token $voting --environment 
 The Redemptions app must also have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`.
 
 ```sh
-dao acl create $dao $token BURN_ROLE $redemptions $voting --environment aragon:rinkeby
+dao acl create $dao $vault TRANSFER_ROLE $redemptions $voting --environment aragon:rinkeby
 ```
 ```sh
-dao acl create $dao $vault TRANSFER_ROLE $redemptions $voting --environment aragon:rinkeby
+dao acl create $dao $token BURN_ROLE $redemptions $voting --environment aragon:rinkeby
 ```
 
 > Notes:
-> if for some reason you're not allowed to create a vote try creating it manually via the GUI in the Aragon Cleint (system / permissions / Add permission)
+> if for some reason you're not allowed to create a vote try creating it manually via the GUI in the Aragon Client (system / permissions / Add permission)
 > if you're not able to vote YES on a vote, but your account is the only account with a voting token, try voting NO. If that works, then try creating the vote again. Sometimes it magically works. If not, double check that your Metamask account is still the account that has a voting token in the DAO.
 
 ---
@@ -117,5 +117,5 @@ Click add token and paste in the contract address.
 
 > Note:
 > On Rinkeby you can't just add in any old contract. It must be a token contract deployed on Rinkeby. The testing tokens sent to your DAO are deployed on Rinkeby and will work.
->
+
 ---
