@@ -14,6 +14,11 @@ The Redemptions app has been published to `open.aragonpm.eth` on the Rinkeby tes
 The code in this repo has not been audited.
 
 
+## How to try Redemptions immediately
+
+We have a [Redemptions demo DAO live on Rinkeby!](https://rinkeby.aragon.org/#/tryredemptions/0x18a9713625256548670ad979d51a6b9fad5b6c45)
+
+
 ## How to run Redemptions locally
 
 First make sure that you have node, npm, and the Aragon CLI installed and working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html). You'll also need to have [Metamask](https://metamask.io) or some kind of web wallet enabled to sign transactions in the browser.
@@ -41,7 +46,7 @@ Deploy a dao with Redemptions installed on your local environment.
 npm run start:template
 ```
 
-If everything is working correctly, your new DAO will be deployed and your browser will open http://localhost:3000/#/YOUR-DAO-ADDRESS. It should look something like this: 
+If everything is working correctly, your new DAO will be deployed and your browser will open http://localhost:3000/#/YOUR-DAO-ADDRESS. It should look something like this:
 
 ![newly deployed dao with Redemptions](https://i.imgur.com/Kixxqr0.png)
 
@@ -71,7 +76,7 @@ ETH 0x0000000000000000000000000000000000000000 Balance: 2
 ------------------------------------------------
 ```
 
-Now if you navigate back to your browser (http://localhost:3000/#/YOUR-DAO-ADDRESS) you'll be able to open the Redemptions app and add one of these tokens to your locally deployed Redemptions app. 
+Now if you navigate back to your browser (http://localhost:3000/#/YOUR-DAO-ADDRESS) you'll be able to open the Redemptions app and add one of these tokens to your locally deployed Redemptions app.
 
 
 ## How to deploy Redemptions to an organization
@@ -89,7 +94,7 @@ The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the 
 
 ## Contributing
 
-We welcome community contributions! 
+We welcome community contributions!
 
 Please check out our [open Issues]() to get started.
 
