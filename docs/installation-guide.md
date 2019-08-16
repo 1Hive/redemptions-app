@@ -2,6 +2,23 @@
 
 This guide will walk you though everything you need to add Redemptions to an existing DAO.
 
+---
+
+## TL;DR
+
+Redemptions has been published to APM on rinkeby at `redemptions.open.aragonpm.eth`
+
+To deploy to an organization you can use the [Aragon CLI](https://hack.aragon.org/docs/cli-intro.html).
+
+```sh
+aragon dao install <dao-address> redemptions.open.aragonpm.eth --app-init-args <vault-address> <token-manager-address>
+```
+
+The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`.
+
+---
+
+## Detailed Installation Guide
 
 ---
 
