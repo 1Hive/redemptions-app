@@ -27,9 +27,10 @@ Adding the address to the Redemptions app does not transfer any tokens. What thi
 - mapping the token contract address to a boolean (`true`)
 - emitting an event that the token has been added to the Redemptions app
 ```
-tokenAdded[_token] = true;
-redemptionTokenList.push(_token);
-emit AddToken(_token);
+	tokenAdded[_token] = true;
+	redemptionTokenList.push(_token);
+	emit AddToken(_token);
+}
 ```
 
 <br />
@@ -47,9 +48,10 @@ Removing an address from the Redemptions app does not transfer any tokens. If a 
 - mapping the token contract address to a boolean (`false`)
 - emitting an event that the token has been removed from the Redemptions app
 ```
-tokenAdded[_token] = false;
-redemptionTokenList.deleteItem(_token);
-emit RemoveToken(_token);
+	tokenAdded[_token] = false;
+	redemptionTokenList.deleteItem(_token);
+	emit RemoveToken(_token);
+}
 ```
 
 <br />
