@@ -1,5 +1,7 @@
 <br />
 
+## About
+
 Redemptions is an Aragon app that enables redeeming organizations tokens for organization assets. Users can choose which assets held within an organization’s Vault are eligible for redemption. Then members of the organization can redeem (burn) their DAO membership tokens in exchange for a proportional amount of the organization's eligible assets. This means that if members of the org disagree with a vote they can "rage-quit" and take their share of the assets with them in exchange for burning their membership token (like in MolochDAO).
 
 ## User Guide
