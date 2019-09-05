@@ -63,20 +63,14 @@ Accounts that hold redemption tokens can call the `redeem(uint256 _amount)` func
 1. check that the `_amount` is greater than 0
 ```
 require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
-require(REDEEM_MESSAGE == msgHash, ERROR_INCORRECT_MESSAGE);
 ```
 
-2. check the signer of the message
+2. check that the msg.sender has a balance of redemption tokens greater than or equal to the amount they would like to redeem
 ```
-address redeemer = recoverAddr(msgHash, v, r, s);
-```
-
-3. check that the `_amount` of redemption tokens to be redeemed is > 0
-```
-require(tokenManager.spendableBalanceOf(redeemer) >= _amount, ERROR_INSUFFICIENT_BALANCE);
+require(tokenManager.spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
 ```
 
-3. calculate the `redemptionAmount` to determine the percentage of redemption tokens held by the `redeemer`, and thus the percentage of the `Vault` that the `redeemer` is eligible to redeem.
+4. calculate the `redemptionAmount` to determine the percentage of redemption tokens held by the `redeemer`, and thus the percentage of the eligible tokens in the `Vault` that the `msg.sender` is eligible to redeem.
 ```
 uint256 redemptionAmount;
 uint256 tokenBalance;
@@ -87,37 +81,26 @@ for (uint256 i = 0; i < redemptionTokenList.length; i++) {
 	redemptionAmount = _amount.mul(tokenBalance).div(totalSupply);
 ```
 
-4. check if there is a non-zero amount of each token in the `_redemptionTokenList`, and if so, transfer the `_redemptionAmount` of that token to the the `redeemer`.
+4. check if there is a non-zero amount of each token in the `_redemptionTokenList`, and if so, transfer the `_redemptionAmount` of that token to the `redeemer`.
 ```
 if (redemptionAmount > 0)
 	vault.transfer(redemptionTokenList[i], redeemer, redemptionAmount);
 ```
 
-5. burn `_amount` of the user tokens associated with `_tokenManager`
+5. burn `_amount` of the msg.sender's redemption tokens
 ```
-tokenManager.burn(msg.sender, _amount
+tokenManager.burn(msg.sender, _amount);
 ```
 
 6. if the redeem function executes successfully it will emit an event that includes the `redeemer` and the `_amount`
+```
+emit Redeem(msg.sender, _amount);
+```
 
 <br />
 
 ## Get Tokens
 
 Anyone can view the token contract addresses that are stored in `redemptionTokenList` by calling `getTokens()`.
-
-<br />
-
-## Recover Address
-
-The way Aragon DAOs are structured, the Access Control List forwards messages between various Aragon apps. This means that the EOA/contract that signed a message is likely not to be the address that delivers it to it's destination. As such, we need to manually recover the signature from the message to determine who sent it.
-
-```
-function recoverAddr(bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
-	bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-	bytes32 prefixedHash = keccak256(abi.encodePacked(prefix,msgHash));
-	return ecrecover(prefixedHash, v, r, s);
-}
-```
 
 <br />
