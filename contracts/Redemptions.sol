@@ -119,10 +119,4 @@ contract Redemptions is AragonApp {
     function getTokens() public view returns (address[]) {
         return redemptionTokenList;
     }
-
-    // function recoverAddr(bytes32 msgHash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
-    //     bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-    //     bytes32 prefixedHash = keccak256(abi.encodePacked(prefix,msgHash));
-    //     return ecrecover(prefixedHash, v, r, s);
-    // }
 }
