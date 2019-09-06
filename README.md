@@ -2,6 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/1Hive/redemptions-app.svg?style=svg)](https://circleci.com/gh/1Hive/redemptions-app)
 [![Coverage Status](https://coveralls.io/repos/github/1Hive/redemptions-app/badge.svg?branch=master&service=github)](https://coveralls.io/github/1Hive/redemptions-app?branch=master&service=github)
+[![Crytic Status](https://crytic.io/api/repositories/i8VojaU5RTS5vHfn4MtivQ/badge.svg?token=d24cea18-e929-4f0a-8a2c-9c7122593348)](https://crytic.io/1Hive/redemptions-app)
 
 1Hive's Redemptions app allows Aragon organizations to grant their token holders the right to redeem tokens in exchange for a proportional share of the organizations treasury assets.
 
