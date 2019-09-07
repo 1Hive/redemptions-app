@@ -4,7 +4,7 @@
 
 Redemptions is an Aragon app that enables users to redeem an organization's native token for a percentage of the tokens in that organization's vault.
 
-Example
+Example:
 - your organization has 5 members
 - you create a DAO to manage your governance and finances
 - your DAO has 1 ETH, 1000 DAI, and 300 ANT in the [Vault](https://wiki.aragon.org/dev/apps/vault/)
