@@ -13,7 +13,7 @@ const HDWalletProviderPrivkey = require('truffle-hdwallet-provider-privkey')
 const DEFAULT_MNEMONIC =
   'explain tackle mirror kit van hammer degree position ginger unfair soup bonus'
 
-const defaultRPC = network => `https://${network}.infura.io`
+const defaultRPC = network => `https://${network}.eth.aragon.network`
 
 const configFilePath = filename => path.join(homedir(), `.aragon/${filename}`)
 
@@ -56,13 +56,6 @@ module.exports = {
       port: 8545,
       network_id: '15',
     },
-    coverage: {
-      host: 'localhost',
-      network_id: '*',
-      port: 8555,
-      gas: 0xffffffffff,
-      gasPrice: 0x01,
-    },
     mainnet: {
       network_id: 1,
       provider: providerForNetwork('mainnet'),
@@ -70,6 +63,13 @@ module.exports = {
     rinkeby: {
       network_id: 4,
       provider: providerForNetwork('rinkeby'),
+    },
+    coverage: {
+      host: 'localhost',
+      network_id: '*',
+      port: 8555,
+      gas: 0xffffffffff,
+      gasPrice: 0x01,
     },
   },
   // Configure your compilers
