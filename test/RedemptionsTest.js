@@ -7,7 +7,7 @@ const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('ERC20Token')
 
-const {assertRevert, deployedContract, getSeconds} = require('./helpers/helpers')
+const { assertRevert, deployedContract, getSeconds, timeTravel } = require('./helpers/helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -276,75 +276,51 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           })
 
           const NOW = getSeconds()
-          const start = NOW
-          const cliff = start + 2
-          const vesting = start + 4
+          const start = NOW + 1
+          const cliff = start + 4
+          const vesting = start + 10
 
           TIME_TO_CLIFF = cliff - NOW
           TIME_TO_VESTING = vesting - NOW
 
           await tokenManager.issue(vestingAmount)
+
+          console.log((await tokenManager.spendableBalanceOf(redeemer)).toString())
+
           await tokenManager.assignVested(redeemer, vestingAmount, start, cliff, vesting, true)
+
+          console.log((await tokenManager.spendableBalanceOf(redeemer)).toString())
+
         })
 
-        // next tests will use setTimeout()
-        // we cannot use mock contract in this case because the contract we want to fake its time is not the main one
-        it('reverts when redeeming tokens before vesting starts', async () => {
+        it.only('reverts when redeeming tokens before vesting starts', async () => {
+
+          await assertRevert(redemptions.redeem(redeemerAmount + 10, {from: redeemer}), 'REDEMPTIONS_INSUFFICIENT_BALANCE')
+        })
+
+        it('reverts when redeeming tokens before cliff', async () => {
+          await timeTravel(web3)(TIME_TO_CLIFF - 1)
           await assertRevert(
-            redemptions.redeem(redeemerAmount + 1, {
-              from: redeemer,
-            }),
+            redemptions.redeem(redeemerAmount + 1, { from: redeemer }),
             'REDEMPTIONS_INSUFFICIENT_BALANCE'
           )
         })
 
-        it('reverts when redeeming tokens before cliff', done => {
-          const timeout = TIME_TO_CLIFF - 1
-
-          setTimeout(async () => {
-            await assertRevert(
-              redemptions.redeem(redeemerAmount + 1, {
-                from: redeemer,
-              }),
-              'REDEMPTIONS_INSUFFICIENT_BALANCE'
-            )
-            done()
-          }, timeout * 1000)
-        })
-
         it('should redeem partial amount of vested tokens after cliff', async () => {
-          const timeout = TIME_TO_CLIFF + 1
+          await timeTravel(web3)(TIME_TO_CLIFF + 2)
 
           const amountToRedeem = redeemerAmount + 1
-          const redeem = new Promise((resolve, reject) => {
-            setTimeout(async () => {
-              await redemptions.redeem(amountToRedeem, {
-                from: redeemer,
-              })
-              resolve()
-            }, timeout * 1000)
+          await redemptions.redeem(amountToRedeem, {
+            from: redeemer,
           })
-
-          await redeem
-
-          const redeemerBalance = await tokenManager.spendableBalanceOf(redeemer)
-          assert(redeemerBalance < amountToRedeem)
         })
 
         it('should redeem all tokens after vesting', async () => {
-          const timeout = TIME_TO_VESTING + 1
-
-          const redeem = new Promise((resolve, reject) => {
-            setTimeout(async () => {
-              await redemptions.redeem(redeemerAmount + vestingAmount, {
-                from: redeemer,
-              })
-              resolve()
-            }, timeout * 1000)
-          })
-
+          await timeTravel(web3)(TIME_TO_VESTING + 1)
           const expectedRedeemableBalance = 0
-          await redeem
+          await await redemptions.redeem(redeemerAmount + vestingAmount, {
+            from: redeemer,
+          })
 
           const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
           assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
@@ -356,13 +332,13 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
   context('app not initialized', () => {
     it('reverts on adding token ', async () => {
-      await assertRevert(redemptions.addRedeemableToken())
+      await assertRevert(redemptions.addRedeemableToken(ANY_ADDRESS), 'APP_AUTH_FAILED')
     })
     it('reverts on removing token ', async () => {
-      await assertRevert(redemptions.removeRedeemableToken())
+      await assertRevert(redemptions.removeRedeemableToken(ANY_ADDRESS), 'APP_AUTH_FAILED')
     })
     it('reverts on redeeming tokens ', async () => {
-      await assertRevert(redemptions.redeem(1))
+      await assertRevert(redemptions.redeem(1), 'APP_AUTH_FAILED')
     })
   })
 })

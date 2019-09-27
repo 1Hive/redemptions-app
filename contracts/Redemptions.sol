@@ -17,15 +17,14 @@ contract Redemptions is AragonApp {
     bytes32 constant public ADD_TOKEN_ROLE = keccak256("ADD_TOKEN_ROLE");
     bytes32 constant public REMOVE_TOKEN_ROLE = keccak256("REMOVE_TOKEN_ROLE");
 
-    string private constant ERROR_VAULT_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
-    string private constant ERROR_TOKEN_MANAGER_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
+    string private constant ERROR_VAULT_IS_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
+    string private constant ERROR_TOKEN_MANAGER_IS_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
     string private constant ERROR_REDEEMABLE_TOKEN_LIST_FULL = "REDEMPTIONS_REDEEMABLE_TOKEN_LIST_FULL";
     string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
     string private constant ERROR_NOT_VAULT_TOKEN = "REDEMPTIONS_NOT_VAULT_TOKEN";
     string private constant ERROR_CANNOT_REDEEM_ZERO = "REDEMPTIONS_CANNOT_REDEEM_ZERO";
     string private constant ERROR_INSUFFICIENT_BALANCE = "REDEMPTIONS_INSUFFICIENT_BALANCE";
-    string private constant ERROR_INCORRECT_MESSAGE = "REDEMPTIONS_INCORRECT_MESSAGE";
 
     uint256 constant public REDEEMABLE_TOKENS_MAX_SIZE = 30;
 
@@ -48,8 +47,8 @@ contract Redemptions is AragonApp {
     function initialize(Vault _vault, TokenManager _tokenManager) external onlyInit {
         initialized();
 
-        require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
-        require(isContract(_tokenManager), ERROR_TOKEN_MANAGER_NOT_CONTRACT);
+        require(isContract(_vault), ERROR_VAULT_IS_NOT_CONTRACT);
+        require(isContract(_tokenManager), ERROR_TOKEN_MANAGER_IS_NOT_CONTRACT);
 
         vault = _vault;
         tokenManager = _tokenManager;
@@ -57,7 +56,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Add `_token.symbol(): string` token to redeemable tokens
+    * @notice Add `_token.symbol(): string` token to the redeemable tokens
     * @param _token Token address
     */
     function addRedeemableToken(address _token) external auth(ADD_TOKEN_ROLE) {
@@ -75,7 +74,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Remove `_token.symbol(): string` token from redeemable tokens
+    * @notice Remove `_token.symbol(): string` token from the redeemable tokens
     * @param _token Token address
     */
     function removeRedeemableToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
