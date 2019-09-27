@@ -284,26 +284,18 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           TIME_TO_VESTING = vesting - NOW
 
           await tokenManager.issue(vestingAmount)
-
-          console.log((await tokenManager.spendableBalanceOf(redeemer)).toString())
-
           await tokenManager.assignVested(redeemer, vestingAmount, start, cliff, vesting, true)
-
-          console.log((await tokenManager.spendableBalanceOf(redeemer)).toString())
-
         })
 
-        it.only('reverts when redeeming tokens before vesting starts', async () => {
-
-          await assertRevert(redemptions.redeem(redeemerAmount + 10, {from: redeemer}), 'REDEMPTIONS_INSUFFICIENT_BALANCE')
+        it('reverts when redeeming tokens before vesting starts', async () => {
+          await assertRevert(redemptions.redeem(redeemerAmount + 1, {from: redeemer}),
+            'REDEMPTIONS_INSUFFICIENT_BALANCE')
         })
 
         it('reverts when redeeming tokens before cliff', async () => {
           await timeTravel(web3)(TIME_TO_CLIFF - 1)
-          await assertRevert(
-            redemptions.redeem(redeemerAmount + 1, { from: redeemer }),
-            'REDEMPTIONS_INSUFFICIENT_BALANCE'
-          )
+          await assertRevert(redemptions.redeem(redeemerAmount + 1, { from: redeemer }),
+            'REDEMPTIONS_INSUFFICIENT_BALANCE')
         })
 
         it('should redeem partial amount of vested tokens after cliff', async () => {
