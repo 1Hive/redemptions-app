@@ -16,10 +16,9 @@ contract Redemptions is AragonApp {
     bytes32 constant public REDEEM_ROLE = keccak256("REDEEM_ROLE");
     bytes32 constant public ADD_TOKEN_ROLE = keccak256("ADD_TOKEN_ROLE");
     bytes32 constant public REMOVE_TOKEN_ROLE = keccak256("REMOVE_TOKEN_ROLE");
-    // bytes32 constant private REDEEM_MESSAGE = keccak256("I WOULD LIKE TO REDEEM SOME TOKENS PLEASE");
 
-    string private constant ERROR_VAULT_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
-    string private constant ERROR_TOKEN_MANAGER_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
+    string private constant ERROR_VAULT_IS_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
+    string private constant ERROR_TOKEN_MANAGER_IS_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
     string private constant ERROR_CANNOT_ADD_TOKEN_MANAGER = "REDEMPTIONS_CANNOT_ADD_TOKEN_MANAGER";
     string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
@@ -30,7 +29,7 @@ contract Redemptions is AragonApp {
 
     Vault public vault;
     TokenManager public tokenManager;
-    MiniMeToken private token;              //temporary workaround, to show amount of tokens on radspecs's redeem function
+    MiniMeToken public token;              //temporary workaround, to show amount of tokens on radspecs's redeem function
 
     mapping(address => bool) public tokenAdded;
     address[] public redemptionTokenList;
@@ -47,8 +46,8 @@ contract Redemptions is AragonApp {
     function initialize(Vault _vault, TokenManager _tokenManager) external onlyInit {
         initialized();
 
-        require(isContract(_vault), ERROR_VAULT_NOT_CONTRACT);
-        require(isContract(_tokenManager), ERROR_TOKEN_MANAGER_NOT_CONTRACT);
+        require(isContract(_vault), ERROR_VAULT_IS_NOT_CONTRACT);
+        require(isContract(_tokenManager), ERROR_TOKEN_MANAGER_IS_NOT_CONTRACT);
 
         vault = _vault;
         tokenManager = _tokenManager;
@@ -56,7 +55,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Add `_token.symbol()` token to redemption list
+    * @notice Add ` _token.symbol(): string` token to redemption list
     * @param _token token address
     */
     function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
@@ -74,7 +73,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Remove `_token.symbol()` token from redemption list
+    * @notice Remove `_token.symbol(): string` token from redemption list
     * @param _token token address
     */
     function removeToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
@@ -88,7 +87,7 @@ contract Redemptions is AragonApp {
 
     /**
     * @dev Redeem function is intended to only be used directly, using a forwarder will not work see: https://github.com/1Hive/redemptions-app/issues/78
-    * @notice Redeem `@tokenAmount(self.token(): address, _amount, false)` redeemable tokens
+    * @notice Redeem `@tokenAmount(self.token(): address, _amount, true)` tokens
     * @param _amount amount of tokens
     */
     function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
