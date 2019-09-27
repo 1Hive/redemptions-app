@@ -221,7 +221,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         assert.equal(actualRedemptionToken1, expectedRedemptionToken1)
       })
 
-      it('should allow redeeming up to max redeemable tokens', async () => {
+      it.only('should allow redeeming up to max redeemable tokens and no more', async () => {
         const maxGasAllowed = 3000000
         const redeemableTokensMaxSize = await redemptions.REDEEMABLE_TOKENS_MAX_SIZE()
         const redeemableTokenTotalSupply = await redeemableToken.totalSupply()
@@ -234,6 +234,9 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           await token.transfer(vault.address, vaultToken0Amount)
           tokens.push(token)
         }
+        const token = await Erc20.new(rootAccount, '', '')
+        await assertRevert(redemptions.addRedeemableToken(token.address),
+          'REDEMPTIONS_REDEEMABLE_TOKEN_LIST_FULL') // Cannot add more than max redeemable tokens
 
         const receipt = await redemptions.redeem(redeemerAmount, {from: redeemer,})
 
