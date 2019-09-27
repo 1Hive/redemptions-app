@@ -35,8 +35,8 @@ contract Redemptions is AragonApp {
     mapping(address => bool) public redeemableTokenEnabled;
     address[] public redeemableTokens;
 
-    event AddToken(address indexed token);
-    event RemoveToken(address indexed token);
+    event AddRedeemableToken(address indexed token);
+    event RemoveRedeemableToken(address indexed token);
     event Redeem(address indexed redeemer, uint256 amount);
 
     /**
@@ -70,7 +70,7 @@ contract Redemptions is AragonApp {
         redeemableTokenEnabled[_token] = true;
         redeemableTokens.push(_token);
 
-        emit AddToken(_token);
+        emit AddRedeemableToken(_token);
     }
 
     /**
@@ -83,7 +83,7 @@ contract Redemptions is AragonApp {
         redeemableTokenEnabled[_token] = false;
         redeemableTokens.deleteItem(_token);
 
-        emit RemoveToken(_token);
+        emit RemoveRedeemableToken(_token);
     }
 
     /**
