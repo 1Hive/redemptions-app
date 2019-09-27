@@ -1,4 +1,5 @@
 import DaoDeployment from './helpers/DaoDeployment'
+
 const Redemptions = artifacts.require('Redemptions')
 const TokenManager = artifacts.require('TokenManager')
 const Vault = artifacts.require('Vault')
@@ -6,7 +7,7 @@ const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('ERC20Token')
 
-const { assertRevert, deployedContract, getSeconds } = require('./helpers/helpers')
+const {assertRevert, deployedContract, getSeconds} = require('./helpers/helpers')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -103,71 +104,67 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
     it('should set initial values correctly', async () => {
       const actualVaultAddress = await redemptions.vault()
       const actualTokenManager = await redemptions.tokenManager()
-      const actualTokenAddresses = await redemptions.getTokens()
+      const actualTokenAddresses = await redemptions.getRedeemableTokens()
 
       assert.strictEqual(actualVaultAddress, vault.address)
       assert.strictEqual(actualTokenManager, tokenManager.address)
       assert.deepStrictEqual(actualTokenAddresses, [])
     })
 
-    context('addToken(address _token)', () => {
+    context('addRedeemableToken(address _token)', () => {
       let token0
       let expectedTokenAddresses = []
       it('should add an address to the vault tokens', async () => {
         token0 = await Erc20.new(rootAccount, '', '')
         expectedTokenAddresses.push(token0.address)
 
-        await redemptions.addToken(token0.address)
+        await redemptions.addRedeemableToken(token0.address)
 
-        const actualTokenAddresses = await redemptions.getTokens()
-        const actualTokenAddedToken = await redemptions.tokenAdded(token0.address)
+        const actualTokenAddresses = await redemptions.getRedeemableTokens()
+        const actualTokenAddedToken = await redemptions.redeemableTokenEnabled(token0.address)
         assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
         assert.isTrue(actualTokenAddedToken)
       })
 
       it('should add ether fake address to the vault tokens', async () => {
-        await redemptions.addToken(ETHER_FAKE_ADDRESS)
+        await redemptions.addRedeemableToken(ETHER_FAKE_ADDRESS)
 
-        const etherAdded = await redemptions.tokenAdded(ETHER_FAKE_ADDRESS)
+        const etherAdded = await redemptions.redeemableTokenEnabled(ETHER_FAKE_ADDRESS)
         assert.isTrue(etherAdded)
       })
 
-      it('reverts if adding token manager', async () => {
-        await assertRevert(redemptions.addToken(tokenManager.address), 'REDEMPTIONS_CANNOT_ADD_TOKEN_MANAGER')
-      })
-
       it('reverts if adding already added token', async () => {
-        await redemptions.addToken(token0.address)
-        await assertRevert(redemptions.addToken(token0.address), 'REDEMPTIONS_TOKEN_ALREADY_ADDED')
+        await redemptions.addRedeemableToken(token0.address)
+        await assertRevert(redemptions.addRedeemableToken(token0.address), 'REDEMPTIONS_TOKEN_ALREADY_ADDED')
       })
 
       it('reverts if adding non-contract address', async () => {
-        await assertRevert(redemptions.addToken(accounts[0]), 'REDEMPTIONS_TOKEN_NOT_CONTRACT')
+        await assertRevert(redemptions.addRedeemableToken(accounts[0]), 'REDEMPTIONS_TOKEN_NOT_CONTRACT')
       })
     })
 
-    context('removeToken(address _token)', () => {
+    context('removeRedeemableToken(address _token)', () => {
       let token0
       let expectedTokenAddresses
 
       beforeEach(async () => {
         token0 = await Erc20.new(rootAccount, '', '')
-        await redemptions.addToken(token0.address)
+        await redemptions.addRedeemableToken(token0.address)
         expectedTokenAddresses = [token0.address]
       })
       it('Should remove token address', async () => {
         expectedTokenAddresses = expectedTokenAddresses.slice(1)
 
-        await redemptions.removeToken(token0.address)
+        await redemptions.removeRedeemableToken(token0.address)
 
-        const actualTokenAddresses = await redemptions.getTokens()
-        const actualTokenAddedToken = await redemptions.tokenAdded(token0.address)
+        const actualTokenAddresses = await redemptions.getRedeemableTokens()
+        const actualTokenAddedToken = await redemptions.redeemableTokenEnabled(token0.address)
         assert.deepStrictEqual(actualTokenAddresses, expectedTokenAddresses)
         assert.isFalse(actualTokenAddedToken)
       })
 
       it('reverts if removing token not present', async () => {
-        await assertRevert(redemptions.removeToken(accounts[0]), 'REDEMPTIONS_NOT_VAULT_TOKEN')
+        await assertRevert(redemptions.removeRedeemableToken(accounts[0]), 'REDEMPTIONS_NOT_VAULT_TOKEN')
       })
     })
 
@@ -179,20 +176,6 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
       const vaultToken0Amount = 45231
       const vaultToken1Amount = 20001
-
-      // const CORRECTMSG = sha3('I WOULD LIKE TO REDEEM SOME TOKENS PLEASE')
-      // let correctSignature, correctValues
-
-      // const INCORRECTMSG = sha3('REDEEM PLEASE')
-      // let incorrectSignature, incorrectValues
-
-      // before(async () => {
-      //   // get hash signatures
-      //   correctSignature = await sign(CORRECTMSG, redeemer)
-      //   correctValues = Object.values(getSignatureFields(correctSignature))
-      //   incorrectSignature = await sign(INCORRECTMSG, redeemer)
-      //   incorrectValues = Object.values(getSignatureFields(incorrectSignature))
-      // })
 
       beforeEach(async () => {
         // set permissions
@@ -208,8 +191,9 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
         token0 = await Erc20.new(rootAccount, '', '')
         token1 = await Erc20.new(rootAccount, '', '')
-        await redemptions.addToken(token0.address)
-        await redemptions.addToken(token1.address)
+
+        await redemptions.addRedeemableToken(token0.address)
+        await redemptions.addRedeemableToken(token1.address)
 
         // transfer tokens to vault
         await token0.transfer(vault.address, vaultToken0Amount)
@@ -226,9 +210,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         const expectedRedemptionToken0 = parseInt((redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply)
         const expectedRedemptionToken1 = parseInt((redeemerAmount * vaultToken1Amount) / redeemableTokenTotalSupply)
 
-        await redemptions.redeem(redeemerAmount, {
-          from: redeemer,
-        })
+        await redemptions.redeem(redeemerAmount, {from: redeemer,})
 
         const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
         const actualRedemptionToken0 = await token0.balanceOf(redeemer)
@@ -237,6 +219,27 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
         assert.equal(actualRedemptionToken0, expectedRedemptionToken0)
         assert.equal(actualRedemptionToken1, expectedRedemptionToken1)
+      })
+
+      it('should allow redeeming up to max redeemable tokens', async () => {
+        const maxGasAllowed = 3000000
+        const redeemableTokensMaxSize = await redemptions.REDEEMABLE_TOKENS_MAX_SIZE()
+        const redeemableTokenTotalSupply = await redeemableToken.totalSupply()
+        const expectedRedemptionTokenBalance = parseInt((redeemerAmount * vaultToken0Amount) / redeemableTokenTotalSupply)
+        const tokens = []
+
+        for (let i = 0; i < redeemableTokensMaxSize - 2; i++) {
+          const token = await Erc20.new(rootAccount, '', '')
+          await redemptions.addRedeemableToken(token.address)
+          await token.transfer(vault.address, vaultToken0Amount)
+          tokens.push(token)
+        }
+
+        const receipt = await redemptions.redeem(redeemerAmount, {from: redeemer,})
+
+        const actualRedemptionTokenBalance = await tokens[tokens.length - 1].balanceOf(redeemer)
+        assert.equal(actualRedemptionTokenBalance, expectedRedemptionTokenBalance)
+        assert.isBelow(receipt.receipt.gasUsed, maxGasAllowed)
       })
 
       it('reverts if amount to redeem is zero', async () => {
@@ -250,7 +253,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
       it("reverts if amount to redeem exceeds account's balance", async () => {
         await assertRevert(
-          redemptions.redeem(redeemerAmount + 1, { from: redeemer }),
+          redemptions.redeem(redeemerAmount + 1, {from: redeemer}),
           'REDEMPTIONS_INSUFFICIENT_BALANCE'
         )
       })
@@ -346,16 +349,17 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
           assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
         })
+
       })
     })
   })
 
   context('app not initialized', () => {
     it('reverts on adding token ', async () => {
-      await assertRevert(redemptions.addToken())
+      await assertRevert(redemptions.addRedeemableToken())
     })
     it('reverts on removing token ', async () => {
-      await assertRevert(redemptions.removeToken())
+      await assertRevert(redemptions.removeRedeemableToken())
     })
     it('reverts on redeeming tokens ', async () => {
       await assertRevert(redemptions.redeem(1))

@@ -16,11 +16,10 @@ contract Redemptions is AragonApp {
     bytes32 constant public REDEEM_ROLE = keccak256("REDEEM_ROLE");
     bytes32 constant public ADD_TOKEN_ROLE = keccak256("ADD_TOKEN_ROLE");
     bytes32 constant public REMOVE_TOKEN_ROLE = keccak256("REMOVE_TOKEN_ROLE");
-    // bytes32 constant private REDEEM_MESSAGE = keccak256("I WOULD LIKE TO REDEEM SOME TOKENS PLEASE");
 
     string private constant ERROR_VAULT_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
     string private constant ERROR_TOKEN_MANAGER_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
-    string private constant ERROR_CANNOT_ADD_TOKEN_MANAGER = "REDEMPTIONS_CANNOT_ADD_TOKEN_MANAGER";
+    string private constant ERROR_REDEEMABLE_TOKEN_LIST_FULL = "REDEMPTIONS_REDEEMABLE_TOKEN_LIST_FULL";
     string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
     string private constant ERROR_NOT_VAULT_TOKEN = "REDEMPTIONS_NOT_VAULT_TOKEN";
@@ -28,12 +27,14 @@ contract Redemptions is AragonApp {
     string private constant ERROR_INSUFFICIENT_BALANCE = "REDEMPTIONS_INSUFFICIENT_BALANCE";
     string private constant ERROR_INCORRECT_MESSAGE = "REDEMPTIONS_INCORRECT_MESSAGE";
 
+    uint256 constant public REDEEMABLE_TOKENS_MAX_SIZE = 30;
+
     Vault public vault;
     TokenManager public tokenManager;
-    MiniMeToken private token;              //temporary workaround, to show amount of tokens on radspecs's redeem function
+    MiniMeToken public burnableToken;              //temporary workaround, to show amount of tokens on radspecs's redeem function
 
-    mapping(address => bool) public tokenAdded;
-    address[] public redemptionTokenList;
+    mapping(address => bool) public redeemableTokenEnabled;
+    address[] public redeemableTokens;
 
     event AddToken(address indexed token);
     event RemoveToken(address indexed token);
@@ -41,7 +42,7 @@ contract Redemptions is AragonApp {
 
     /**
     * @notice Initialize Redemptions app contract
-    * @param _vault Address of the vault
+    * @param _vault Vault address
     * @param _tokenManager TokenManager address
     */
     function initialize(Vault _vault, TokenManager _tokenManager) external onlyInit {
@@ -52,71 +53,73 @@ contract Redemptions is AragonApp {
 
         vault = _vault;
         tokenManager = _tokenManager;
-        token = _tokenManager.token();
+        burnableToken = _tokenManager.token();
     }
 
     /**
-    * @notice Add `_token.symbol()` token to redemption list
-    * @param _token token address
+    * @notice Add `_token.symbol(): string` token to redeemable tokens
+    * @param _token Token address
     */
-    function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
-        require(_token != address(tokenManager), ERROR_CANNOT_ADD_TOKEN_MANAGER);
-        require(!tokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
+    function addRedeemableToken(address _token) external auth(ADD_TOKEN_ROLE) {
+        require(redeemableTokens.length < REDEEMABLE_TOKENS_MAX_SIZE, ERROR_REDEEMABLE_TOKEN_LIST_FULL);
+        require(!redeemableTokenEnabled[_token], ERROR_TOKEN_ALREADY_ADDED);
 
         if (_token != ETH) {
             require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
         }
 
-        tokenAdded[_token] = true;
-        redemptionTokenList.push(_token);
+        redeemableTokenEnabled[_token] = true;
+        redeemableTokens.push(_token);
 
         emit AddToken(_token);
     }
 
     /**
-    * @notice Remove `_token.symbol()` token from redemption list
-    * @param _token token address
+    * @notice Remove `_token.symbol(): string` token from redeemable tokens
+    * @param _token Token address
     */
-    function removeToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
-        require(tokenAdded[_token], ERROR_NOT_VAULT_TOKEN);
+    function removeRedeemableToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
+        require(redeemableTokenEnabled[_token], ERROR_NOT_VAULT_TOKEN);
 
-        tokenAdded[_token] = false;
-        redemptionTokenList.deleteItem(_token);
+        redeemableTokenEnabled[_token] = false;
+        redeemableTokens.deleteItem(_token);
 
         emit RemoveToken(_token);
     }
 
     /**
-    * @dev Redeem function is intended to only be used directly, using a forwarder will not work see: https://github.com/1Hive/redemptions-app/issues/78
-    * @notice Redeem `@tokenAmount(self.token(): address, _amount, false)` redeemable tokens
-    * @param _amount amount of tokens
+    * @dev The redeem function is intended to be used directly, using a forwarder will not work see: https://github.com/1Hive/redemptions-app/issues/78
+    * @notice Burn `@tokenAmount(self.burnableToken(): address, _amount, true)` in exchange for redeemable tokens.
+    * @param _burnableAmount Amount of burnable token to be exchanged for redeemable tokens
     */
-    function redeem(uint256 _amount) external auth(REDEEM_ROLE) {
-        require(_amount > 0, ERROR_CANNOT_REDEEM_ZERO);
-        require(tokenManager.spendableBalanceOf(msg.sender) >= _amount, ERROR_INSUFFICIENT_BALANCE);
+    function redeem(uint256 _burnableAmount) external auth(REDEEM_ROLE) {
+        require(_burnableAmount > 0, ERROR_CANNOT_REDEEM_ZERO);
+        require(tokenManager.spendableBalanceOf(msg.sender) >= _burnableAmount, ERROR_INSUFFICIENT_BALANCE);
 
         uint256 redemptionAmount;
-        uint256 tokenBalance;
-        uint256 totalSupply = tokenManager.token().totalSupply();
+        uint256 vaultTokenBalance;
+        uint256 burnableTokenTotalSupply = tokenManager.token().totalSupply();
 
-        for (uint256 i = 0; i < redemptionTokenList.length; i++) {
-            tokenBalance = vault.balance(redemptionTokenList[i]);
+        for (uint256 i = 0; i < redeemableTokens.length; i++) {
+            vaultTokenBalance = vault.balance(redeemableTokens[i]);
 
-            redemptionAmount = _amount.mul(tokenBalance).div(totalSupply);
-            if (redemptionAmount > 0)
-                vault.transfer(redemptionTokenList[i], msg.sender, redemptionAmount);
+            redemptionAmount = _burnableAmount.mul(vaultTokenBalance).div(burnableTokenTotalSupply);
+
+            if (redemptionAmount > 0) {
+                vault.transfer(redeemableTokens[i], msg.sender, redemptionAmount);
+            }
         }
 
-        tokenManager.burn(msg.sender, _amount);
+        tokenManager.burn(msg.sender, _burnableAmount);
 
-        emit Redeem(msg.sender, _amount);
+        emit Redeem(msg.sender, _burnableAmount);
     }
 
     /**
     * @notice Get tokens from redemption list
     * @return token addresses
     */
-    function getTokens() public view returns (address[]) {
-        return redemptionTokenList;
+    function getRedeemableTokens() public view returns (address[]) {
+        return redeemableTokens;
     }
 }
