@@ -40,7 +40,7 @@ Adding the address to the Redemptions app does not transfer any tokens. What thi
 Removing tokens from the Redemptions app is done by passing an address `_token` to the removeRedeemableToken() function. This must be an address that is already added to the Redemptions `redeemableTokenAdded` mapping.
 ```
 function removeRedeemableToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
-	require(redeemableTokenAdded[_token], ERROR_NOT_VAULT_TOKEN);
+	require(redeemableTokenAdded[_token], ERROR_TOKEN_NOT_ADDED);
 ```
 
 Removing an address from the Redemptions app does not transfer any tokens. If a token is in the `Vault` and you remove it from the Redemptions app, it will stay in the `Vault`. It will, however, no longer be eligible for redemption and will no longer show up in the Redemption app UI. Concretely this looks like:
