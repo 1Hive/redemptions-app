@@ -85,7 +85,7 @@ contract Template is TemplateBase {
         // Initialize apps
         vault.initialize();
         tokenManager.initialize(token, true, 0);
-        redemptions.initialize(vault, tokenManager);
+        redemptions.initialize(vault, tokenManager, new address[](0));
         voting.initialize(token, 50 * PCT, 20 * PCT, 1 days);
 
         acl.createPermission(this, tokenManager, tokenManager.MINT_ROLE(), this);

@@ -22,7 +22,7 @@ contract Redemptions is AragonApp {
     string private constant ERROR_REDEEMABLE_TOKEN_LIST_FULL = "REDEMPTIONS_REDEEMABLE_TOKEN_LIST_FULL";
     string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
-    string private constant ERROR_NOT_VAULT_TOKEN = "REDEMPTIONS_NOT_VAULT_TOKEN";
+    string private constant ERROR_TOKEN_NOT_ADDED = "REDEMPTIONS_TOKEN_NOT_ADDED";
     string private constant ERROR_CANNOT_REDEEM_ZERO = "REDEMPTIONS_CANNOT_REDEEM_ZERO";
     string private constant ERROR_INSUFFICIENT_BALANCE = "REDEMPTIONS_INSUFFICIENT_BALANCE";
 
@@ -30,9 +30,9 @@ contract Redemptions is AragonApp {
 
     Vault public vault;
     TokenManager public tokenManager;
-    MiniMeToken public burnableToken;              //temporary workaround, to show amount of tokens on radspecs's redeem function
+    MiniMeToken public burnableToken; // convenience variable for getting the burnable token's address in radspec
 
-    mapping(address => bool) public redeemableTokenEnabled;
+    mapping(address => bool) public redeemableTokenAdded;
     address[] public redeemableTokens;
 
     event AddRedeemableToken(address indexed token);
@@ -44,15 +44,25 @@ contract Redemptions is AragonApp {
     * @param _vault Vault address
     * @param _tokenManager TokenManager address
     */
-    function initialize(Vault _vault, TokenManager _tokenManager) external onlyInit {
+    function initialize(Vault _vault, TokenManager _tokenManager, address[] _redeemableTokens) external onlyInit {
         initialized();
 
         require(isContract(_vault), ERROR_VAULT_IS_NOT_CONTRACT);
         require(isContract(_tokenManager), ERROR_TOKEN_MANAGER_IS_NOT_CONTRACT);
+        require(_redeemableTokens.length <= REDEEMABLE_TOKENS_MAX_SIZE, ERROR_REDEEMABLE_TOKEN_LIST_FULL);
+
+        for (uint256 i = 0; i < _redeemableTokens.length; i++) {
+            address token = _redeemableTokens[i];
+            if (token != ETH) {
+                require(isContract(token), ERROR_TOKEN_NOT_CONTRACT);
+            }
+            redeemableTokenAdded[token] = true;
+        }
 
         vault = _vault;
         tokenManager = _tokenManager;
         burnableToken = _tokenManager.token();
+        redeemableTokens = _redeemableTokens;
     }
 
     /**
@@ -61,13 +71,13 @@ contract Redemptions is AragonApp {
     */
     function addRedeemableToken(address _token) external auth(ADD_TOKEN_ROLE) {
         require(redeemableTokens.length < REDEEMABLE_TOKENS_MAX_SIZE, ERROR_REDEEMABLE_TOKEN_LIST_FULL);
-        require(!redeemableTokenEnabled[_token], ERROR_TOKEN_ALREADY_ADDED);
+        require(!redeemableTokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
 
         if (_token != ETH) {
             require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
         }
 
-        redeemableTokenEnabled[_token] = true;
+        redeemableTokenAdded[_token] = true;
         redeemableTokens.push(_token);
 
         emit AddRedeemableToken(_token);
@@ -78,9 +88,9 @@ contract Redemptions is AragonApp {
     * @param _token Token address
     */
     function removeRedeemableToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
-        require(redeemableTokenEnabled[_token], ERROR_NOT_VAULT_TOKEN);
+        require(redeemableTokenAdded[_token], ERROR_TOKEN_NOT_ADDED);
 
-        redeemableTokenEnabled[_token] = false;
+        redeemableTokenAdded[_token] = false;
         redeemableTokens.deleteItem(_token);
 
         emit RemoveRedeemableToken(_token);
@@ -88,7 +98,7 @@ contract Redemptions is AragonApp {
 
     /**
     * @dev The redeem function is intended to be used directly, using a forwarder will not work see: https://github.com/1Hive/redemptions-app/issues/78
-    * @notice Burn `@tokenAmount(self.burnableToken(): address, _amount, true)` in exchange for redeemable tokens.
+    * @notice Burn `@tokenAmount(self.burnableToken(): address, _burnableAmount, true)` in exchange for redeemable tokens.
     * @param _burnableAmount Amount of burnable token to be exchanged for redeemable tokens
     */
     function redeem(uint256 _burnableAmount) external auth(REDEEM_ROLE) {

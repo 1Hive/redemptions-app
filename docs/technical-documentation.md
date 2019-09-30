@@ -16,7 +16,7 @@ Adding tokens to the Redemptions app is done by passing an address `_token` to t
 ```
 function addRedeemableToken(address _token) external auth(ADD_TOKEN_ROLE) {
 	require(_token != address(tokenManager), ERROR_CANNOT_ADD_TOKEN_MANAGER);
-	require(!redeemableTokenEnabled[_token], ERROR_TOKEN_ALREADY_ADDED);
+	require(!redeemableTokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
 	if (_token != ETH) {
 		require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
 	}
@@ -27,7 +27,7 @@ Adding the address to the Redemptions app does not transfer any tokens. What thi
 - mapping the token contract address to a boolean (`true`)
 - emitting an event that the token has been added to the Redemptions app
 ```
-	redeemableTokenEnabled[_token] = true;
+	redeemableTokenAdded[_token] = true;
 	redeemableTokens.push(_token);
 	emit AddRedeemableToken(_token);
 }
@@ -37,10 +37,10 @@ Adding the address to the Redemptions app does not transfer any tokens. What thi
 
 ## Removing Tokens
 
-Removing tokens from the Redemptions app is done by passing an address `_token` to the removeRedeemableToken() function. This must be an address that is already added to the Redemptions `redeemableTokenEnabled` mapping.
+Removing tokens from the Redemptions app is done by passing an address `_token` to the removeRedeemableToken() function. This must be an address that is already added to the Redemptions `redeemableTokenAdded` mapping.
 ```
 function removeRedeemableToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
-	require(redeemableTokenEnabled[_token], ERROR_NOT_VAULT_TOKEN);
+	require(redeemableTokenAdded[_token], ERROR_NOT_VAULT_TOKEN);
 ```
 
 Removing an address from the Redemptions app does not transfer any tokens. If a token is in the `Vault` and you remove it from the Redemptions app, it will stay in the `Vault`. It will, however, no longer be eligible for redemption and will no longer show up in the Redemption app UI. Concretely this looks like:
@@ -48,7 +48,7 @@ Removing an address from the Redemptions app does not transfer any tokens. If a 
 - mapping the token contract address to a boolean (`false`)
 - emitting an event that the token has been removed from the Redemptions app
 ```
-	redeemableTokenEnabled[_token] = false;
+	redeemableTokenAdded[_token] = false;
 	redeemableTokens.deleteItem(_token);
 	emit RemoveRedeemableToken(_token);
 }
