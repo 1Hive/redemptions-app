@@ -252,7 +252,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         )
       })
 
-      context.skip('respect vesting', () => {
+      context('respect vesting', () => {
         const vestingAmount = 200
 
         let TIME_TO_CLIFF
