@@ -139,9 +139,9 @@ async function createStore(settings) {
     } else {
       // Redemptions event
       switch (event) {
-        case 'AddToken':
+        case 'AddRedeemableToken':
           return addedToken(nextState, returnValues, settings)
-        case 'RemoveToken':
+        case 'RemoveRedeemableToken':
           return removedToken(nextState, returnValues)
         case 'Redeem':
           return newRedemption(nextState, settings)
@@ -293,7 +293,7 @@ function spendableBalanceOf({ tokenManager: { contract } }, account) {
 
 /** called when redemption has been made (refresh of all tokens balances)  */
 async function updateTokens(settings) {
-  const tokens = await app.call('getTokens').toPromise()
+  const tokens = await app.call('getRedeemableTokens').toPromise()
   return getVaultBalances(tokens, settings)
 }
 

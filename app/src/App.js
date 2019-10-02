@@ -52,8 +52,8 @@ class App extends React.Component {
 
   handleUpdateTokens = (mode, address) => {
     const { api } = this.props
-    if (mode === 'add') api.addToken(address).toPromise()
-    if (mode === 'remove') api.removeToken(address).toPromise()
+    if (mode === 'add') api.addRedeemableToken(address).toPromise()
+    if (mode === 'remove') api.removeRedeemableToken(address).toPromise()
 
     this.handleSidePanelClose()
   }

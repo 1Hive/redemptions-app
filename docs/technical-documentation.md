@@ -12,24 +12,24 @@ The Redemptions app must have the `TRANSFER_ROLE` permission on `_vault` and the
 
 ## Adding Tokens
 
-Adding tokens to the Redemptions app is done by passing an address `_token` to the addToken() function. This must be the address of a token contract.
+Adding tokens to the Redemptions app is done by passing an address `_token` to the addRedeemableToken() function. This must be the address of a token contract.
 ```
-function addToken(address _token) external auth(ADD_TOKEN_ROLE) {
+function addRedeemableToken(address _token) external auth(ADD_TOKEN_ROLE) {
 	require(_token != address(tokenManager), ERROR_CANNOT_ADD_TOKEN_MANAGER);
-	require(!tokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
+	require(!redeemableTokenAdded[_token], ERROR_TOKEN_ALREADY_ADDED);
 	if (_token != ETH) {
 		require(isContract(_token), ERROR_TOKEN_NOT_CONTRACT);
 	}
 ```
 
 Adding the address to the Redemptions app does not transfer any tokens. What this does do is add a token contract address to the Redemptions app and make it eligible for redemption. If that token is in the `Vault` a user will then be able to redeem their tokens for a percentage of those tokens in the `Vault`. Concretely this looks like:
-- adding the contract address to the `_redemptionTokenList` array
+- adding the contract address to the `_redeemableTokens` array
 - mapping the token contract address to a boolean (`true`)
 - emitting an event that the token has been added to the Redemptions app
 ```
-	tokenAdded[_token] = true;
-	redemptionTokenList.push(_token);
-	emit AddToken(_token);
+	redeemableTokenAdded[_token] = true;
+	redeemableTokens.push(_token);
+	emit AddRedeemableToken(_token);
 }
 ```
 
@@ -37,20 +37,20 @@ Adding the address to the Redemptions app does not transfer any tokens. What thi
 
 ## Removing Tokens
 
-Removing tokens from the Redemptions app is done by passing an address `_token` to the removeToken() function. This must be an address that is already added to the Redemptions `tokenAdded[]` array.
+Removing tokens from the Redemptions app is done by passing an address `_token` to the removeRedeemableToken() function. This must be an address that is already added to the Redemptions `redeemableTokenAdded` mapping.
 ```
-function removeToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
-	require(tokenAdded[_token], ERROR_NOT_VAULT_TOKEN);
+function removeRedeemableToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
+	require(redeemableTokenAdded[_token], ERROR_TOKEN_NOT_ADDED);
 ```
 
 Removing an address from the Redemptions app does not transfer any tokens. If a token is in the `Vault` and you remove it from the Redemptions app, it will stay in the `Vault`. It will, however, no longer be eligible for redemption and will no longer show up in the Redemption app UI. Concretely this looks like:
-- removing the contract address from the `_redemptionTokenList` array
+- removing the contract address from the `_redeemableTokens` array
 - mapping the token contract address to a boolean (`false`)
 - emitting an event that the token has been removed from the Redemptions app
 ```
-	tokenAdded[_token] = false;
-	redemptionTokenList.deleteItem(_token);
-	emit RemoveToken(_token);
+	redeemableTokenAdded[_token] = false;
+	redeemableTokens.deleteItem(_token);
+	emit RemoveRedeemableToken(_token);
 }
 ```
 
@@ -76,15 +76,15 @@ uint256 redemptionAmount;
 uint256 tokenBalance;
 uint256 totalSupply = tokenManager.token().totalSupply();
 
-for (uint256 i = 0; i < redemptionTokenList.length; i++) {
-	tokenBalance = vault.balance(redemptionTokenList[i]);
+for (uint256 i = 0; i < redeemableTokens.length; i++) {
+	tokenBalance = vault.balance(redeemableTokens[i]);
 	redemptionAmount = _amount.mul(tokenBalance).div(totalSupply);
 ```
 
-4. check if there is a non-zero amount of each token in the `_redemptionTokenList`, and if so, transfer the `_redemptionAmount` of that token to the `redeemer`.
+4. check if there is a non-zero amount of each token in the `_redeemableTokens`, and if so, transfer the `_redemptionAmount` of that token to the `redeemer`.
 ```
 if (redemptionAmount > 0)
-	vault.transfer(redemptionTokenList[i], redeemer, redemptionAmount);
+	vault.transfer(redeemableTokens[i], redeemer, redemptionAmount);
 ```
 
 5. burn `_amount` of the msg.sender's redemption tokens
@@ -101,6 +101,6 @@ emit Redeem(msg.sender, _amount);
 
 ## Get Tokens
 
-Anyone can view the token contract addresses that are stored in `redemptionTokenList` by calling `getTokens()`.
+Anyone can view the token contract addresses that are stored in `redeemableTokens` by calling `getRedeemableTokens()`.
 
 <br />
