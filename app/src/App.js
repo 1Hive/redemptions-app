@@ -161,6 +161,5 @@ class App extends React.Component {
 export default () => {
   const api = useApi()
   const appState = useAppState()
-  console.log('state', appState)
   return <App api={api} {...appState} />
 }
