@@ -133,7 +133,7 @@ contract Redemptions is AragonApp {
     /**
     * @dev Convenience function for getting the burnable token in a radspec string
     */
-    function getToken() public returns (address) {
+    function getToken() public view returns (address) {
         return tokenManager.token();
     }
 }
