@@ -1,13 +1,14 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { useAragonApi } from '@aragon/api-react'
-import { Main, Badge, SidePanel, SyncIndicator } from '@aragon/ui'
+import { useAppState, useApi } from '@aragon/api-react'
+import { Main, Badge, SidePanel, SyncIndicator, Header, GU } from '@aragon/ui'
 import { capitalizeFirst } from './lib/utils'
 
 import redeemIcon from './assets/icono.svg'
+import Title from './components/Title'
+import MainButton from './components/Buttons/MainButton'
 import Balances from './components/Balances'
-import AppLayout from './components/AppLayout'
-import EmptyState from './screens/EmptyState'
+import NoTokens from './screens/NoTokens'
 import UpdateTokens from './components/Panels/UpdateTokens'
 import RedeemTokens from './components/Panels/RedeemTokens'
 
@@ -84,51 +85,73 @@ class App extends React.Component {
     return (
       <Main>
         <SyncIndicator visible={isSyncing} />
-        <AppLayout
-          title="Redemptions"
-          afterTitle={rdt && <Badge.App>{rdt.symbol}</Badge.App>}
-          mainButton={
-            showTokens
-              ? {
-                  label: 'Redeem',
-                  onClick: this.handleLaunchRedeemTokens,
-                  icon: <img src={redeemIcon} height="30px" alt="" />,
-                }
-              : null
+        <Header
+          primary={
+            <Title
+              text="Redememptions"
+              after={rdt && <Badge.App>{rdt.symbol}</Badge.App>}
+            />
           }
-          smallViewPadding={0}
-        >
-          {showTokens ? (
-            <Balances
-              tokens={tokens}
-              onAddToken={this.handleLaunchAddToken}
-              onRemoveToken={this.handleLaunchRemoveToken}
-            />
-          ) : (
-            !isSyncing && <EmptyState onActivate={this.handleLaunchAddToken} />
-          )}
-        </AppLayout>
+          secondary={
+            showTokens ? (
+              <MainButton
+                label="Redeem"
+                onClick={this.handleLaunchRedeemTokens}
+                icon={<img src={redeemIcon} height="30px" alt="" />}
+              />
+            ) : null
+          }
+        />
+        {showTokens ? (
+          <Balances
+            tokens={tokens}
+            onAddToken={this.handleLaunchAddToken}
+            onRemoveToken={this.handleLaunchRemoveToken}
+          />
+        ) : (
+          !isSyncing && (
+            <div
+              css={`
+                height: calc(100vh - ${8 * GU}px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              `}
+            >
+              <NoTokens
+                onNewToken={this.handleLaunchAddToken}
+                isSyncing={isSyncing}
+              />
+            </div>
+          )
+        )}
         <SidePanel {...sidePanelProps}>
-          {mode === 'redeem' ? (
-            <RedeemTokens
-              appi={api}
-              balance={rdt.balance}
-              symbol={rdt.symbol}
-              decimals={rdt.numData.decimals}
-              totalSupply={rdt.totalSupply}
-              tokens={redeemables}
-              onRedeemTokens={this.handleRedeemTokens}
-              opened={sidePanelProps.opened}
-            />
-          ) : (
-            <UpdateTokens
-              mode={mode}
-              tokens={tokens}
-              tokenAddress={tokenAddress}
-              onUpdateTokens={this.handleUpdateTokens}
-              opened={sidePanelProps.opened}
-            />
-          )}
+          <div
+            css={`
+              margin-top: ${3 * GU}px;
+            `}
+          >
+            {mode === 'redeem' ? (
+              <RedeemTokens
+                appi={api}
+                balance={rdt.balance}
+                symbol={rdt.symbol}
+                decimals={rdt.numData.decimals}
+                totalSupply={rdt.totalSupply}
+                tokens={redeemables}
+                onRedeemTokens={this.handleRedeemTokens}
+                opened={sidePanelProps.opened}
+              />
+            ) : (
+              <UpdateTokens
+                mode={mode}
+                tokens={tokens}
+                tokenAddress={tokenAddress}
+                onUpdateTokens={this.handleUpdateTokens}
+                opened={sidePanelProps.opened}
+              />
+            )}
+          </div>
         </SidePanel>
       </Main>
     )
@@ -136,6 +159,8 @@ class App extends React.Component {
 }
 
 export default () => {
-  const { api, appState } = useAragonApi()
+  const api = useApi()
+  const appState = useAppState()
+  console.log('state', appState)
   return <App api={api} {...appState} />
 }

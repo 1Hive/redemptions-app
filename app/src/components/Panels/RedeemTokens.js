@@ -4,7 +4,13 @@ import styled from 'styled-components'
 
 import RedeemTokenList from '../RedeemTokenList'
 import { ErrorMessage, InfoMessage } from '../Message'
-import { formatTokenAmount, toDecimals, safeDiv, fromDecimals, round } from '../../lib/math-utils'
+import {
+  formatTokenAmount,
+  toDecimals,
+  safeDiv,
+  fromDecimals,
+  round,
+} from '../../lib/math-utils'
 
 const MAX_INPUT_DECIMAL_BASE = 6
 
@@ -82,16 +88,26 @@ class RedeemTokens extends Component {
     const formattedBalance = formatAmount(balance, decimals)
     const formattedSupply = formatAmount(totalSupply, decimals)
 
-    const youGet = getTokenExchange(tokens, amount.value, totalSupply / Math.pow(10, decimals))
+    const youGet = getTokenExchange(
+      tokens,
+      amount.value,
+      totalSupply / Math.pow(10, decimals)
+    )
 
-    const minTokenStep = fromDecimals('1', Math.min(MAX_INPUT_DECIMAL_BASE, decimals))
+    const minTokenStep = fromDecimals(
+      '1',
+      Math.min(MAX_INPUT_DECIMAL_BASE, decimals)
+    )
 
     const errorMessage = amount.error
 
     return (
       <div>
         <form onSubmit={this.handleFormSubmit}>
-          <InfoMessage title={'Redeemption action'} text={`This action will redeem ${amount.value} tokens`} />
+          <InfoMessage
+            title={'Redeemption action'}
+            text={`This action will redeem ${amount.value} tokens`}
+          />
           <TokenInfo>
             You have{' '}
             <Text weight="bold">
@@ -127,7 +143,12 @@ class RedeemTokens extends Component {
             text="You'll have to sign a message first for security purposes."
             background={theme.infoPermissionsBackground}
           /> */}
-          <Button mode="strong" wide={true} type="submit" disabled={amount.value <= 0 || tokens.length === 0}>
+          <Button
+            mode="strong"
+            wide={true}
+            type="submit"
+            disabled={amount.value <= 0 || tokens.length === 0}
+          >
             {'Redeem tokens'}
           </Button>
           {errorMessage && <ErrorMessage message={errorMessage} />}
