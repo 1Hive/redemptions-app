@@ -35,6 +35,7 @@ dao=0x6604f9fe9Db1D3F6a45d8F0ab79e8a4B05968816
 token=0x7F42cEB659B944cBB9F3D5ED637f66818C1bAcbf
 voting=0x41CA57d1e65Cdcd3A68A0e9f8E835F3a1FeDc655
 vault=0x04b46b9e0c1f893cA50Cb35F096d14dD946DEf95
+ANY_ADDRESS=0xffffffffffffffffffffffffffffffffffffffff
 ```
 
 ---
@@ -42,7 +43,6 @@ vault=0x04b46b9e0c1f893cA50Cb35F096d14dD946DEf95
 ### 2. Install Redemptions App
 
 Redemptions has been published to APM on Rinkeby at `redemptions.open.aragonpm.eth`
-
 
 ```sh
 aragon dao install $dao redemptions.open.aragonpm.eth --app-init-args $vault $token --environment aragon:rinkeby
@@ -72,17 +72,20 @@ Three permissions need to be created for the Redemptions app to function properl
 
 After setting one of these roles the Redemptions App will appear in the UI
 
-We're going to grant token holders the permission to redeem tokens and sets the voting app as the controller. Again like the rest of the commands that change state, you must first vote before the action takes affect.
+We're going to grant any account the permission to redeem tokens and set the voting app as the controller. Again like the rest of the commands that change state, you must first vote before the action takes affect. We currently support only direct redemptions which means that granting the permission to a forwarder instead will not work.
+
 ```sh
-dao acl create $dao $redemptions REDEEM_ROLE $token $voting --environment aragon:rinkeby
+dao acl create $dao $redemptions REDEEM_ROLE $ANY_ADDRESS $voting --environment aragon:rinkeby
 ```
 
 This grants the voting app the permission to add tokens to the list of redeemable tokens and sets it as the controller
+
 ```sh
 dao acl create $dao $redemptions ADD_TOKEN_ROLE $voting $voting --environment aragon:rinkeby
 ```
 
 This grants the voting app the permission to remove tokens from the list of redeemable tokens and sets it as the controller
+
 ```sh
 dao acl create $dao $redemptions REMOVE_TOKEN_ROLE $token $voting --environment aragon:rinkeby
 ```
@@ -94,6 +97,7 @@ The Redemptions app must also have the `TRANSFER_ROLE` permission on `Vault` and
 ```sh
 dao acl create $dao $vault TRANSFER_ROLE $redemptions $voting --environment aragon:rinkeby
 ```
+
 ```sh
 dao acl create $dao $token BURN_ROLE $redemptions $voting --environment aragon:rinkeby
 ```
@@ -105,6 +109,7 @@ dao acl create $dao $token BURN_ROLE $redemptions $voting --environment aragon:r
 ---
 
 ### 4. Testing the Redemptions app
+
 Before we test out Redemptions, we are going to need some tokens to redeem and some assets to redeem them for
 
 Go back to the settings tab and press the request tokens button a few times. This will deposit some tokens into the vault.

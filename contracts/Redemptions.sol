@@ -30,7 +30,6 @@ contract Redemptions is AragonApp {
 
     Vault public vault;
     TokenManager public tokenManager;
-    MiniMeToken public burnableToken; // convenience variable for getting the burnable token's address in radspec
 
     mapping(address => bool) public redeemableTokenAdded;
     address[] public redeemableTokens;
@@ -61,7 +60,6 @@ contract Redemptions is AragonApp {
 
         vault = _vault;
         tokenManager = _tokenManager;
-        burnableToken = _tokenManager.token();
         redeemableTokens = _redeemableTokens;
     }
 
@@ -98,7 +96,7 @@ contract Redemptions is AragonApp {
 
     /**
     * @dev The redeem function is intended to be used directly, using a forwarder will not work see: https://github.com/1Hive/redemptions-app/issues/78
-    * @notice Burn `@tokenAmount(self.burnableToken(): address, _burnableAmount, true)` in exchange for redeemable tokens.
+    * @notice Burn `@tokenAmount(self.getToken(): address, _burnableAmount, true)` in exchange for redeemable tokens.
     * @param _burnableAmount Amount of burnable token to be exchanged for redeemable tokens
     */
     function redeem(uint256 _burnableAmount) external authP(REDEEM_ROLE, arr(msg.sender)) {
@@ -130,5 +128,12 @@ contract Redemptions is AragonApp {
     */
     function getRedeemableTokens() public view returns (address[]) {
         return redeemableTokens;
+    }
+
+    /**
+    * @dev Convenience function for getting the burnable token in a radspec string
+    */
+    function getToken() public view returns (address) {
+        return tokenManager.token();
     }
 }
