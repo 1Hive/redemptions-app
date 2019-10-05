@@ -99,7 +99,7 @@ contract Redemptions is AragonApp {
     * @notice Burn `@tokenAmount(self.getToken(): address, _burnableAmount, true)` in exchange for redeemable tokens.
     * @param _burnableAmount Amount of burnable token to be exchanged for redeemable tokens
     */
-    function redeem(uint256 _burnableAmount) external auth(REDEEM_ROLE) {
+    function redeem(uint256 _burnableAmount) external authP(REDEEM_ROLE, arr(msg.sender)) {
         require(_burnableAmount > 0, ERROR_CANNOT_REDEEM_ZERO);
         require(tokenManager.spendableBalanceOf(msg.sender) >= _burnableAmount, ERROR_INSUFFICIENT_BALANCE);
 
