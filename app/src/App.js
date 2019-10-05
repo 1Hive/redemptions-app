@@ -87,10 +87,12 @@ class App extends React.Component {
         <SyncIndicator visible={isSyncing} />
         <Header
           primary={
-            <Title
-              text="Redememptions"
-              after={rdt && <Badge.App>{rdt.symbol}</Badge.App>}
-            />
+            showTokens ? (
+              <Title
+                text="Redememptions"
+                after={rdt && <Badge.App>{rdt.symbol}</Badge.App>}
+              />
+            ) : null
           }
           secondary={
             showTokens ? (
