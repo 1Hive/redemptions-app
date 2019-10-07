@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { useAppState, useApi } from '@aragon/api-react'
-import { Main, Badge, SidePanel, SyncIndicator, Header, GU } from '@aragon/ui'
+import { Main, Tag, SidePanel, SyncIndicator, Header, GU } from '@aragon/ui'
 import { capitalizeFirst } from './lib/utils'
 
 import redeemIcon from './assets/icono.svg'
@@ -68,7 +68,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { tokens, redeemableToken: rdt, isSyncing, api } = this.props
+    const { tokens, redeemableToken: rdt, isSyncing } = this.props
     const { mode, sidePanelOpened, tokenAddress } = this.state
 
     const modeStr = capitalizeFirst(mode)
@@ -86,14 +86,7 @@ class App extends React.Component {
       <Main>
         <SyncIndicator visible={isSyncing} />
         <Header
-          primary={
-            showTokens ? (
-              <Title
-                text="Redememptions"
-                after={rdt && <Badge.App>{rdt.symbol}</Badge.App>}
-              />
-            ) : null
-          }
+          primary={showTokens ? <Title text="Redemptions" after={rdt && <Tag mode='identifier'>{rdt.symbol}</Tag>} /> : null}
           secondary={
             showTokens ? (
               <MainButton
@@ -120,10 +113,7 @@ class App extends React.Component {
                 justify-content: center;
               `}
             >
-              <NoTokens
-                onNewToken={this.handleLaunchAddToken}
-                isSyncing={isSyncing}
-              />
+              <NoTokens onNewToken={this.handleLaunchAddToken} isSyncing={isSyncing} />
             </div>
           )
         )}
@@ -135,7 +125,6 @@ class App extends React.Component {
           >
             {mode === 'redeem' ? (
               <RedeemTokens
-                appi={api}
                 balance={rdt.balance}
                 symbol={rdt.symbol}
                 decimals={rdt.numData.decimals}
@@ -161,7 +150,5 @@ class App extends React.Component {
 }
 
 export default () => {
-  const api = useApi()
-  const appState = useAppState()
-  return <App api={api} {...appState} />
+  return <App api={useApi()} {...useAppState()} />
 }

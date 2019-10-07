@@ -1,16 +1,10 @@
 import React, { Component } from 'react'
-import { Text, TextInput, Button, Slider, breakpoint } from '@aragon/ui'
+import { Text, TextInput, Button, Slider, breakpoint, Field } from '@aragon/ui'
 import styled from 'styled-components'
 
 import RedeemTokenList from '../RedeemTokenList'
 import { ErrorMessage, InfoMessage } from '../Message'
-import {
-  formatTokenAmount,
-  toDecimals,
-  safeDiv,
-  fromDecimals,
-  round,
-} from '../../lib/math-utils'
+import { formatTokenAmount, toDecimals, safeDiv, fromDecimals, round } from '../../lib/math-utils'
 
 const MAX_INPUT_DECIMAL_BASE = 6
 
@@ -88,16 +82,9 @@ class RedeemTokens extends Component {
     const formattedBalance = formatAmount(balance, decimals)
     const formattedSupply = formatAmount(totalSupply, decimals)
 
-    const youGet = getTokenExchange(
-      tokens,
-      amount.value,
-      totalSupply / Math.pow(10, decimals)
-    )
+    const youGet = getTokenExchange(tokens, amount.value, totalSupply / Math.pow(10, decimals))
 
-    const minTokenStep = fromDecimals(
-      '1',
-      Math.min(MAX_INPUT_DECIMAL_BASE, decimals)
-    )
+    const minTokenStep = fromDecimals('1', Math.min(MAX_INPUT_DECIMAL_BASE, decimals))
 
     const errorMessage = amount.error
 
@@ -105,8 +92,8 @@ class RedeemTokens extends Component {
       <div>
         <form onSubmit={this.handleFormSubmit}>
           <InfoMessage
-            title={'Redeemption action'}
-            text={`This action will redeem ${amount.value} tokens`}
+            title={'Redemption action'}
+            text={`This action will burn ${amount.value} ${symbol} tokens in exchange for redeemable tokens`}
           />
           <TokenInfo>
             You have{' '}
@@ -116,11 +103,11 @@ class RedeemTokens extends Component {
             tokens for redemption
           </TokenInfo>
           <Wrapper>
-            <SliderWrapper label="Amount to redeem">
+            <SliderWrapper label="Amount to burn">
               <Slider value={progress} onUpdate={this.handleSliderChange} />
             </SliderWrapper>
             <InputWrapper>
-              <TextInput.Number
+              <TextInput
                 name="amount"
                 wide={false}
                 value={amount.value}
@@ -133,22 +120,9 @@ class RedeemTokens extends Component {
               <Text size="large">{symbol}</Text>
             </InputWrapper>
           </Wrapper>
-          {tokens.length > 0 ? (
-            <RedeemTokenList tokens={tokens} youGet={youGet} />
-          ) : (
-            <Info>No tokens for redemption</Info>
-          )}
-
-          {/* <InfoMessage
-            text="You'll have to sign a message first for security purposes."
-            background={theme.infoPermissionsBackground}
-          /> */}
-          <Button
-            mode="strong"
-            wide={true}
-            type="submit"
-            disabled={amount.value <= 0 || tokens.length === 0}
-          >
+          {tokens.length > 0 ? <RedeemTokenList tokens={tokens} youGet={youGet} /> : <Info>No tokens to redeem</Info>}
+          
+          <Button mode="strong" wide={true} type="submit" disabled={amount.value <= 0 || tokens.length === 0}>
             {'Redeem tokens'}
           </Button>
           {errorMessage && <ErrorMessage message={errorMessage} />}
@@ -168,9 +142,9 @@ const Wrapper = styled.div`
   padding: 20px 0px;
 `
 
-const SliderWrapper = styled.div`
+const SliderWrapper = styled(Field)`
   flex-basis: 50%;
-  > :first-child {
+  > :first-child > :nth-child(2) {
     min-width: 150px;
     padding-left: 0;
     ${breakpoint(

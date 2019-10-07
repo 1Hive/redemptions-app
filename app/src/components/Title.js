@@ -1,21 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
-import { useAragonApi } from '@aragon/api-react'
-import MenuButton from './Buttons/MenuButton'
 
 function Title({ text, after }) {
-  const { requestMenu, displayMenuButton } = useAragonApi()
-
   return (
     <Wrapper>
-      {displayMenuButton && <MenuButton onClick={requestMenu} />}
-      <Label
-        css={`
-          margin-left: ${displayMenuButton ? '20' : '0'};
-        `}
-      >
-        {text}
-      </Label>
+      <Label>{text}</Label>
       {after}
     </Wrapper>
   )
