@@ -25,8 +25,7 @@ const BalanceToken = ({
   verified,
   removable,
   theme
-}) => {
-  return (
+}) => (
     <Balance removable={removable} negative={String(theme.negative)}>
       <Top>
         <Token color={String(theme.contentSecondary)}>
@@ -48,12 +47,11 @@ const BalanceToken = ({
         <Amount>{splitAmount(amount, decimals)}</Amount>
       </Bottom>
     </Balance>
-)}
+)
 
 const Top = styled.div`
   position: relative;
   height: 100%;
-  displa
 
   ${breakpoint(
     'medium',
