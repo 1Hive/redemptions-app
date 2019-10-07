@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { theme, breakpoint, IconCross } from '@aragon/ui'
+import { breakpoint, IconCross, useTheme } from '@aragon/ui'
 import { formatTokenAmount } from '../lib/math-utils'
 
 const splitAmount = (amount, decimals) => {
@@ -24,28 +24,29 @@ const BalanceToken = ({
   decimals,
   verified,
   removable,
+  theme
 }) => (
-  <Balance removable={removable}>
-    <Top>
-      <Token title={symbol || 'Unknown symbol'}>
-        {verified && symbol && (
-          <img
-            alt=""
-            width="16"
-            height="16"
-            src={`https://chasing-coins.com/coin/logo/${symbol}`}
-          />
-        )}
-        {symbol || '?'}
-      </Token>
-      <Remove>
-        <IconCross /> Remove
-      </Remove>
-    </Top>
-    <Bottom>
-      <Amount>{splitAmount(amount, decimals)}</Amount>
-    </Bottom>
-  </Balance>
+    <Balance removable={removable} negative={String(theme.negative)}>
+      <Top>
+        <Token color={String(theme.contentSecondary)}>
+          {verified && symbol && (
+            <img
+              alt=""
+              width="16"
+              height="16"
+              src={`https://chasing-coins.com/coin/logo/${symbol}`}
+            />
+          )}
+          {symbol || '?'}
+        </Token>
+        <Remove>
+          <IconCross color={String(theme.negative)}/> Remove
+        </Remove>
+      </Top>
+      <Bottom>
+        <Amount>{splitAmount(amount, decimals)}</Amount>
+      </Bottom>
+    </Balance>
 )
 
 const Top = styled.div`
@@ -66,8 +67,8 @@ const Token = styled.div`
   align-items: center;
   text-transform: uppercase;
   font-size: 20px;
-  color: ${theme.textSecondary};
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  color: ${({color}) => color};
+  transition: opacity 0.3s ease, transform 0.4s ease;
   height: 100%;
   img {
     margin-right: 10px;
@@ -83,13 +84,16 @@ const Token = styled.div`
 `
 
 const Remove = styled.div`
+  display: flex;
+  align-items: center;
   width: 100px;
-  transform: translateX(1.5rem);
   opacity: 0;
-  transition: opacity 0.4s ease, transform 0.4s ease;
   position: absolute;
   top: 20%;
   font-size: 17px;
+
+  transition: opacity 0.3s ease, transform 0.4s ease;
+  transform: rotate3d(1,0,0, 90deg);
 
   ${breakpoint(
     'medium',
@@ -131,32 +135,34 @@ const Balance = styled.div`
  `
   )}
 
-  ${({ removable }) =>
+  ${({ removable, negative }) =>
     removable &&
     `
     cursor: pointer;
     &:hover {
       ${Top} > ${Remove} {
-        transform: translateX(0px);
+        transform: rotate3d(0,0,0,0deg);
         opacity: 1;
       }
 
       ${Top} > ${Token} {
-        transform: translateX(-1.5rem);
+        transform:  rotate3d(1,0,0,90deg);
         opacity: 0;
       }
 
       ${Bottom} > ${Amount} {
-        color: ${theme.negative}
+        color: ${negative}
       }
     }
 
     &:active {
       ${Top} > ${Remove} {
-        color: ${theme.negative}
+        color: ${negative}
       }
     }
     `}
 `
 
-export default BalanceToken
+export default props => {
+  return <BalanceToken {...props} theme={useTheme()}/>
+}

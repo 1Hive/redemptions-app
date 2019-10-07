@@ -18,10 +18,15 @@ import tokenSymbolAbi from './abi/token-symbol.json'
 import tokenSupplyAbi from './abi/token-totalSupply.json'
 
 import minimeTokenAbi from './abi/minimeToken.json'
-import tmAbi from './abi/tokenManager.json'
+import tokenManagerAbi from './abi/tokenManager.json'
 import vaultAbi from './abi/vault.json'
 
-const tokenAbi = [].concat(tokenDecimalsAbi, tokenNameAbi, tokenSymbolAbi, tokenSupplyAbi)
+const tokenAbi = [].concat(
+  tokenDecimalsAbi,
+  tokenNameAbi,
+  tokenSymbolAbi,
+  tokenSupplyAbi
+)
 const ZERO_ADDRESS = ETHER_TOKEN_FAKE_ADDRESS
 
 const tokenContracts = new Map() // Addr -> External contract
@@ -37,17 +42,22 @@ try {
   forkJoin(app.call('vault'), app.call('tokenManager')).subscribe(
     adresses => initialize(...adresses, ETHER_TOKEN_FAKE_ADDRESS),
     err =>
-      console.error('Could not start background script execution due to the contract not loading vault or tokenManager')
+      console.error(
+        'Could not start background script execution due to the contract not loading vault or tokenManager'
+      )
   )
 } catch (err) {
   console.error(err)
 }
 
-async function initialize(vaultAddress, tmAddress, ethAddress) {
+async function initialize(vaultAddress, tokenManagerAddress, ethAddress) {
   const vaultContract = app.external(vaultAddress, vaultAbi)
-  const tmContract = app.external(tmAddress, tmAbi)
+  const tokenManagerContract = app.external(
+    tokenManagerAddress,
+    tokenManagerAbi
+  )
 
-  const minimeAddress = await tmContract.token().toPromise()
+  const minimeAddress = await tokenManagerContract.token().toPromise()
   const minimeContract = app.external(minimeAddress, minimeTokenAbi)
 
   const minimeData = await getMinimeTokenData(minimeContract)
@@ -74,8 +84,8 @@ async function initialize(vaultAddress, tmAddress, ethAddress) {
       contract: vaultContract,
     },
     tokenManager: {
-      address: tmAddress,
-      contract: tmContract,
+      address: tokenManagerAddress,
+      contract: tokenManagerContract,
     },
     minimeToken: {
       address: minimeAddress,
@@ -89,7 +99,9 @@ async function createStore(settings) {
   let vaultInitializationBlock
 
   try {
-    vaultInitializationBlock = await settings.vault.contract.getInitializationBlock().toPromise()
+    vaultInitializationBlock = await settings.vault.contract
+      .getInitializationBlock()
+      .toPromise()
   } catch (err) {
     console.error("Could not get attached vault's initialization block:", err)
   }
@@ -202,7 +214,11 @@ async function vaultEvent(state, { token }, settings) {
     amount: await loadTokenBalance(token, settings),
   }
 
-  const newTokens = [...tokens.slice(0, index), elem, ...tokens.slice(index + 1)]
+  const newTokens = [
+    ...tokens.slice(0, index),
+    elem,
+    ...tokens.slice(index + 1),
+  ]
   return {
     ...state,
     tokens: newTokens,
@@ -305,7 +321,10 @@ async function getVaultBalances(tokens = [], settings) {
       ? tokenContracts.get(tokenAddress)
       : app.external(tokenAddress, tokenAbi)
     tokenContracts.set(tokenAddress, tokenContract)
-    balances = [...balances, await newBalanceEntry(tokenContract, tokenAddress, settings)]
+    balances = [
+      ...balances,
+      await newBalanceEntry(tokenContract, tokenAddress, settings),
+    ]
   }
   return balances
 }
@@ -325,7 +344,8 @@ async function newBalanceEntry(tokenContract, tokenAddress, settings) {
     address: tokenAddress,
     amount: balance,
     verified:
-      isTokenVerified(tokenAddress, settings.network.type) || addressesEqual(tokenAddress, settings.ethToken.address),
+      isTokenVerified(tokenAddress, settings.network.type) ||
+      addressesEqual(tokenAddress, settings.ethToken.address),
   }
 }
 
@@ -338,7 +358,8 @@ async function loadTokenDecimals(tokenContract, tokenAddress, { network }) {
     return tokenDecimals.get(tokenContract)
   }
 
-  const fallback = tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
+  const fallback =
+    tokenDataFallback(tokenAddress, 'decimals', network.type) || '0'
 
   let decimals
   try {
@@ -386,5 +407,7 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
 }
 
 function getBlockNumber() {
-  return new Promise((resolve, reject) => app.web3Eth('getBlockNumber').subscribe(resolve, reject))
+  return new Promise((resolve, reject) =>
+    app.web3Eth('getBlockNumber').subscribe(resolve, reject)
+  )
 }
