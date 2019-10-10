@@ -24,29 +24,33 @@ const BalanceToken = ({
   decimals,
   verified,
   removable,
-  theme
+  theme,
 }) => (
-    <Balance removable={removable} negative={String(theme.negative)}>
-      <Top>
-        <Token color={String(theme.contentSecondary)}>
-          {verified && symbol && (
-            <img
-              alt=""
-              width="16"
-              height="16"
-              src={`https://chasing-coins.com/coin/logo/${symbol}`}
-            />
-          )}
-          {symbol || '?'}
-        </Token>
-        <Remove>
-          <IconCross color={String(theme.negative)}/> Remove
-        </Remove>
-      </Top>
-      <Bottom>
-        <Amount>{splitAmount(amount, decimals)}</Amount>
-      </Bottom>
-    </Balance>
+  <Balance removable={removable} negative={String(theme.negative)}>
+    <Top>
+      <Token color={String(theme.contentSecondary)}>
+        {verified && symbol && (
+          <img
+            alt=""
+            width="16"
+            height="16"
+            src={`https://chasing-coins.com/coin/logo/${symbol}`}
+          />
+        )}
+        {symbol || '?'}
+      </Token>
+      <Remove>
+        <IconCross
+          css={{ transform: 'translateX(-3px)' }}
+          color={String(theme.negative)}
+        />{' '}
+        Remove
+      </Remove>
+    </Top>
+    <Bottom>
+      <Amount>{splitAmount(amount, decimals)}</Amount>
+    </Bottom>
+  </Balance>
 )
 
 const Top = styled.div`
@@ -67,7 +71,7 @@ const Token = styled.div`
   align-items: center;
   text-transform: uppercase;
   font-size: 20px;
-  color: ${({color}) => color};
+  color: ${({ color }) => color};
   transition: opacity 0.3s ease, transform 0.4s ease;
   height: 100%;
   img {
@@ -93,7 +97,7 @@ const Remove = styled.div`
   font-size: 17px;
 
   transition: opacity 0.3s ease, transform 0.4s ease;
-  transform: rotate3d(1,0,0, 90deg);
+  transform: rotate3d(1, 0, 0, 90deg);
 
   ${breakpoint(
     'medium',
@@ -164,5 +168,5 @@ const Balance = styled.div`
 `
 
 export default props => {
-  return <BalanceToken {...props} theme={useTheme()}/>
+  return <BalanceToken {...props} theme={useTheme()} />
 }
