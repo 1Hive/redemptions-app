@@ -1,8 +1,6 @@
 /**
  * https://github.com/aragon/aragonOS/blob/v4.0.0/truffle-config.js
  */
-require('@babel/register')
-require('@babel/polyfill')
 
 const homedir = require('homedir')
 const path = require('path')
@@ -10,8 +8,7 @@ const path = require('path')
 const HDWalletProvider = require('truffle-hdwallet-provider')
 const HDWalletProviderPrivkey = require('truffle-hdwallet-provider-privkey')
 
-const DEFAULT_MNEMONIC =
-  'explain tackle mirror kit van hammer degree position ginger unfair soup bonus'
+const DEFAULT_MNEMONIC = 'explain tackle mirror kit van hammer degree position ginger unfair soup bonus'
 
 const defaultRPC = network => `https://${network}.eth.aragon.network`
 

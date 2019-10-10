@@ -1,5 +1,3 @@
-import DaoDeployment from './helpers/DaoDeployment'
-
 const Redemptions = artifacts.require('Redemptions')
 const TokenManager = artifacts.require('TokenManager')
 const Vault = artifacts.require('Vault')
@@ -7,26 +5,25 @@ const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('ERC20Token')
 
+const deployDAO = require('./helpers/deployDAO')
 const { assertRevert, deployedContract, getSeconds, timeTravel } = require('./helpers/helpers')
+const { hash: nameHash } = require('eth-ens-namehash')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const ETHER_FAKE_ADDRESS = ZERO_ADDRESS
 
 contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
-  let daoDeployment = new DaoDeployment()
-  let APP_MANAGER_ROLE, REDEEM_ROLE, ADD_TOKEN_ROLE, REMOVE_TOKEN_ROLE
+  let REDEEM_ROLE, ADD_TOKEN_ROLE, REMOVE_TOKEN_ROLE
   let TRANSFER_ROLE, MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
   let vaultBase, vault, burnableToken, redemptionsBase, redemptions, tokenManagerBase, tokenManager, token0
+  let dao, acl
 
-  before(async () => {
-    await daoDeployment.deployBefore()
-
+  before('deploy base apps', async () => {
     vaultBase = await Vault.new()
     redemptionsBase = await Redemptions.new()
     tokenManagerBase = await TokenManager.new()
 
-    APP_MANAGER_ROLE = await daoDeployment.kernelBase.APP_MANAGER_ROLE()
     REDEEM_ROLE = await redemptionsBase.REDEEM_ROLE()
     ADD_TOKEN_ROLE = await redemptionsBase.ADD_TOKEN_ROLE()
     REMOVE_TOKEN_ROLE = await redemptionsBase.REMOVE_TOKEN_ROLE()
@@ -39,27 +36,24 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
     TRANSFER_ROLE = await vaultBase.TRANSFER_ROLE()
   })
 
-  beforeEach(async () => {
-    await daoDeployment.deployBeforeEach(rootAccount)
+  beforeEach('deploy dao and redemptions', async () => {
+    const daoDeployment = await deployDAO(rootAccount)
+    dao = daoDeployment.dao
+    acl = daoDeployment.acl
 
-    const newVaultAppReceipt = await daoDeployment.kernel.newAppInstance('0x5678', vaultBase.address, '0x', false, {
-      from: rootAccount,
-    })
-    vault = await Vault.at(deployedContract(newVaultAppReceipt))
-
-    const newRedemptionsAppReceipt = await daoDeployment.kernel.newAppInstance(
-      '0x1234',
-      redemptionsBase.address,
+    const newVaultAppReceipt = await dao.newAppInstance(
+      nameHash('vault.aragonpm.test'),
+      vaultBase.address,
       '0x',
       false,
       {
         from: rootAccount,
       }
     )
-    redemptions = await Redemptions.at(deployedContract(newRedemptionsAppReceipt))
+    vault = await Vault.at(deployedContract(newVaultAppReceipt))
 
-    const newTokenManagerAppReceipt = await daoDeployment.kernel.newAppInstance(
-      '0x4321',
+    const newTokenManagerAppReceipt = await dao.newAppInstance(
+      nameHash('token-manager.aragonpm.test'),
       tokenManagerBase.address,
       '0x',
       false,
@@ -69,13 +63,24 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
     )
     tokenManager = await TokenManager.at(deployedContract(newTokenManagerAppReceipt))
 
-    await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REDEEM_ROLE, rootAccount, {
+    const newRedemptionsAppReceipt = await dao.newAppInstance(
+      nameHash('redemptions.aragonpm.test'),
+      redemptionsBase.address,
+      '0x',
+      false,
+      {
+        from: rootAccount,
+      }
+    )
+    redemptions = await Redemptions.at(deployedContract(newRedemptionsAppReceipt))
+
+    await acl.createPermission(ANY_ADDRESS, redemptions.address, REDEEM_ROLE, rootAccount, {
       from: rootAccount,
     })
-    await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, ADD_TOKEN_ROLE, rootAccount, {
+    await acl.createPermission(ANY_ADDRESS, redemptions.address, ADD_TOKEN_ROLE, rootAccount, {
       from: rootAccount,
     })
-    await daoDeployment.acl.createPermission(ANY_ADDRESS, redemptions.address, REMOVE_TOKEN_ROLE, rootAccount, {
+    await acl.createPermission(ANY_ADDRESS, redemptions.address, REMOVE_TOKEN_ROLE, rootAccount, {
       from: rootAccount,
     })
 
@@ -172,13 +177,13 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
       beforeEach(async () => {
         // set permissions
-        await daoDeployment.acl.createPermission(rootAccount, tokenManager.address, MINT_ROLE, rootAccount, {
+        await acl.createPermission(rootAccount, tokenManager.address, MINT_ROLE, rootAccount, {
           from: rootAccount,
         })
-        await daoDeployment.acl.createPermission(redemptions.address, tokenManager.address, BURN_ROLE, rootAccount, {
+        await acl.createPermission(redemptions.address, tokenManager.address, BURN_ROLE, rootAccount, {
           from: rootAccount,
         })
-        await daoDeployment.acl.createPermission(redemptions.address, vault.address, TRANSFER_ROLE, rootAccount, {
+        await acl.createPermission(redemptions.address, vault.address, TRANSFER_ROLE, rootAccount, {
           from: rootAccount,
         })
 
@@ -258,13 +263,13 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         let TIME_TO_VESTING
 
         beforeEach(async () => {
-          await daoDeployment.acl.createPermission(ANY_ADDRESS, tokenManager.address, ISSUE_ROLE, rootAccount, {
+          await acl.createPermission(ANY_ADDRESS, tokenManager.address, ISSUE_ROLE, rootAccount, {
             from: rootAccount,
           })
-          await daoDeployment.acl.createPermission(ANY_ADDRESS, tokenManager.address, ASSIGN_ROLE, rootAccount, {
+          await acl.createPermission(ANY_ADDRESS, tokenManager.address, ASSIGN_ROLE, rootAccount, {
             from: rootAccount,
           })
-          await daoDeployment.acl.createPermission(ANY_ADDRESS, vault.address, REVOKE_VESTINGS_ROLE, rootAccount, {
+          await acl.createPermission(ANY_ADDRESS, vault.address, REVOKE_VESTINGS_ROLE, rootAccount, {
             from: rootAccount,
           })
 
