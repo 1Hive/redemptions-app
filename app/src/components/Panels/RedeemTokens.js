@@ -4,7 +4,13 @@ import styled from 'styled-components'
 
 import RedeemTokenList from '../RedeemTokenList'
 import { ErrorMessage, InfoMessage } from '../Message'
-import { formatTokenAmount, toDecimals, safeDiv, fromDecimals, round } from '../../lib/math-utils'
+import {
+  formatTokenAmount,
+  toDecimals,
+  safeDiv,
+  fromDecimals,
+  round,
+} from '../../lib/math-utils'
 
 const MAX_INPUT_DECIMAL_BASE = 6
 
@@ -79,10 +85,17 @@ class RedeemTokens extends Component {
     const { amount, progress } = this.state
     const { balance, symbol, decimals, totalSupply, tokens } = this.props
 
+    //show only tokens that are going to be redeemed
+    const redeemables = showTokens ? tokens.filter(t => !t.amount.isZero()) : []
+
     const formattedBalance = formatAmount(balance, decimals)
     const formattedSupply = formatAmount(totalSupply, decimals)
 
-    const youGet = getTokenExchange(tokens, amount.value, totalSupply / Math.pow(10, decimals))
+    const youGet = getTokenExchange(
+      tokens,
+      amount.value,
+      totalSupply / Math.pow(10, decimals)
+    )
 
     const minTokenStep = fromDecimals('1', Math.min(MAX_INPUT_DECIMAL_BASE, decimals))
 
@@ -120,9 +133,18 @@ class RedeemTokens extends Component {
               <Text size="large">{symbol}</Text>
             </InputWrapper>
           </Wrapper>
-          {tokens.length > 0 ? <RedeemTokenList tokens={tokens} youGet={youGet} /> : <Info>No tokens to redeem</Info>}
-          
-          <Button mode="strong" wide={true} type="submit" disabled={amount.value <= 0 || tokens.length === 0}>
+          {tokens.length > 0 ? (
+            <RedeemTokenList tokens={tokens} youGet={youGet} />
+          ) : (
+            <Info>No tokens to redeem</Info>
+          )}
+
+          <Button
+            mode="strong"
+            wide={true}
+            type="submit"
+            disabled={amount.value <= 0 || tokens.length === 0}
+          >
             {'Redeem tokens'}
           </Button>
           {errorMessage && <ErrorMessage message={errorMessage} />}

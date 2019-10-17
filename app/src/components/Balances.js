@@ -4,16 +4,19 @@ import { useTheme, Box, breakpoint, Button, useViewport, GU } from '@aragon/ui'
 
 import BalanceToken from './BalanceToken'
 
-class Balances extends Component {
-  render() {
-    const { tokens, onAddToken, onRemoveToken, theme, below } = this.props
+const Balances = React.memo(
+  ({ tokens, onRequestAddToken, onRequestRemoveToken, theme, belowMedium }) => {
     return (
       <>
         <Box heading="Redeemable tokens" padding={0}>
           <List>
             {tokens.map(({ address, name, decimals, amount, symbol, verified }) => {
               return (
-                <ListItem key={address} onClick={() => onRemoveToken(address)} borderColor={String(theme.border)}>
+                <ListItem
+                  key={address}
+                  onClick={() => onRequestRemoveToken(address)}
+                  borderColor={String(theme.border)}
+                >
                   <BalanceToken
                     name={name}
                     symbol={symbol}
@@ -25,14 +28,16 @@ class Balances extends Component {
                 </ListItem>
               )
             })}
-            {!below('medium') && AddTokenButton(false, 'normal', onAddToken)}
+            {!belowMedium && AddTokenButton(false, 'normal', onRequestAddToken)}
           </List>
         </Box>
-        {below('medium') && <Wrapper>{AddTokenButton(true, 'strong', onAddToken)}</Wrapper>}
+        {belowMedium && (
+          <Wrapper>{AddTokenButton(true, 'strong', onRequestAddToken)}</Wrapper>
+        )}
       </>
     )
   }
-}
+)
 
 const List = styled.ul`
   list-style: none;
@@ -76,5 +81,5 @@ const Wrapper = styled.div`
 
 export default props => {
   const { below } = useViewport()
-  return <Balances {...props} below={below} theme={useTheme()} />
+  return <Balances {...props} belowMedium={below('medium')} theme={useTheme()} />
 }

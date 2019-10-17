@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button, EmptyStateCard, GU, LoadingRing } from '@aragon/ui'
 
-const NoTokens = React.memo(function NoTokens({ onNewToken, isSyncing }) {
+const NoTokens = React.memo(({ onNewToken, isSyncing }) => {
   return (
     <EmptyStateCard
       text={

@@ -1,10 +1,7 @@
 import React from 'react'
-import PropTypes from 'prop-types'
-import { useAppState, useApi } from '@aragon/api-react'
 import { Main, Tag, SidePanel, SyncIndicator, Header, GU } from '@aragon/ui'
-import { capitalizeFirst } from './lib/utils'
 
-import redeemIcon from './assets/icono.svg'
+import redeemIcon from './assets/icon.svg'
 import Title from './components/Title'
 import MainButton from './components/Buttons/MainButton'
 import Balances from './components/Balances'
@@ -12,143 +9,102 @@ import NoTokens from './screens/NoTokens'
 import UpdateTokens from './components/Panels/UpdateTokens'
 import RedeemTokens from './components/Panels/RedeemTokens'
 
-class App extends React.Component {
-  static propTypes = {
-    api: PropTypes.object,
-    appState: PropTypes.object,
-  }
+import { AppLogicProvider, useAppLogic } from './app-logic'
+import { getModeTag, MODE } from './mode-types'
 
-  state = {
-    sidePanelOpened: false,
-    mode: 'add',
-    tokenAddress: '',
-  }
+const App = React.memo(() => {
+  const {
+    actions,
+    requests,
+    isSyncing,
+    burnableToken,
+    tokens,
+    panelState,
+    mode,
+    tokenAddress,
+  } = useAppLogic()
 
-  handleLaunchAddToken = () => {
-    this.handleLaunchToken('add', '')
-  }
-
-  handleLaunchRemoveToken = address => {
-    this.handleLaunchToken('remove', address)
-  }
-
-  handleLaunchToken = (mode, tokenAddress) => {
-    this.setState({
-      sidePanelOpened: true,
-      mode,
-      tokenAddress,
-    })
-  }
-
-  handleLaunchRedeemTokens = () => {
-    this.setState({
-      sidePanelOpened: true,
-      mode: 'redeem',
-    })
-  }
-
-  handleSidePanelClose = () => {
-    this.setState({ sidePanelOpened: false })
-  }
-
-  handleUpdateTokens = (mode, address) => {
-    const { api } = this.props
-    if (mode === 'add') api.addRedeemableToken(address).toPromise()
-    if (mode === 'remove') api.removeRedeemableToken(address).toPromise()
-
-    this.handleSidePanelClose()
-  }
-
-  handleRedeemTokens = async amount => {
-    const { api } = this.props
-
-    api.redeem(amount).toPromise()
-
-    this.handleSidePanelClose()
-  }
-
-  render() {
-    const { tokens, redeemableToken: rdt, isSyncing } = this.props
-    const { mode, sidePanelOpened, tokenAddress } = this.state
-
-    const modeStr = capitalizeFirst(mode)
-    const sidePanelProps = {
-      opened: sidePanelOpened,
-      onClose: this.handleSidePanelClose,
-      title: mode === 'redeem' ? modeStr : `${modeStr} token`,
-    }
-
-    const showTokens = tokens && tokens.length > 0
-    //show only tokens that are going to be redeemed
-    const redeemables = showTokens ? tokens.filter(t => !t.amount.isZero()) : []
-
-    return (
-      <Main>
-        <SyncIndicator visible={isSyncing} />
-        <Header
-          primary={showTokens ? <Title text="Redemptions" after={rdt && <Tag mode='identifier'>{rdt.symbol}</Tag>} /> : null}
-          secondary={
-            showTokens ? (
+  return (
+    <Main>
+      <SyncIndicator visible={isSyncing} />
+      {!!tokens.length ? (
+        <React.Fragment>
+          <Header
+            primary={
+              <Title
+                text="Redemptions"
+                after={
+                  burnableToken && <Tag mode="identifier">{burnableToken.symbol}</Tag>
+                }
+              />
+            }
+            secondary={
               <MainButton
                 label="Redeem"
-                onClick={this.handleLaunchRedeemTokens}
+                onClick={requests.redeemTokens}
                 icon={<img src={redeemIcon} height="30px" alt="" />}
               />
-            ) : null
-          }
-        />
-        {showTokens ? (
+            }
+          />
           <Balances
             tokens={tokens}
-            onAddToken={this.handleLaunchAddToken}
-            onRemoveToken={this.handleLaunchRemoveToken}
+            onRequestAddToken={requests.addToken}
+            onRequestRemoveToken={requests.removeToken}
           />
-        ) : (
-          !isSyncing && (
-            <div
-              css={`
-                height: calc(100vh - ${8 * GU}px);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              `}
-            >
-              <NoTokens onNewToken={this.handleLaunchAddToken} isSyncing={isSyncing} />
-            </div>
-          )
-        )}
-        <SidePanel {...sidePanelProps}>
+        </React.Fragment>
+      ) : (
+        !isSyncing && (
           <div
             css={`
-              margin-top: ${3 * GU}px;
+              height: calc(100vh - ${8 * GU}px);
+              display: flex;
+              align-items: center;
+              justify-content: center;
             `}
           >
-            {mode === 'redeem' ? (
-              <RedeemTokens
-                balance={rdt.balance}
-                symbol={rdt.symbol}
-                decimals={rdt.numData.decimals}
-                totalSupply={rdt.totalSupply}
-                tokens={redeemables}
-                onRedeemTokens={this.handleRedeemTokens}
-                opened={sidePanelProps.opened}
-              />
-            ) : (
-              <UpdateTokens
-                mode={mode}
-                tokens={tokens}
-                tokenAddress={tokenAddress}
-                onUpdateTokens={this.handleUpdateTokens}
-                opened={sidePanelProps.opened}
-              />
-            )}
+            <NoTokens onNewToken={requests.addToken} isSyncing={isSyncing} />
           </div>
-        </SidePanel>
-      </Main>
-    )
-  }
-}
+        )
+      )}
+      <SidePanel
+        title={getModeTag(mode)}
+        opened={panelState.visible}
+        onClose={panelState.requestClose}
+        onTransitionEnd={panelState.endTransition}
+      >
+        <div
+          css={`
+            margin-top: ${3 * GU}px;
+          `}
+        >
+          {mode === MODE.REDEEM_TOKENS ? (
+            <RedeemTokens
+              balance={burnableToken.balance}
+              symbol={burnableToken.symbol}
+              decimals={burnableToken.numData.decimals}
+              totalSupply={burnableToken.totalSupply}
+              onRedeemTokens={actions.redeemTokens}
+              opened={panelState.opened}
+            />
+          ) : (
+            <UpdateTokens
+              mode={mode}
+              tokens={tokens}
+              tokenAddress={tokenAddress}
+              onUpdateTokens={actions.updateTokens}
+              panelOpened={panelState.opened}
+            />
+          )}
+        </div>
+      </SidePanel>
+    </Main>
+  )
+})
 
 export default () => {
-  return <App api={useApi()} {...useAppState()} />
+  return (
+    <AppLogicProvider>
+      <App />
+    </AppLogicProvider>
+  )
 }
