@@ -83,8 +83,9 @@ const App = React.memo(() => {
               symbol={burnableToken.symbol}
               decimals={burnableToken.numData.decimals}
               totalSupply={burnableToken.totalSupply}
+              tokens={tokens}
               onRedeemTokens={actions.redeemTokens}
-              opened={panelState.opened}
+              panelOpened={panelState.opened}
             />
           ) : (
             <UpdateTokens
@@ -92,6 +93,7 @@ const App = React.memo(() => {
               tokens={tokens}
               tokenAddress={tokenAddress}
               onUpdateTokens={actions.updateTokens}
+              panelVisible={panelState.visible}
               panelOpened={panelState.opened}
             />
           )}

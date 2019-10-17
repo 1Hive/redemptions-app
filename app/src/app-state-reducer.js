@@ -12,7 +12,8 @@ const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
 }
 
 function appStateReducer(state) {
-  if (!state) return { ready: false }
+  const ready = state && state.burnableToken
+  if (!ready) return { ready: false }
 
   const { tokens, burnableToken } = state || {}
   const tokensBn = tokens
@@ -41,6 +42,7 @@ function appStateReducer(state) {
 
   return {
     ...state,
+    ready,
     tokens: tokensBn,
     burnableToken: {
       ...burnableTokenBn,

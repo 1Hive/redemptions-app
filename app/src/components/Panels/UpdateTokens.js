@@ -6,11 +6,11 @@ import { ErrorMessage, InfoMessage } from '../Message'
 import { MODE, getModeTag } from '../../mode-types'
 
 const UpdateTokens = React.memo(
-  ({ mode, tokens, tokenAddress, onUpdateTokens, panelOpened }) => {
+  ({ mode, tokens, tokenAddress, onUpdateTokens, panelVisible, panelOpened }) => {
     const inputRef = useRef(null)
-    const [address, setAddress, error, setError] = useAddress(tokenAddress, panelOpened)
+    const [address, setAddress, error, setError] = useAddress(tokenAddress, panelVisible)
 
-    /* Panel opens =>  Focus inpuy
+    /* Panel opens =>  Focus input
      **/
     useEffect(() => {
       if (panelOpened) {
@@ -82,7 +82,7 @@ const validate = (mode, address, tokens) => {
   return null
 }
 
-const useAddress = (tokenAddress, panelOpened) => {
+const useAddress = (tokenAddress, panelVisible) => {
   const [address, setAddress] = useState('')
   const [error, setError] = useState('')
 
@@ -91,17 +91,17 @@ const useAddress = (tokenAddress, panelOpened) => {
   }
 
   useEffect(() => {
-    setAddress(tokenAddress)
-  }, [tokenAddress])
+    if (panelVisible) setAddress(tokenAddress)
+  }, [tokenAddress, panelVisible])
 
   /* Panel closes => Reset address and error state
    **/
   useEffect(() => {
-    if (!panelOpened) {
+    if (!panelVisible) {
       setAddress('')
       setError('')
     }
-  }, [panelOpened])
+  }, [panelVisible])
 
   return [address, handleAddressChange, error, setError]
 }
