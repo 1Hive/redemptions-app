@@ -150,7 +150,7 @@ const useAmount = (balance, rounding) => {
   // Change progress handler
   const handleSliderChange = useCallback(
     newProgress => {
-      const newValue = round(newProgress * balance, rounding)
+      const newValue = round(newProgress * balance, 2)
 
       setAmount({ ...amount, value: String(newValue) })
       setProgress(newProgress)
