@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React from 'react'
 import styled from 'styled-components'
 import { useTheme, Box, breakpoint, Button, useViewport, GU } from '@aragon/ui'
 
@@ -23,7 +23,7 @@ const Balances = React.memo(
                     decimals={decimals}
                     amount={amount}
                     verified={verified}
-                    removable={true}
+                    removable
                   />
                 </ListItem>
               )
@@ -31,9 +31,7 @@ const Balances = React.memo(
             {!belowMedium && AddTokenButton(false, 'normal', onRequestAddToken)}
           </List>
         </Box>
-        {belowMedium && (
-          <Wrapper>{AddTokenButton(true, 'strong', onRequestAddToken)}</Wrapper>
-        )}
+        {belowMedium && <Wrapper>{AddTokenButton(true, 'strong', onRequestAddToken)}</Wrapper>}
       </>
     )
   }

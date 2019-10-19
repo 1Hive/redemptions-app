@@ -21,24 +21,18 @@ const KNOWN_TOKENS_FALLBACK = new Map([
   ],
 ])
 
-export const ETHER_TOKEN_FAKE_ADDRESS =
-  '0x0000000000000000000000000000000000000000'
+export const ETHER_TOKEN_FAKE_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 export const isTokenVerified = (tokenAddress, networkType) =>
   // The verified list is without checksums
-  networkType === 'main'
-    ? ETHER_TOKEN_VERIFIED_ADDRESSES.has(tokenAddress.toLowerCase())
-    : true
+  networkType === 'main' ? ETHER_TOKEN_VERIFIED_ADDRESSES.has(tokenAddress.toLowerCase()) : true
 
 export const tokenDataFallback = (tokenAddress, fieldName, networkType) => {
   // The fallback list is without checksums
   const addressWithoutChecksum = tokenAddress.toLowerCase()
 
   const fallbacksForNetwork = KNOWN_TOKENS_FALLBACK.get(networkType)
-  if (
-    fallbacksForNetwork == null ||
-    !fallbacksForNetwork.has(addressWithoutChecksum)
-  ) {
+  if (fallbacksForNetwork == null || !fallbacksForNetwork.has(addressWithoutChecksum)) {
     return null
   }
   return fallbacksForNetwork.get(addressWithoutChecksum)[fieldName] || null

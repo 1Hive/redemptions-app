@@ -27,15 +27,13 @@ const App = React.memo(() => {
   return (
     <Main>
       <SyncIndicator visible={isSyncing} />
-      {!!tokens.length ? (
+      {tokens.length ? (
         <React.Fragment>
           <Header
             primary={
               <Title
                 text="Redemptions"
-                after={
-                  burnableToken && <Tag mode="identifier">{burnableToken.symbol}</Tag>
-                }
+                after={burnableToken && <Tag mode="identifier">{burnableToken.symbol}</Tag>}
               />
             }
             secondary={

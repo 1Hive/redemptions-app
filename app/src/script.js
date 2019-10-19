@@ -12,6 +12,8 @@ import {
   getTokenName,
 } from './lib/token-utils'
 import { addressesEqual } from './lib/web3-utils'
+import retryEvery from './lib/retry-every'
+
 import tokenDecimalsAbi from './abi/token-decimals.json'
 import tokenNameAbi from './abi/token-name.json'
 import tokenSymbolAbi from './abi/token-symbol.json'
@@ -33,17 +35,15 @@ const ETH_CONTRACT = Symbol('ETH_CONTRACT')
 
 const app = new Aragon()
 
-try {
+retryEvery(() => {
   forkJoin(app.call('vault'), app.call('tokenManager')).subscribe(
     adresses => initialize(...adresses, ETHER_TOKEN_FAKE_ADDRESS),
     err =>
       console.error(
-        'Could not start background script execution due to the contract not loading vault or tokenManager'
+        `Could not start background script execution due to the contract not loading vault or tokenManager: ${err}`
       )
   )
-} catch (err) {
-  console.error(err)
-}
+})
 
 async function initialize(vaultAddress, tokenManagerAddress, ethAddress) {
   const vaultContract = app.external(vaultAddress, vaultAbi)
@@ -91,9 +91,7 @@ async function createStore(settings) {
   let vaultInitializationBlock
 
   try {
-    vaultInitializationBlock = await settings.vault.contract
-      .getInitializationBlock()
-      .toPromise()
+    vaultInitializationBlock = await settings.vault.contract.getInitializationBlock().toPromise()
   } catch (err) {
     console.error("Could not get attached vault's initialization block:", err)
   }
@@ -120,11 +118,11 @@ async function createStore(settings) {
     // (our app state can be obtained from smart contract state)
     if (blockNumber && blockNumber <= currentBlock) return state
 
-    let nextState = {
+    const nextState = {
       ...state,
     }
 
-    //default events
+    // default events
     switch (event) {
       case events.ACCOUNTS_TRIGGER:
         return updateConnectedAccount(nextState, returnValues, settings)
@@ -138,7 +136,7 @@ async function createStore(settings) {
       // Vault event
       return vaultEvent(nextState, returnValues, settings)
     } else if (addressesEqual(address, minimeToken.address)) {
-      //minimeTokenEvent
+      // minimeTokenEvent
       return minimeTokenEvent(nextState, returnValues, settings)
     } else {
       // Redemptions event
@@ -165,7 +163,7 @@ async function createStore(settings) {
 function initializeState(settings) {
   return async cachedState => {
     try {
-      let nextState = {
+      const nextState = {
         ...cachedState,
         isSyncing: true,
         burnableToken: {
@@ -234,7 +232,7 @@ async function minimeTokenEvent(state, { _from, _to }, settings) {
 
 /** New token has been added to redemptions list */
 async function addedToken(state, { token }, settings) {
-  //fix to address issue where contract events randomly fire twice
+  // fix to address issue where contract events randomly fire twice
   const index = state.tokens.findIndex(t => addressesEqual(t.address, token))
   if (index > -1) return state
 
@@ -248,7 +246,7 @@ async function addedToken(state, { token }, settings) {
 async function removedToken(state, { token }) {
   const { tokens } = state
 
-  let nextState = {
+  const nextState = {
     ...state,
   }
 
@@ -305,7 +303,7 @@ async function updateTokens(settings) {
 /** Returns `tokens` balances from vault */
 async function getVaultBalances(tokens = [], settings) {
   let balances = []
-  for (let tokenAddress of tokens) {
+  for (const tokenAddress of tokens) {
     const tokenContract = tokenContracts.has(tokenAddress)
       ? tokenContracts.get(tokenAddress)
       : app.external(tokenAddress, tokenAbi)
@@ -392,7 +390,5 @@ async function loadTokenSymbol(tokenContract, tokenAddress, { network }) {
 }
 
 function getBlockNumber() {
-  return new Promise((resolve, reject) =>
-    app.web3Eth('getBlockNumber').subscribe(resolve, reject)
-  )
+  return new Promise((resolve, reject) => app.web3Eth('getBlockNumber').subscribe(resolve, reject))
 }

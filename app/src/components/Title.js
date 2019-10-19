@@ -25,6 +25,6 @@ const Label = styled.span`
   margin-right: 10px;
   font-size: 26px;
 `
-//TODO: (fabri) replace font-size with ${font({ size: 'xxlarge' })}; when new client released
+// TODO: (fabri) replace font-size with ${font({ size: 'xxlarge' })}; when new client released
 
 export default Title

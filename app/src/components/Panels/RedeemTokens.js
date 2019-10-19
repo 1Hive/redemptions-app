@@ -1,21 +1,16 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react'
+import React, { useCallback, useEffect, useReducer, useRef } from 'react'
 import styled from 'styled-components'
 
 import { Text, TextInput, Button, Slider, breakpoint, Field } from '@aragon/ui'
 import RedeemTokenList from '../RedeemTokenList'
 import { InfoMessage } from '../Message'
 
-import {
-  formatTokenAmount,
-  toDecimals,
-  safeDiv,
-  fromDecimals,
-  round,
-} from '../../lib/math-utils'
+import { formatTokenAmount, toDecimals, safeDiv, fromDecimals, round } from '../../lib/math-utils'
+import { reducer } from '../../lib/redeem-utils'
 
 const MAX_INPUT_DECIMAL_BASE = 6
 
-/** HELPERS */
+// HELPERS
 function getTokenExchange(tokens, amount, totalSupply) {
   return tokens.map(t => safeDiv(amount * t.amount, totalSupply))
 }
@@ -43,7 +38,7 @@ const RedeemTokens = ({
   const formattedSupply = formatAmount(totalSupply, decimals)
 
   // Use state
-  const [amount, setAmount, progress, setProgress] = useAmount(formattedBalance, rounding)
+  const [{ value, max, progress }, setAmount, setProgress] = useAmount(formattedBalance, rounding)
 
   // Focus input
   const inputRef = useRef(null)
@@ -56,23 +51,19 @@ const RedeemTokens = ({
   const handleFormSubmit = event => {
     event.preventDefault()
 
-    onRedeemTokens(toDecimals(amount.value, decimals))
+    onRedeemTokens(toDecimals(value, decimals))
   }
 
   // Filter tokens with 0 balance and get exchange
   const tokensWithBalance = tokens ? tokens.filter(t => !t.amount.isZero()) : []
-  const youGet = getTokenExchange(
-    tokensWithBalance,
-    amount.value,
-    totalSupply / Math.pow(10, decimals)
-  )
+  const youGet = getTokenExchange(tokensWithBalance, value, totalSupply / Math.pow(10, decimals))
 
   return (
     <div>
       <form onSubmit={handleFormSubmit}>
         <InfoMessage
           title={'Redemption action'}
-          text={`This action will burn ${amount.value} ${symbol} tokens in exchange for redeemable tokens`}
+          text={`This action will burn ${value} ${symbol} tokens in exchange for redeemable tokens`}
         />
         <TokenInfo>
           You have{' '}
@@ -90,8 +81,8 @@ const RedeemTokens = ({
               type="number"
               name="amount"
               wide={false}
-              value={amount.value}
-              max={amount.max}
+              value={value}
+              max={max}
               min={'0'}
               step={minTokenStep}
               onChange={setAmount}
@@ -109,9 +100,9 @@ const RedeemTokens = ({
 
         <Button
           mode="strong"
-          wide={true}
+          wide
           type="submit"
-          disabled={amount.value <= 0 || tokensWithBalance.length === 0}
+          disabled={value <= 0 || tokensWithBalance.length === 0}
         >
           {'Redeem tokens'}
         </Button>
@@ -120,29 +111,31 @@ const RedeemTokens = ({
   )
 }
 
-/** CUSTOM HOOK */
+// CUSTOM HOOK
 const useAmount = (balance, rounding) => {
-  const [amount, setAmount] = useState({
+  const [amount, dispatch] = useReducer(reducer, {
     value: balance,
     max: balance,
+    progress: 1,
   })
-  const [progress, setProgress] = useState(1)
 
   // If balance changes => Update max balance && Update amount based on progress
   useEffect(() => {
-    const value = round(progress * balance, rounding)
+    const newValue = round(amount.progress * balance, rounding)
 
-    setAmount({ ...amount, value: String(value), max: balance })
-  }, [balance, rounding])
+    dispatch({ type: 'BALANCE_UPDATE', amount: { value: String(newValue), max: balance } })
+  }, [balance, rounding]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Change amount handler
   const handleAmountChange = useCallback(
     event => {
       const newValue = Math.min(event.target.value, balance)
-      const progress = safeDiv(newValue, balance)
+      const newProgress = safeDiv(newValue, balance)
 
-      setAmount({ ...amount, value: String(newValue) })
-      setProgress(progress)
+      dispatch({
+        type: 'AMOUNT_PROGRESS_UPDATE',
+        amount: { value: String(newValue), progress: newProgress },
+      })
     },
     [balance]
   )
@@ -150,15 +143,20 @@ const useAmount = (balance, rounding) => {
   // Change progress handler
   const handleSliderChange = useCallback(
     newProgress => {
-      const newValue = round(newProgress * balance, 2)
+      // Round amount to 2 decimals when changing slider
+      // Check for edge case where setting max amount with more than 2 decimals
+      const newValue =
+        newProgress === 1 ? round(balance, rounding) : round(newProgress * balance, 2)
 
-      setAmount({ ...amount, value: String(newValue) })
-      setProgress(newProgress)
+      dispatch({
+        type: 'AMOUNT_PROGRESS_UPDATE',
+        amount: { value: String(newValue), progress: newProgress },
+      })
     },
     [balance, rounding]
   )
 
-  return [amount, handleAmountChange, progress, handleSliderChange]
+  return [amount, handleAmountChange, handleSliderChange]
 }
 
 export default RedeemTokens

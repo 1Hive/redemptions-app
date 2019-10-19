@@ -49,18 +49,12 @@ const UpdateTokens = React.memo(
           />
           <Field label="Token address">
             {mode === MODE.ADD_TOKEN ? (
-              <TextInput
-                name="address"
-                wide={true}
-                onChange={setAddress}
-                value={address}
-                ref={inputRef}
-              />
+              <TextInput name="address" wide onChange={setAddress} value={address} ref={inputRef} />
             ) : (
               address && <TokenBadge address={address} name={name} symbol={symbol} />
             )}
           </Field>
-          <Button mode="strong" wide={true} type="submit">
+          <Button mode="strong" wide type="submit">
             {getModeTag(mode)}
           </Button>
           {error && <ErrorMessage message={error} />}
@@ -76,8 +70,7 @@ const validate = (mode, address, tokens) => {
   const exists = tokens.some(t => addressesEqual(t.address, address))
   if (mode === MODE.ADD_TOKEN && exists) return 'Token already added to redemption list'
 
-  if (mode === MODE.REMOVE_TOKEN && !exists)
-    return 'Token is not added to redemption list'
+  if (mode === MODE.REMOVE_TOKEN && !exists) return 'Token is not added to redemption list'
 
   return null
 }
