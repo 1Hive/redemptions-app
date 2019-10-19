@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useReducer, useRef } from 'react'
+import React, { useCallback, useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
 import { Text, TextInput, Button, Slider, breakpoint, Field } from '@aragon/ui'
@@ -6,7 +6,6 @@ import RedeemTokenList from '../RedeemTokenList'
 import { InfoMessage } from '../Message'
 
 import { formatTokenAmount, toDecimals, safeDiv, fromDecimals, round } from '../../lib/math-utils'
-import { reducer } from '../../lib/redeem-utils'
 
 const MAX_INPUT_DECIMAL_BASE = 6
 
@@ -113,18 +112,21 @@ const RedeemTokens = ({
 
 // CUSTOM HOOK
 const useAmount = (balance, rounding) => {
-  const [amount, dispatch] = useReducer(reducer, {
+  const [amount, setAmount] = useState({
     value: balance,
     max: balance,
     progress: 1,
   })
 
-  // If balance changes => Update max balance && Update amount based on progress
+  // If balance or rounding (unlikely) changes => Update max balance && Update amount based on progress
   useEffect(() => {
-    const newValue = round(amount.progress * balance, rounding)
+    setAmount(prevState => {
+      // Recalculate value based on same progress and new balance
+      const newValue = round(prevState.progress * balance, rounding)
 
-    dispatch({ type: 'BALANCE_UPDATE', amount: { value: String(newValue), max: balance } })
-  }, [balance, rounding]) // eslint-disable-line react-hooks/exhaustive-deps
+      return { ...prevState, value: String(newValue), max: balance }
+    })
+  }, [balance, rounding])
 
   // Change amount handler
   const handleAmountChange = useCallback(
@@ -132,10 +134,11 @@ const useAmount = (balance, rounding) => {
       const newValue = Math.min(event.target.value, balance)
       const newProgress = safeDiv(newValue, balance)
 
-      dispatch({
-        type: 'AMOUNT_PROGRESS_UPDATE',
-        amount: { value: String(newValue), progress: newProgress },
-      })
+      setAmount(prevState => ({
+        ...prevState,
+        value: String(newValue),
+        progress: newProgress,
+      }))
     },
     [balance]
   )
@@ -148,10 +151,11 @@ const useAmount = (balance, rounding) => {
       const newValue =
         newProgress === 1 ? round(balance, rounding) : round(newProgress * balance, 2)
 
-      dispatch({
-        type: 'AMOUNT_PROGRESS_UPDATE',
-        amount: { value: String(newValue), progress: newProgress },
-      })
+      setAmount(prevState => ({
+        ...prevState,
+        value: String(newValue),
+        progress: newProgress,
+      }))
     },
     [balance, rounding]
   )
