@@ -10,13 +10,12 @@ const UpdateTokens = React.memo(
     const inputRef = useRef(null)
     const [address, setAddress, error, setError] = useAddress(tokenAddress, panelVisible)
 
-    /* Panel opens =>  Focus input
-     **/
+    // Panel opens =>  Focus input
     useEffect(() => {
       if (panelOpened) {
         mode === MODE.ADD_TOKEN && inputRef.current.focus()
       }
-    }, [panelOpened])
+    }, [mode, panelOpened])
 
     const handleFormSubmit = event => {
       event.preventDefault()
@@ -34,7 +33,7 @@ const UpdateTokens = React.memo(
       return mode === MODE.REMOVE_TOKEN && address
         ? tokens.find(t => addressesEqual(t.address, address))
         : {}
-    }, [address, tokens])
+    }, [address, mode, tokens])
 
     return (
       <div>
@@ -87,8 +86,7 @@ const useAddress = (tokenAddress, panelVisible) => {
     if (panelVisible) setAddress(tokenAddress)
   }, [tokenAddress, panelVisible])
 
-  /* Panel closes => Reset address and error state
-   **/
+  // Panel closes => Reset address and error state
   useEffect(() => {
     if (!panelVisible) {
       setAddress('')
