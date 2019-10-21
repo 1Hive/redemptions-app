@@ -12,9 +12,10 @@ const compareBalancesByEthAndSymbol = (tokenA, tokenB) => {
 }
 
 function appStateReducer(state) {
-  if (!state) return {}
+  const ready = state && state.burnableToken
+  if (!ready) return { ready: false }
 
-  const { tokens, redeemableToken } = state || {}
+  const { tokens, burnableToken } = state || {}
   const tokensBn = tokens
     ? tokens
         .map(token => ({
@@ -25,10 +26,10 @@ function appStateReducer(state) {
         .sort(compareBalancesByEthAndSymbol)
     : []
 
-  const { decimals, balance, totalSupply } = redeemableToken
-  const redeemableTokenBn = redeemableToken
+  const { decimals, balance, totalSupply } = burnableToken
+  const burnableTokenBn = burnableToken
     ? {
-        ...redeemableToken,
+        ...burnableToken,
         decimals: new BN(decimals),
         balance: new BN(balance),
         totalSupply: new BN(totalSupply),
@@ -41,9 +42,10 @@ function appStateReducer(state) {
 
   return {
     ...state,
+    ready,
     tokens: tokensBn,
-    redeemableToken: {
-      ...redeemableTokenBn,
+    burnableToken: {
+      ...burnableTokenBn,
     },
   }
 }

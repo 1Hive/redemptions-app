@@ -1,119 +1,100 @@
-import React, { Component } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { Field, TextInput, Button, TokenBadge } from '@aragon/ui'
 
 import { isAddress, addressesEqual } from '../../lib/web3-utils'
-import { capitalizeFirst } from '../../lib/utils'
 import { ErrorMessage, InfoMessage } from '../Message'
+import { MODE, getModeTag } from '../../mode-types'
+
+const UpdateTokens = React.memo(
+  ({ mode, tokens, tokenAddress, onUpdateTokens, panelVisible, panelOpened }) => {
+    const inputRef = useRef(null)
+    const [address, setAddress, error, setError] = useAddress(tokenAddress, panelVisible)
+
+    // Panel opens =>  Focus input
+    useEffect(() => {
+      if (panelOpened) {
+        mode === MODE.ADD_TOKEN && inputRef.current.focus()
+      }
+    }, [mode, panelOpened])
+
+    const handleFormSubmit = event => {
+      event.preventDefault()
+
+      const error = validate(mode, address, tokens)
+      if (error) {
+        setError(error)
+        return
+      }
+
+      onUpdateTokens(address)
+    }
+
+    const { name, symbol } = useMemo(() => {
+      return mode === MODE.REMOVE_TOKEN && address
+        ? tokens.find(t => addressesEqual(t.address, address))
+        : {}
+    }, [address, mode, tokens])
+
+    return (
+      <div>
+        <form onSubmit={handleFormSubmit}>
+          <InfoMessage
+            title="Redemption action"
+            text={`This action will ${
+              mode === MODE.ADD_TOKEN
+                ? 'add a token to redemption list'
+                : `remove ${symbol && symbol} token from the redemption list`
+            }.`}
+          />
+          <Field label="Token address">
+            {mode === MODE.ADD_TOKEN ? (
+              <TextInput name="address" wide onChange={setAddress} value={address} ref={inputRef} />
+            ) : (
+              address && <TokenBadge address={address} name={name} symbol={symbol} />
+            )}
+          </Field>
+          <Button mode="strong" wide type="submit">
+            {getModeTag(mode)}
+          </Button>
+          {error && <ErrorMessage message={error} />}
+        </form>
+      </div>
+    )
+  }
+)
 
 const validate = (mode, address, tokens) => {
   if (!isAddress(address)) return 'Token address is not a valid Ethereum address'
 
   const exists = tokens.some(t => addressesEqual(t.address, address))
-  if (mode === 'add' && exists) return 'Token already added to redemption list'
+  if (mode === MODE.ADD_TOKEN && exists) return 'Token already added to redemption list'
 
-  if (mode === 'remove' && !exists) return 'Token is not added to redemption list'
+  if (mode === MODE.REMOVE_TOKEN && !exists) return 'Token is not added to redemption list'
 
   return null
 }
 
-const initialState = {
-  address: {
-    value: '',
-    error: null,
-  },
-}
+const useAddress = (tokenAddress, panelVisible) => {
+  const [address, setAddress] = useState('')
+  const [error, setError] = useState('')
 
-class UpdateTokens extends Component {
-  state = {
-    ...initialState,
-    address: {
-      value: this.props.tokenAddress,
-    },
+  const handleAddressChange = event => {
+    setAddress(event.target.value)
   }
 
-  componentDidUpdate({ opened }) {
-    if (!opened && this.props.opened) {
-      // setTimeout is needed as a small hack to wait until the input's on
-      // screen until we call focus
-      this.props.mode === 'add' && this.addressRef && setTimeout(() => this.addressRef.focus(), 100)
+  useEffect(() => {
+    if (panelVisible) setAddress(tokenAddress)
+  }, [tokenAddress, panelVisible])
 
-      this.setState(({ address }) => ({
-        address: { ...address, value: this.props.tokenAddress },
-      }))
+  // Panel closes => Reset address and error state
+  useEffect(() => {
+    if (!panelVisible) {
+      setAddress('')
+      setError('')
     }
+  }, [panelVisible])
 
-    if (opened && !this.props.opened) {
-      this.setState({ ...initialState })
-    }
-  }
-
-  handleAddressChange = event => {
-    const value = event.target.value
-    this.setState(({ address }) => ({
-      address: { ...address, value },
-    }))
-  }
-
-  handleFormSubmit = event => {
-    event.preventDefault()
-
-    const { address } = this.state
-    const { mode, tokens } = this.props
-
-    const error = validate(mode, address.value, tokens)
-    if (error) {
-      this.setState(({ address }) => ({
-        address: {
-          ...address,
-          error,
-        },
-      }))
-      return
-    }
-
-    this.props.onUpdateTokens(mode, address.value)
-  }
-
-  render() {
-    const { address } = this.state
-    const { mode, tokens } = this.props
-    let token = mode === 'remove' ? tokens.find(t => t.address === address.value) : {}
-    let { name, symbol } = token || {}
-
-    const errorMessage = address.error
-
-    return (
-      <div>
-        <form onSubmit={this.handleFormSubmit}>
-          <InfoMessage
-            title={'Redeemption action'}
-            text={`This action will ${
-              mode === 'add'
-                ? 'add token to redemption list'
-                : `remove ${symbol && symbol} token from the redemption list`
-            }.`}
-          />
-          <Field label="Token address">
-            {mode === 'add' ? (
-              <TextInput
-                name="address"
-                wide={true}
-                onChange={this.handleAddressChange}
-                value={address.value}
-                ref={address => (this.addressRef = address)}
-              />
-            ) : (
-              address.value && <TokenBadge address={address.value} name={name} symbol={symbol} />
-            )}
-          </Field>
-          <Button mode="strong" wide={true} type="submit">
-            {`${capitalizeFirst(mode)} token`}
-          </Button>
-          {errorMessage && <ErrorMessage message={errorMessage} />}
-        </form>
-      </div>
-    )
-  }
+  return [address, handleAddressChange, error, setError]
 }
 
 export default UpdateTokens

@@ -3,7 +3,7 @@ const getSignatureFields = signature => {
   const v = toDecimal(`0x${signature.slice(128, 130)}`)
 
   return {
-    v: v != 27 && v != 28 ? v + 27 : v,
+    v: v !== 27 && v !== 28 ? v + 27 : v,
     r: `0x${signature.slice(0, 64)}`,
     s: `0x${signature.slice(64, 128)}`,
   }

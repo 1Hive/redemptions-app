@@ -30,19 +30,15 @@ export function shortenAddress(address, charsLength = 4) {
   if (address.length < charsLength * 2 + prefixLength) {
     return address
   }
-  return (
-    address.slice(0, charsLength + prefixLength) +
-    '…' +
-    address.slice(-charsLength)
-  )
+  return address.slice(0, charsLength + prefixLength) + '…' + address.slice(-charsLength)
 }
 
 export function getSignatureFields(signature) {
-  signature = signature.substr(2) //remove 0x
+  signature = signature.substr(2) // remove 0x
   const v = hexToNumber(`0x${signature.slice(128, 130)}`)
 
   return {
-    v: v != 27 && v != 28 ? v + 27 : v,
+    v: v !== 27 && v !== 28 ? v + 27 : v,
     r: `0x${signature.slice(0, 64)}`,
     s: `0x${signature.slice(64, 128)}`,
   }

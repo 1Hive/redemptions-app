@@ -4,11 +4,7 @@ import { breakpoint, IconCross, useTheme } from '@aragon/ui'
 import { formatTokenAmount } from '../lib/math-utils'
 
 const splitAmount = (amount, decimals) => {
-  const [integer, fractional] = formatTokenAmount(
-    amount,
-    false,
-    decimals
-  ).split('.')
+  const [integer, fractional] = formatTokenAmount(amount, false, decimals).split('.')
   return (
     <span>
       <span className="integer">{integer}</span>
@@ -17,15 +13,7 @@ const splitAmount = (amount, decimals) => {
   )
 }
 
-const BalanceToken = ({
-  name,
-  amount,
-  symbol,
-  decimals,
-  verified,
-  removable,
-  theme,
-}) => (
+const BalanceToken = ({ amount, symbol, decimals, verified, removable, theme }) => (
   <Balance removable={removable} negative={String(theme.negative)}>
     <Top>
       <Token color={String(theme.contentSecondary)}>
@@ -40,11 +28,7 @@ const BalanceToken = ({
         {symbol || '?'}
       </Token>
       <Remove>
-        <IconCross
-          css={{ transform: 'translateX(-3px)' }}
-          color={String(theme.negative)}
-        />{' '}
-        Remove
+        <IconCross css={{ transform: 'translateX(-3px)' }} color={String(theme.negative)} /> Remove
       </Remove>
     </Top>
     <Bottom>

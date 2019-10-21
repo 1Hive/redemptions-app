@@ -16,7 +16,14 @@ const ETHER_FAKE_ADDRESS = ZERO_ADDRESS
 contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
   let REDEEM_ROLE, ADD_TOKEN_ROLE, REMOVE_TOKEN_ROLE
   let TRANSFER_ROLE, MINT_ROLE, ISSUE_ROLE, ASSIGN_ROLE, REVOKE_VESTINGS_ROLE, BURN_ROLE
-  let vaultBase, vault, burnableToken, redemptionsBase, redemptions, tokenManagerBase, tokenManager, token0
+  let vaultBase,
+    vault,
+    burnableToken,
+    redemptionsBase,
+    redemptions,
+    tokenManagerBase,
+    tokenManager,
+    token0
   let dao, acl
 
   before('deploy base apps', async () => {
@@ -140,11 +147,17 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
       })
 
       it('reverts if adding already added token', async () => {
-        await assertRevert(redemptions.addRedeemableToken(token0.address), 'REDEMPTIONS_TOKEN_ALREADY_ADDED')
+        await assertRevert(
+          redemptions.addRedeemableToken(token0.address),
+          'REDEMPTIONS_TOKEN_ALREADY_ADDED'
+        )
       })
 
       it('reverts if adding non-contract address', async () => {
-        await assertRevert(redemptions.addRedeemableToken(accounts[0]), 'REDEMPTIONS_TOKEN_NOT_CONTRACT')
+        await assertRevert(
+          redemptions.addRedeemableToken(accounts[0]),
+          'REDEMPTIONS_TOKEN_NOT_CONTRACT'
+        )
       })
     })
 
@@ -162,7 +175,10 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
       })
 
       it('reverts if removing token not present', async () => {
-        await assertRevert(redemptions.removeRedeemableToken(accounts[0]), 'REDEMPTIONS_TOKEN_NOT_ADDED.')
+        await assertRevert(
+          redemptions.removeRedeemableToken(accounts[0]),
+          'REDEMPTIONS_TOKEN_NOT_ADDED.'
+        )
       })
     })
 
@@ -180,9 +196,15 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         await acl.createPermission(rootAccount, tokenManager.address, MINT_ROLE, rootAccount, {
           from: rootAccount,
         })
-        await acl.createPermission(redemptions.address, tokenManager.address, BURN_ROLE, rootAccount, {
-          from: rootAccount,
-        })
+        await acl.createPermission(
+          redemptions.address,
+          tokenManager.address,
+          BURN_ROLE,
+          rootAccount,
+          {
+            from: rootAccount,
+          }
+        )
         await acl.createPermission(redemptions.address, vault.address, TRANSFER_ROLE, rootAccount, {
           from: rootAccount,
         })
@@ -203,8 +225,12 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
       it('Should redeem tokens as expected', async () => {
         const burnableTokenTotalSupply = await burnableToken.totalSupply()
         const expectedRedeemableBalance = 0
-        const expectedRedemptionToken0 = parseInt((redeemerAmount * vaultToken0Amount) / burnableTokenTotalSupply)
-        const expectedRedemptionToken1 = parseInt((redeemerAmount * vaultToken1Amount) / burnableTokenTotalSupply)
+        const expectedRedemptionToken0 = parseInt(
+          (redeemerAmount * vaultToken0Amount) / burnableTokenTotalSupply
+        )
+        const expectedRedemptionToken1 = parseInt(
+          (redeemerAmount * vaultToken1Amount) / burnableTokenTotalSupply
+        )
 
         await redemptions.redeem(redeemerAmount, { from: redeemer })
 
@@ -221,7 +247,9 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         const maxGasAllowed = 3000000
         const redeemableTokensMaxSize = await redemptions.REDEEMABLE_TOKENS_MAX_SIZE()
         const burnableTokenTotalSupply = await burnableToken.totalSupply()
-        const expectedRedemptionTokenBalance = parseInt((redeemerAmount * vaultToken0Amount) / burnableTokenTotalSupply)
+        const expectedRedemptionTokenBalance = parseInt(
+          (redeemerAmount * vaultToken0Amount) / burnableTokenTotalSupply
+        )
         const tokens = []
 
         for (let i = 0; i < redeemableTokensMaxSize - 2; i++) {
@@ -231,7 +259,10 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           tokens.push(token)
         }
         const token = await Erc20.new(rootAccount, '', '')
-        await assertRevert(redemptions.addRedeemableToken(token.address), 'REDEMPTIONS_REDEEMABLE_TOKEN_LIST_FULL') // Cannot add more than max redeemable tokens
+        await assertRevert(
+          redemptions.addRedeemableToken(token.address),
+          'REDEMPTIONS_REDEEMABLE_TOKEN_LIST_FULL'
+        ) // Cannot add more than max redeemable tokens
 
         const receipt = await redemptions.redeem(redeemerAmount, { from: redeemer })
 
@@ -269,9 +300,15 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           await acl.createPermission(ANY_ADDRESS, tokenManager.address, ASSIGN_ROLE, rootAccount, {
             from: rootAccount,
           })
-          await acl.createPermission(ANY_ADDRESS, vault.address, REVOKE_VESTINGS_ROLE, rootAccount, {
-            from: rootAccount,
-          })
+          await acl.createPermission(
+            ANY_ADDRESS,
+            vault.address,
+            REVOKE_VESTINGS_ROLE,
+            rootAccount,
+            {
+              from: rootAccount,
+            }
+          )
 
           const NOW = getSeconds()
           const start = NOW + 1
