@@ -94,7 +94,7 @@ const RedeemTokens = ({
         {tokensWithBalance.length > 0 ? (
           <RedeemTokenList tokens={tokensWithBalance} youGet={youGet} />
         ) : (
-          <Info>No assets in the vault</Info>
+          <Info>No eligible assets in the vault</Info>
         )}
         <Button
           mode="strong"
