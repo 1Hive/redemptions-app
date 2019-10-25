@@ -49,6 +49,7 @@ const List = styled.ul`
 `
 
 const ListItem = styled.li`
-  box-shadow: 0px 0px 3px 0px rgb(36, 173, 169, 0.25);
+  box-shadow: rgba(51, 77, 117, 0.2) 0px 1px 3px;
   padding: 5px 15px;
+  border-radius: 4px;
 `
