@@ -64,7 +64,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Add `_token.symbol(): string` token to the redeemable tokens
+    * @notice Add `_token == self.getETHAddress(): address ? 'ETH' : _token.symbol(): string` token to the redeemable tokens
     * @param _token Token address
     */
     function addRedeemableToken(address _token) external auth(ADD_TOKEN_ROLE) {
@@ -82,7 +82,7 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @notice Remove `_token.symbol(): string` token from the redeemable tokens
+    * @notice Remove `_token == self.getETHAddress(): address ? 'ETH' : _token.symbol(): string` token from the redeemable tokens
     * @param _token Token address
     */
     function removeRedeemableToken(address _token) external auth(REMOVE_TOKEN_ROLE) {
@@ -131,9 +131,13 @@ contract Redemptions is AragonApp {
     }
 
     /**
-    * @dev Convenience function for getting the burnable token in a radspec string
+    * @dev Convenience functions for radspec
     */
     function getToken() public view returns (address) {
         return tokenManager.token();
+    }
+
+    function getETHAddress() public view returns(address) {
+        return ETH;
     }
 }

@@ -53,7 +53,7 @@ async function initialize(vaultAddress, tokenManagerAddress, ethAddress) {
   const minimeContract = app.external(minimeAddress, minimeTokenAbi)
 
   const minimeData = await getMinimeTokenData(minimeContract)
-  app.identify(`Redemptions ${minimeData.symbol}`)
+  app.identify(minimeData.symbol)
 
   const network = await app
     .network()
