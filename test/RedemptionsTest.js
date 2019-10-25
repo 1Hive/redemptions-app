@@ -109,6 +109,29 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
     await vault.initialize()
   })
 
+  describe('initialize(Vault _vault, TokenManager _tokenManager)', async () => {
+    it('reverts when passed non-contract address as vault', async () => {
+      await assertRevert(
+        redemptions.initialize(rootAccount, tokenManager.address, [token0.address]),
+        'REDEMPTIONS_VAULT_NOT_CONTRACT'
+      )
+    })
+
+    it('reverts when passed non-contract address as token manager', async () => {
+      await assertRevert(
+        redemptions.initialize(vault.address, rootAccount, [token0.address]),
+        'REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT'
+      )
+    })
+
+    it('reverts when passed non-contract address as one of the redeemable tokens', async () => {
+      await assertRevert(
+        redemptions.initialize(vault.address, tokenManager.address, [token0.address, rootAccount]),
+        'REDEMPTIONS_TOKEN_NOT_CONTRACT'
+      )
+    })
+  })
+
   context('initialize(Vault _vault, TokenManager _tokenManager)', () => {
     beforeEach(async () => {
       await redemptions.initialize(vault.address, tokenManager.address, [token0.address])
@@ -124,6 +147,18 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
       assert.strictEqual(actualTokenManager, tokenManager.address)
       assert.strictEqual(actualBurnableToken, burnableToken.address)
       assert.deepStrictEqual(actualTokenAddresses, [token0.address])
+    })
+
+    it('reverts when re-initializing contract', async () => {
+      await assertRevert(
+        redemptions.initialize(vault.address, tokenManager.address, [token0.address]),
+        'INIT_ALREADY_INITIALIZED'
+      )
+    })
+
+    // Test to not decrease coverage (convenience function for radspec)
+    it('should get ETH fake Address', async () => {
+      assert.strictEqual(await redemptions.getETHAddress(), ETHER_FAKE_ADDRESS)
     })
 
     context('addRedeemableToken(address _token)', () => {
@@ -146,14 +181,29 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         assert.isTrue(etherAdded)
       })
 
-      it('reverts if adding already added token', async () => {
+      it('reverts when adding more than max allowed redeemable tokens ', async () => {
+        const redeemableTokensMaxSize = await redemptions.REDEEMABLE_TOKENS_MAX_SIZE()
+
+        for (let i = 0; i < redeemableTokensMaxSize - 1; i++) {
+          const token = await Erc20.new(rootAccount, '', '')
+          await redemptions.addRedeemableToken(token.address)
+        }
+
+        const token = await Erc20.new(rootAccount, '', '')
+        await assertRevert(
+          redemptions.addRedeemableToken(token.address),
+          'REDEMPTIONS_REDEEMABLE_TOKEN_LIST_FULL'
+        )
+      })
+
+      it('reverts when adding already added token', async () => {
         await assertRevert(
           redemptions.addRedeemableToken(token0.address),
           'REDEMPTIONS_TOKEN_ALREADY_ADDED'
         )
       })
 
-      it('reverts if adding non-contract address', async () => {
+      it('reverts when adding non-contract address', async () => {
         await assertRevert(
           redemptions.addRedeemableToken(accounts[0]),
           'REDEMPTIONS_TOKEN_NOT_CONTRACT'
@@ -269,6 +319,17 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         const actualRedemptionTokenBalance = await tokens[tokens.length - 1].balanceOf(redeemer)
         assert.equal(actualRedemptionTokenBalance, expectedRedemptionTokenBalance)
         assert.isBelow(receipt.receipt.gasUsed, maxGasAllowed)
+      })
+
+      it('should redeem even if there is no eligible assets in the vault', async () => {
+        const expectedRedeemableBalance = 0
+        await redemptions.removeRedeemableToken(token0.address)
+        await redemptions.removeRedeemableToken(token1.address)
+
+        await redemptions.redeem(redeemerAmount, { from: redeemer })
+
+        const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
+        assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
       })
 
       it('reverts if amount to redeem is zero', async () => {
