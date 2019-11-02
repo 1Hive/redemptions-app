@@ -37,7 +37,10 @@ const RedeemTokens = ({
   const formattedSupply = formatAmount(totalSupply, decimals)
 
   // Use state
-  const [{ value, max, progress }, setAmount, setProgress] = useAmount(formattedBalance, rounding)
+  const [{ value, max, progress }, setAmount, setProgress] = useAmount(
+    formattedBalance.replace(',', ''),
+    rounding
+  )
 
   // Focus input
   const inputRef = useRef(null)
