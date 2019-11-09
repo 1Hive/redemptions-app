@@ -5,18 +5,15 @@ import { useSidePanel } from './hooks/utils-hooks'
 import appStateReducer from './app-state-reducer'
 import { MODE } from './mode-types'
 
-export function useRequestMode(requestOpen) {
-  const [requestMode, setRequestMode] = useState({
-    mode: MODE.ADD_TOKEN,
-    tokenAddress: '',
-  })
+export function useRequestMode(requestPanelOpen) {
+  const [requestMode, setRequestMode] = useState(MODE.UPDATE_TOKENS)
 
   const updateMode = useCallback(
-    (newMode, newTokenAddress = '') => {
-      setRequestMode({ mode: newMode, tokenAddress: newTokenAddress })
-      requestOpen()
+    newMode => {
+      setRequestMode(newMode)
+      requestPanelOpen()
     },
-    [requestOpen]
+    [requestPanelOpen]
   )
 
   return [requestMode, updateMode]
@@ -24,34 +21,27 @@ export function useRequestMode(requestOpen) {
 
 // Requests to set new mode and open side panel
 export function useRequestActions(request) {
-  const addToken = useCallback(() => {
-    request(MODE.ADD_TOKEN)
+  const updateTokens = useCallback(() => {
+    request(MODE.UPDATE_TOKENS)
   }, [request])
-
-  const removeToken = useCallback(
-    tokenAddress => {
-      request(MODE.REMOVE_TOKEN, tokenAddress)
-    },
-    [request]
-  )
 
   const redeemTokens = useCallback(() => {
     request(MODE.REDEEM_TOKENS)
   }, [request])
 
-  return { addToken, removeToken, redeemTokens }
+  return { updateTokens, redeemTokens }
 }
 
-export function useUpdateTokens(mode, onDone) {
+export function useUpdateTokens(onDone) {
   const api = useApi()
 
   return useCallback(
-    address => {
-      if (mode === MODE.ADD_TOKEN) api.addRedeemableToken(address).toPromise()
-      if (mode === MODE.REMOVE_TOKEN) api.removeRedeemableToken(address).toPromise()
+    (updateMode, address) => {
+      if (updateMode === 'add') api.addRedeemableToken(address).toPromise()
+      if (updateMode === 'remove') api.removeRedeemableToken(address).toPromise()
       onDone()
     },
-    [api, mode, onDone]
+    [api, onDone]
   )
 }
 
@@ -71,10 +61,10 @@ export function useAppLogic() {
   const { ready, isSyncing, burnableToken, tokens = [] } = useAppState()
 
   const panelState = useSidePanel()
-  const [{ mode, tokenAddress }, setMode] = useRequestMode(panelState.requestOpen)
+  const [mode, setMode] = useRequestMode(panelState.requestOpen)
 
   const actions = {
-    updateTokens: useUpdateTokens(mode, panelState.requestClose),
+    updateTokens: useUpdateTokens(panelState.requestClose),
     redeemTokens: useRedeemTokens(panelState.requestClose),
   }
 
@@ -88,7 +78,6 @@ export function useAppLogic() {
     tokens,
     panelState,
     mode,
-    tokenAddress,
   }
 }
 

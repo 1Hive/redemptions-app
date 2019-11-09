@@ -4,38 +4,35 @@ import { useTheme, Box, breakpoint, Button, useViewport, GU } from '@aragon/ui'
 
 import BalanceToken from './BalanceToken'
 
-const Balances = React.memo(
-  ({ tokens, onRequestAddToken, onRequestRemoveToken, theme, belowMedium }) => {
-    return (
-      <>
-        <Box heading="Redeemable tokens" padding={0}>
-          <List>
-            {tokens.map(({ address, name, decimals, amount, symbol, verified }) => {
-              return (
-                <ListItem
-                  key={address}
-                  onClick={() => onRequestRemoveToken(address)}
-                  borderColor={String(theme.border)}
-                >
-                  <BalanceToken
-                    name={name}
-                    symbol={symbol}
-                    decimals={decimals}
-                    amount={amount}
-                    verified={verified}
-                    removable
-                  />
-                </ListItem>
-              )
-            })}
-            {!belowMedium && AddTokenButton(false, 'normal', onRequestAddToken)}
-          </List>
-        </Box>
-        {belowMedium && <Wrapper>{AddTokenButton(true, 'strong', onRequestAddToken)}</Wrapper>}
-      </>
-    )
-  }
-)
+const Balances = React.memo(({ tokens, onRequestUpdate, theme, belowMedium }) => {
+  return (
+    <>
+      <Box heading="Redeemable tokens" padding={0}>
+        <List>
+          {tokens.map(({ address, name, decimals, amount, symbol, verified }) => {
+            return (
+              <ListItem key={address} borderColor={String(theme.border)}>
+                <BalanceToken
+                  name={name}
+                  symbol={symbol}
+                  decimals={decimals}
+                  amount={amount}
+                  verified={verified}
+                  removable
+                />
+              </ListItem>
+            )
+          })}
+          {!belowMedium &&
+            UpdateTokenButton({ wide: false, onClick: onRequestUpdate, css: `margin: 20px;` })}
+        </List>
+      </Box>
+      {belowMedium && (
+        <Wrapper>{UpdateTokenButton({ wide: true, onClick: onRequestUpdate })}</Wrapper>
+      )}
+    </>
+  )
+})
 
 const List = styled.ul`
   list-style: none;
@@ -67,9 +64,9 @@ const ListItem = styled.li`
   )};
 `
 
-const AddTokenButton = (wide, mode, onClick) => (
-  <Button wide={wide} mode={mode} onClick={onClick}>
-    Add Token
+const UpdateTokenButton = ({ css, ...props }) => (
+  <Button mode={'normal'} css={css} {...props}>
+    Add / Remove
   </Button>
 )
 

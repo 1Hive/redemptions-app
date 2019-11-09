@@ -10,19 +10,10 @@ import UpdateTokens from './components/Panels/UpdateTokens'
 import RedeemTokens from './components/Panels/RedeemTokens'
 
 import { AppLogicProvider, useAppLogic } from './app-logic'
-import { getModeTag, MODE } from './mode-types'
+import { MODE } from './mode-types'
 
 const App = React.memo(() => {
-  const {
-    actions,
-    requests,
-    isSyncing,
-    burnableToken,
-    tokens,
-    panelState,
-    mode,
-    tokenAddress,
-  } = useAppLogic()
+  const { actions, requests, isSyncing, burnableToken, tokens, panelState, mode } = useAppLogic()
 
   return (
     <Main>
@@ -44,11 +35,7 @@ const App = React.memo(() => {
               />
             }
           />
-          <Balances
-            tokens={tokens}
-            onRequestAddToken={requests.addToken}
-            onRequestRemoveToken={requests.removeToken}
-          />
+          <Balances tokens={tokens} onRequestUpdate={requests.updateTokens} />
         </React.Fragment>
       ) : (
         !isSyncing && (
@@ -60,21 +47,17 @@ const App = React.memo(() => {
               justify-content: center;
             `}
           >
-            <NoTokens onNewToken={requests.addToken} isSyncing={isSyncing} />
+            <NoTokens onNewToken={requests.updateTokens} isSyncing={isSyncing} />
           </div>
         )
       )}
       <SidePanel
-        title={getModeTag(mode)}
+        title={`${mode === MODE.REDEEM_TOKENS ? 'Redeem' : 'Update'} tokens`}
         opened={panelState.visible}
         onClose={panelState.requestClose}
         onTransitionEnd={panelState.endTransition}
       >
-        <div
-          css={`
-            margin-top: ${3 * GU}px;
-          `}
-        >
+        <div>
           {mode === MODE.REDEEM_TOKENS ? (
             <RedeemTokens
               balance={burnableToken.balance}
@@ -87,9 +70,7 @@ const App = React.memo(() => {
             />
           ) : (
             <UpdateTokens
-              mode={mode}
               tokens={tokens}
-              tokenAddress={tokenAddress}
               onUpdateTokens={actions.updateTokens}
               panelVisible={panelState.visible}
               panelOpened={panelState.opened}
