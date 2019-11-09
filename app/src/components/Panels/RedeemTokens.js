@@ -61,7 +61,11 @@ const RedeemTokens = ({
   const youGet = getTokenExchange(tokensWithBalance, value, totalSupply / Math.pow(10, decimals))
 
   return (
-    <div>
+    <div
+      css={`
+        margin-top: 1rem;
+      `}
+    >
       <form onSubmit={handleFormSubmit}>
         <InfoMessage
           title={'Redemption action'}
