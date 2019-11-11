@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { breakpoint, IconCross, useTheme } from '@aragon/ui'
+import { breakpoint, useTheme } from '@aragon/ui'
 import { formatTokenAmount } from '../lib/math-utils'
 
 const splitAmount = (amount, decimals) => {
@@ -15,40 +15,18 @@ const splitAmount = (amount, decimals) => {
 
 const BalanceToken = ({ amount, symbol, decimals, verified, removable, theme }) => (
   <Balance removable={removable} negative={String(theme.negative)}>
-    <Top>
-      <Token color={String(theme.contentSecondary)}>
-        {verified && symbol && (
-          <img
-            alt=""
-            width="16"
-            height="16"
-            src={`https://chasing-coins.com/coin/logo/${symbol}`}
-          />
-        )}
-        {symbol || '?'}
-      </Token>
-      <Remove>
-        <IconCross css={{ transform: 'translateX(-3px)' }} color={String(theme.negative)} /> Remove
-      </Remove>
-    </Top>
+    <Token color={String(theme.contentSecondary)}>
+      {verified && symbol && (
+        <img alt="" width="16" height="16" src={`https://chasing-coins.com/coin/logo/${symbol}`} />
+      )}
+      {symbol || '?'}
+    </Token>
+
     <Bottom>
       <Amount>{splitAmount(amount, decimals)}</Amount>
     </Bottom>
   </Balance>
 )
-
-const Top = styled.div`
-  position: relative;
-  height: 100%;
-
-  ${breakpoint(
-    'medium',
-    `
-    height: 20px;
-    
-    `
-  )}
-`
 
 const Token = styled.div`
   display: flex;
@@ -67,27 +45,6 @@ const Token = styled.div`
     `
       font-size: 14px;
     
-    `
-  )}
-`
-
-const Remove = styled.div`
-  display: flex;
-  align-items: center;
-  width: 100px;
-  opacity: 0;
-  position: absolute;
-  top: 20%;
-  font-size: 17px;
-
-  transition: opacity 0.3s ease, transform 0.4s ease;
-  transform: rotate3d(1, 0, 0, 90deg);
-
-  ${breakpoint(
-    'medium',
-    `
-      top: 0;
-      font-size: 14px;
     `
   )}
 `
@@ -122,33 +79,6 @@ const Balance = styled.div`
    display: block;
  `
   )}
-
-  ${({ removable, negative }) =>
-    removable &&
-    `
-    cursor: pointer;
-    &:hover {
-      ${Top} > ${Remove} {
-        transform: rotate3d(0,0,0,0deg);
-        opacity: 1;
-      }
-
-      ${Top} > ${Token} {
-        transform:  rotate3d(1,0,0,90deg);
-        opacity: 0;
-      }
-
-      ${Bottom} > ${Amount} {
-        color: ${negative}
-      }
-    }
-
-    &:active {
-      ${Top} > ${Remove} {
-        color: ${negative}
-      }
-    }
-    `}
 `
 
 export default props => {

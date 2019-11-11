@@ -1,10 +1,5 @@
 import React from 'react'
-import { Info, Text, IconCross } from '@aragon/ui'
-import styled from 'styled-components'
-
-const Message = styled.div`
-  margin-top: 1rem;
-`
+import { Info, IconCross, useTheme, textStyle } from '@aragon/ui'
 
 export const InfoMessage = ({ title, text, background }) => (
   <div style={{ marginBottom: '1rem' }}>
@@ -14,13 +9,30 @@ export const InfoMessage = ({ title, text, background }) => (
   </div>
 )
 
-export const ErrorMessage = ({ message }) => (
-  <Message>
-    <p>
-      <IconCross />
-      <Text size="small" style={{ marginLeft: '10px' }}>
-        {message}
-      </Text>
-    </p>
-  </Message>
-)
+export const ErrorMessage = ({ text }) => {
+  const theme = useTheme()
+  return (
+    <div
+      css={`
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+      `}
+    >
+      <IconCross
+        size="tiny"
+        css={`
+          color: ${theme.negative};
+          margin-right: 8px;
+        `}
+      />
+      <span
+        css={`
+          ${textStyle('body3')}
+        `}
+      >
+        {text}
+      </span>
+    </div>
+  )
+}
