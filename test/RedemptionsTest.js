@@ -321,15 +321,13 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         assert.isBelow(receipt.receipt.gasUsed, maxGasAllowed)
       })
 
-      it('should redeem even if there is no eligible assets in the vault', async () => {
-        const expectedRedeemableBalance = 0
+      it('reverts if there is no eligible assets in the vault', async () => {
         await redemptions.removeRedeemableToken(token0.address)
         await redemptions.removeRedeemableToken(token1.address)
 
-        await redemptions.redeem(redeemerAmount, { from: redeemer })
-
+        await assertRevert(redemptions.redeem(redeemerAmount, { from: redeemer }), 'REDEMPTIONS_CANNOT_REDEEM_ZERO')
         const actualRedeemableBalance = await tokenManager.spendableBalanceOf(redeemer)
-        assert.equal(actualRedeemableBalance, expectedRedeemableBalance)
+        assert.equal(actualRedeemableBalance.toNumber(), redeemerAmount)
       })
 
       it('reverts if amount to redeem is zero', async () => {
@@ -337,7 +335,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           redemptions.redeem(0, {
             from: redeemer,
           }),
-          'REDEMPTIONS_CANNOT_REDEEM_ZERO'
+          'REDEMPTIONS_CANNOT_BURN_ZERO'
         )
       })
 
@@ -346,6 +344,13 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
           redemptions.redeem(redeemerAmount + 1, { from: redeemer }),
           'REDEMPTIONS_INSUFFICIENT_BALANCE'
         )
+      })
+
+      it('reverts if all redeemable token amounts are zero', async () => {
+        await token0.burn(vault.address, vaultToken0Amount)
+        await token1.burn(vault.address, vaultToken1Amount)
+
+        await assertRevert(redemptions.redeem(redeemerAmount, { from: redeemer }), 'REDEMPTIONS_CANNOT_REDEEM_ZERO')
       })
 
       context('respect vesting', () => {
