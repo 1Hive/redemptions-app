@@ -105,7 +105,7 @@ contract Redemptions is AragonApp {
         require(tokenManager.spendableBalanceOf(msg.sender) >= _burnableAmount, ERROR_INSUFFICIENT_BALANCE);
 
         uint256 redemptionAmount;
-        uint256 totalRedeemAmount;
+        uint256 totalRedepemtionAmount;
         uint256 vaultTokenBalance;
         uint256 burnableTokenTotalSupply = tokenManager.token().totalSupply();
 
@@ -113,14 +113,14 @@ contract Redemptions is AragonApp {
             vaultTokenBalance = vault.balance(redeemableTokens[i]);
 
             redemptionAmount = _burnableAmount.mul(vaultTokenBalance).div(burnableTokenTotalSupply);
-            totalRedeemAmount = totalRedeemAmount.add(redemptionAmount);
+            totalRedepemtionAmount = totalRedepemtionAmount.add(redemptionAmount);
 
             if (redemptionAmount > 0) {
                 vault.transfer(redeemableTokens[i], msg.sender, redemptionAmount);
             }
         }
 
-        require(totalRedeemAmount > 0, ERROR_CANNOT_REDEEM_ZERO);
+        require(totalRedepemtionAmount > 0, ERROR_CANNOT_REDEEM_ZERO);
 
         tokenManager.burn(msg.sender, _burnableAmount);
 
