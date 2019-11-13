@@ -23,8 +23,9 @@ contract Redemptions is AragonApp {
     string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
     string private constant ERROR_TOKEN_NOT_ADDED = "REDEMPTIONS_TOKEN_NOT_ADDED";
-    string private constant ERROR_CANNOT_REDEEM_ZERO = "REDEMPTIONS_CANNOT_REDEEM_ZERO";
+    string private constant ERROR_CANNOT_BURN_ZERO = "REDEMPTIONS_CANNOT_BURN_ZERO";
     string private constant ERROR_INSUFFICIENT_BALANCE = "REDEMPTIONS_INSUFFICIENT_BALANCE";
+    string private constant ERROR_CANNOT_REDEEM_ZERO = "REDEMPTIONS_CANNOT_REDEEM_ZERO";
 
     uint256 constant public REDEEMABLE_TOKENS_MAX_SIZE = 30;
 
@@ -32,7 +33,7 @@ contract Redemptions is AragonApp {
     TokenManager public tokenManager;
 
     mapping(address => bool) public redeemableTokenAdded;
-    address[] public redeemableTokens;
+    address[] internal redeemableTokens;
 
     event AddRedeemableToken(address indexed token);
     event RemoveRedeemableToken(address indexed token);
@@ -100,10 +101,11 @@ contract Redemptions is AragonApp {
     * @param _burnableAmount Amount of burnable token to be exchanged for redeemable tokens
     */
     function redeem(uint256 _burnableAmount) external authP(REDEEM_ROLE, arr(msg.sender)) {
-        require(_burnableAmount > 0, ERROR_CANNOT_REDEEM_ZERO);
+        require(_burnableAmount > 0, ERROR_CANNOT_BURN_ZERO);
         require(tokenManager.spendableBalanceOf(msg.sender) >= _burnableAmount, ERROR_INSUFFICIENT_BALANCE);
 
         uint256 redemptionAmount;
+        uint256 totalRedepemtionAmount;
         uint256 vaultTokenBalance;
         uint256 burnableTokenTotalSupply = tokenManager.token().totalSupply();
 
@@ -111,11 +113,14 @@ contract Redemptions is AragonApp {
             vaultTokenBalance = vault.balance(redeemableTokens[i]);
 
             redemptionAmount = _burnableAmount.mul(vaultTokenBalance).div(burnableTokenTotalSupply);
+            totalRedepemtionAmount = totalRedepemtionAmount.add(redemptionAmount);
 
             if (redemptionAmount > 0) {
                 vault.transfer(redeemableTokens[i], msg.sender, redemptionAmount);
             }
         }
+
+        require(totalRedepemtionAmount > 0, ERROR_CANNOT_REDEEM_ZERO);
 
         tokenManager.burn(msg.sender, _burnableAmount);
 
@@ -126,18 +131,18 @@ contract Redemptions is AragonApp {
     * @notice Get tokens from redemption list
     * @return token addresses
     */
-    function getRedeemableTokens() public view returns (address[]) {
+    function getRedeemableTokens() external view returns (address[]) {
         return redeemableTokens;
     }
 
     /**
     * @dev Convenience functions for radspec
     */
-    function getToken() public view returns (address) {
+    function getToken() external view returns (address) {
         return tokenManager.token();
     }
 
-    function getETHAddress() public view returns(address) {
+    function getETHAddress() external view returns(address) {
         return ETH;
     }
 }
