@@ -11,7 +11,7 @@ Redemptions has been published to APM on Rinkeby at `redemptions.open.aragonpm.e
 To deploy to an organization you can use the [Aragon CLI](https://hack.aragon.org/docs/cli-intro.html).
 
 ```sh
-aragon dao install <dao-address> redemptions.open.aragonpm.eth --app-init-args <vault-address> <token-manager-address>
+aragon dao install <dao-address> redemptions.open.aragonpm.eth --app-init-args <vault-address> <token-manager-address> ["'<tokenAddress1>', '<tokenAddress2>', ..."].
 ```
 
 The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`.
@@ -110,7 +110,7 @@ dao acl create $dao $token BURN_ROLE $redemptions $voting --environment aragon:r
 
 ### 4. Testing the Redemptions app
 
-Before we test out Redemptions, we are going to need some tokens to redeem and some assets to redeem them for
+Before we test out Redemptions, if you already installed the Redemptions app with a any eligible assets you only need to have a positive balance in the vault for those assets, otherwise we are going to need to request some test tokens through the DAO.
 
 Go back to the settings tab and press the request tokens button a few times. This will deposit some tokens into the vault.
 
