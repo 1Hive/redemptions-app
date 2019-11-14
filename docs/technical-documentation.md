@@ -133,3 +133,13 @@ Anyone can view the token contract addresses that are stored in `redeemableToken
 ### Convenience functions for radspec
 
 This functions are necessary so we can evaluate doc strings in [radspec](https://github.com/aragon/radspec) properly and will only be called when en evaluation is made.
+
+```
+function getToken() external view returns (address) {
+		return tokenManager.token();
+}
+
+function getETHAddress() external view returns(address) {
+		return ETH;
+}
+```
