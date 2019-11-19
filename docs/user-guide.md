@@ -27,7 +27,7 @@ Who/what is allowed to control the Redemptions app is determined by the DAO's pe
 - Note: the section you're looking for is "Permissions set on this app", not the permissions available or permissions granted. The "Permissions set on this app" section will tell you who/what can do stuff with the app currently.
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redemptions-app-permissions.gif" width="600" />
+    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/permissions.gif" width="600" />
 </p>
 
 ### Adding tokens:
@@ -38,7 +38,7 @@ The default recommendation is for the Voting app to control adding and removing 
 - approving the vote to add the token to the Redemptions app
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/add-token-to-redemptions-app.gif" width="600" />
+    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/add-token.gif" width="600" />
 </p>
 
 ### Removing tokens:
@@ -48,7 +48,7 @@ To remove a token from the Redemptions app UI, open the Redemptions app in your 
 - Note: Redemptions app is NOT the Vault. More details on the Aragon Vault app can be found [here](ttps://wiki.aragon.org/dev/apps/vault/). TL;DR: The vault holds the tokens. If you remove a token from the Redemptions app UI with the process above, you will not remove tokens from the Vault. At any time you can add the token contract back to the Redemptions app to display that tokens balance. This feature is to prevent tokens with very small balances from polluting the Redemptions token list.
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/remove-token-from-redemptions-app.gif" width="600" />
+    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/remove-token.gif" width="600" />
 </p>
 
 ### Redeeming tokens:
@@ -56,7 +56,7 @@ To remove a token from the Redemptions app UI, open the Redemptions app in your 
 To redeem tokens, click on the "Redeem" button, then use the slider to select how many tokens you would like to redeem. When satisfied with the amount, click redeem to confirm. You will be prompted to sign two messages: one to confirm the transaction and one to send that transaction to the network to be processed.
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redeem-tokens-redemptions-app.gif" width="600" />
+    <img src="https://raw.githubusercontent.com/1Hive/redemptions-app/master/docs/resources/redeem-tokens.gif" width="600" />
 </p>
 
 <br />
