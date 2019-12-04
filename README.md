@@ -14,11 +14,9 @@ The Redemptions app has been published to `open.aragonpm.eth` on the Rinkeby tes
 
 The code in this repo has not been audited.
 
-
 ## How to try Redemptions immediately
 
 We have a [Redemptions demo DAO live on Rinkeby!](https://rinkeby.aragon.org/#/tryredemptions/0x18a9713625256548670ad979d51a6b9fad5b6c45)
-
 
 ## How to run Redemptions locally
 
@@ -43,13 +41,14 @@ npm i
 ```
 
 Deploy a dao with Redemptions installed on your local environment.
+
 ```sh
 npm run start:template
 ```
 
 If everything is working correctly, your new DAO will be deployed and your browser will open http://localhost:3000/#/YOUR-DAO-ADDRESS. It should look something like this:
 
-![newly deployed dao with Redemptions](https://i.imgur.com/Kixxqr0.png)
+![newly deployed dao with Redemptions](https://imgur.com/3Q2N0dh)
 
 You will also see the configuration for your local deployment in the terminal. It should look something like this:
 
@@ -69,16 +68,15 @@ npm run deploy-tokens YOUR-DAO-ADDRESS
 If successful, you will have deployed contracts for ANT, DAI, OMG, and ETH to your local testnet. The terminal will then display the names of the tokens and their addresses on your local testnet. It should look something like this:
 
 ```sh
-------------------------------------------------
-ANT 0x129711C337489538cCcbc0EFf52098a46bCF0705 Balance: 40
-DAI 0xBf61048590B6FAd46Fb446aA241fA33f7a22851b Balance: 100
-OMG 0xC56a94cB177B297A9f4fe11781CE4E2eD1829f8B Balance: 14189
-ETH 0x0000000000000000000000000000000000000000 Balance: 2
-------------------------------------------------
+Token  Address                                     Balance
+-----  ------------------------------------------  -------
+ANT    0x7F381a654914a4C865123B33fD8178efc0Ee5C2D  40
+DAI    0xB5Cc76D092aA440087447EBD3A29E9E0b8A4bf9E  100
+OMG    0x3d09CfCdD3136aaE7A4B26875A7BAcA0C3d8A03b  14189
+ETH    0x0000000000000000000000000000000000000000  0.1
 ```
 
 Now if you navigate back to your browser (http://localhost:3000/#/YOUR-DAO-ADDRESS) you'll be able to open the Redemptions app and add one of these tokens to your locally deployed Redemptions app.
-
 
 ## How to deploy Redemptions to an organization
 
@@ -91,7 +89,6 @@ aragon dao install <dao-address> redemptions.open.aragonpm.eth --app-init-args <
 ```
 
 The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`.
-
 
 ## Contributing
 
