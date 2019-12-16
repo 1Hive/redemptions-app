@@ -130,6 +130,27 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         'REDEMPTIONS_TOKEN_NOT_CONTRACT'
       )
     })
+
+    it('reverts when a redeemable token is duplicated', async () => {
+      await assertRevert(redemptions.initialize(vault.address, tokenManager.address, [token0.address, token0.address]),
+        'ERROR_REDEEMABLE_TOKEN_LIST_MALFORMED')
+    })
+
+    it('reverts when redeemable tokens are not in ascending order', async () => {
+      const token1 = await Erc20.new(rootAccount, '', '')
+      const redeemableTokens = token1.address > token0.address ? [token1.address, token0.address] : [token0.address, token1.address]
+      await assertRevert(redemptions.initialize(vault.address, tokenManager.address, redeemableTokens),
+        'ERROR_REDEEMABLE_TOKEN_LIST_MALFORMED')
+    })
+
+    it('can accept multiple redeemable tokens in ascending order', async () => {
+      const token1 = await Erc20.new(rootAccount, '', '')
+      const redeemableTokens = token1.address > token0.address ? [token0.address, token1.address] : [token1.address, token0.address]
+      redemptions.initialize(vault.address, tokenManager.address, redeemableTokens)
+
+      const actualTokenAddresses = await redemptions.getRedeemableTokens()
+      assert.deepStrictEqual(actualTokenAddresses, redeemableTokens)
+    })
   })
 
   context('initialize(Vault _vault, TokenManager _tokenManager)', () => {

@@ -20,6 +20,7 @@ contract Redemptions is AragonApp {
     string private constant ERROR_VAULT_IS_NOT_CONTRACT = "REDEMPTIONS_VAULT_NOT_CONTRACT";
     string private constant ERROR_TOKEN_MANAGER_IS_NOT_CONTRACT = "REDEMPTIONS_TOKEN_MANAGER_NOT_CONTRACT";
     string private constant ERROR_REDEEMABLE_TOKEN_LIST_FULL = "REDEMPTIONS_REDEEMABLE_TOKEN_LIST_FULL";
+    string private constant ERROR_REDEEMABLE_TOKEN_LIST_MALFORMED = "ERROR_REDEEMABLE_TOKEN_LIST_MALFORMED";
     string private constant ERROR_TOKEN_ALREADY_ADDED = "REDEMPTIONS_TOKEN_ALREADY_ADDED";
     string private constant ERROR_TOKEN_NOT_CONTRACT = "REDEMPTIONS_TOKEN_NOT_CONTRACT";
     string private constant ERROR_TOKEN_NOT_ADDED = "REDEMPTIONS_TOKEN_NOT_ADDED";
@@ -43,6 +44,7 @@ contract Redemptions is AragonApp {
     * @notice Initialize Redemptions app contract
     * @param _vault Vault address
     * @param _tokenManager TokenManager address
+    * @param _redeemableTokens Unique list of redeemable tokens in ascending order
     */
     function initialize(Vault _vault, TokenManager _tokenManager, address[] _redeemableTokens) external onlyInit {
         initialized();
@@ -55,6 +57,9 @@ contract Redemptions is AragonApp {
             address token = _redeemableTokens[i];
             if (token != ETH) {
                 require(isContract(token), ERROR_TOKEN_NOT_CONTRACT);
+            }
+            if (i >= 1) {
+                require(_redeemableTokens[i - 1] < _redeemableTokens[i], ERROR_REDEEMABLE_TOKEN_LIST_MALFORMED);
             }
             redeemableTokenAdded[token] = true;
         }
