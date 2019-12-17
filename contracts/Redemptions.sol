@@ -44,7 +44,7 @@ contract Redemptions is AragonApp {
     * @notice Initialize Redemptions app contract
     * @param _vault Vault address
     * @param _tokenManager TokenManager address
-    * @param _redeemableTokens Unique list of redeemable tokens in ascending order
+    * @param _redeemableTokens Unique list of redeemable tokens
     */
     function initialize(Vault _vault, TokenManager _tokenManager, address[] _redeemableTokens) external onlyInit {
         initialized();
