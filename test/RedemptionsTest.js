@@ -133,23 +133,16 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
 
     it('reverts when a redeemable token is duplicated', async () => {
       await assertRevert(redemptions.initialize(vault.address, tokenManager.address, [token0.address, token0.address]),
-        'ERROR_REDEEMABLE_TOKEN_LIST_MALFORMED')
+        'REDEMPTIONS_DUPLICATE_REDEEMABLE_TOKEN')
     })
 
-    it('reverts when redeemable tokens are not in ascending order', async () => {
+    it('can accept multiple redeemable tokens', async () => {
       const token1 = await Erc20.new(rootAccount, '', '')
-      const redeemableTokens = token1.address > token0.address ? [token1.address, token0.address] : [token0.address, token1.address]
-      await assertRevert(redemptions.initialize(vault.address, tokenManager.address, redeemableTokens),
-        'ERROR_REDEEMABLE_TOKEN_LIST_MALFORMED')
-    })
-
-    it('can accept multiple redeemable tokens in ascending order', async () => {
-      const token1 = await Erc20.new(rootAccount, '', '')
-      const redeemableTokens = token1.address > token0.address ? [token0.address, token1.address] : [token1.address, token0.address]
-      redemptions.initialize(vault.address, tokenManager.address, redeemableTokens)
+      const expectedRedeemableTokens = [token0.address, token1.address]
+      await redemptions.initialize(vault.address, tokenManager.address, expectedRedeemableTokens)
 
       const actualTokenAddresses = await redemptions.getRedeemableTokens()
-      assert.deepStrictEqual(actualTokenAddresses, redeemableTokens)
+      assert.deepStrictEqual(actualTokenAddresses, expectedRedeemableTokens)
     })
   })
 
