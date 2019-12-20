@@ -130,6 +130,20 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
         'REDEMPTIONS_TOKEN_NOT_CONTRACT'
       )
     })
+
+    it('reverts when a redeemable token is duplicated', async () => {
+      await assertRevert(redemptions.initialize(vault.address, tokenManager.address, [token0.address, token0.address]),
+        'REDEMPTIONS_DUPLICATE_REDEEMABLE_TOKEN')
+    })
+
+    it('can accept multiple redeemable tokens', async () => {
+      const token1 = await Erc20.new(rootAccount, '', '')
+      const expectedRedeemableTokens = [token0.address, token1.address]
+      await redemptions.initialize(vault.address, tokenManager.address, expectedRedeemableTokens)
+
+      const actualTokenAddresses = await redemptions.getRedeemableTokens()
+      assert.deepStrictEqual(actualTokenAddresses, expectedRedeemableTokens)
+    })
   })
 
   context('initialize(Vault _vault, TokenManager _tokenManager)', () => {

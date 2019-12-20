@@ -10,7 +10,7 @@
 
 The Redemptions app has been published to `open.aragonpm.eth` on the Rinkeby test network. If you experience any issues or are interested in contributing please see review our open [issues](https://github.com/1hive/redemptions/issues).
 
-#### 🚨 Security Review Status: Contracts frozen for audit as of commit [8dd0accd1812f2a38196b378097bd3914d60fbdf](https://github.com/1Hive/redemptions-app/tree/8dd0accd1812f2a38196b378097bd3914d60fbdf/contracts)
+#### 🚨 Security Review Status: Contracts updated for audit as of commit [d61a3b9b419e154894f3dc2ac2eae291612c6519](https://github.com/1Hive/redemptions-app/tree/d61a3b9b419e154894f3dc2ac2eae291612c6519/contracts)
 
 The code in this repo has not been audited.
 
