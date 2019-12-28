@@ -186,13 +186,13 @@ async function updateConnectedAccount(state, { account }, settings) {
     ...state,
     burnableToken: {
       ...burnableToken,
-      balance: await spendableBalanceOf(settings, account),
+      balance: account ? await spendableBalanceOf(settings, account) : 0,
     },
     account,
   }
 }
 
-/** Called when token is withdrawn from or deposited to the vault */
+// Called when token is withdrawn from or deposited to the vault
 async function vaultEvent(state, { token }, settings) {
   const { tokens } = state
   const index = tokens.findIndex(t => addressesEqual(t.address, token))
@@ -211,7 +211,7 @@ async function vaultEvent(state, { token }, settings) {
   }
 }
 
-/** Called when minimeToken balance has increased/decreased or has been transfered between accounts */
+// Called when minimeToken balance has increased/decreased or has been transfered between accounts
 async function minimeTokenEvent(state, { _from, _to }, settings) {
   const { burnableToken, account } = state
   const newBurnableToken = { ...burnableToken }
@@ -230,7 +230,7 @@ async function minimeTokenEvent(state, { _from, _to }, settings) {
   }
 }
 
-/** New token has been added to redemptions list */
+// New token has been added to redemptions list
 async function addedToken(state, { token }, settings) {
   // fix to address issue where contract events randomly fire twice
   const index = state.tokens.findIndex(t => addressesEqual(t.address, token))
@@ -242,7 +242,7 @@ async function addedToken(state, { token }, settings) {
   }
 }
 
-/** Token has been removed from redemptions list */
+// Token has been removed from redemptions list
 async function removedToken(state, { token }) {
   const { tokens } = state
 
@@ -260,7 +260,7 @@ async function removedToken(state, { token }) {
   return nextState
 }
 
-/** New redemption has been made */
+// New redemption has been made
 async function newRedemption(state, settings) {
   return {
     ...state,
@@ -274,7 +274,7 @@ async function newRedemption(state, settings) {
  *                     *
  ***********************/
 
-/** Returns burnable token metadata */
+// Returns burnable token metadata
 async function getMinimeTokenData(minimeContract) {
   const [symbol, decimals] = await Promise.all([
     minimeContract.symbol().toPromise(),
@@ -294,13 +294,13 @@ function spendableBalanceOf({ tokenManager: { contract } }, account) {
   return contract.spendableBalanceOf(account).toPromise()
 }
 
-/** Called when redemption has been made (refresh of all redeemable tokens balance)  */
+// Called when redemption has been made (refresh of all redeemable tokens balance)
 async function updateTokens(settings) {
   const tokens = await app.call('getRedeemableTokens').toPromise()
   return getVaultBalances(tokens, settings)
 }
 
-/** Returns `tokens` balances from vault */
+// Returns `tokens` balances from vault
 async function getVaultBalances(tokens = [], settings) {
   let balances = []
   for (const tokenAddress of tokens) {
