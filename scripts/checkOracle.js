@@ -1,47 +1,58 @@
 // artifacts
-const Kernel = this.artifacts.require('Kernel')
-const ACL = this.artifacts.require('ACL')
-const IACLOracle = this.artifacts.require('IACLOracle')
-const Redemptions = this.artifacts.require('Redemptions')
+const Kernel = artifacts.require('Kernel')
+const ACL = artifacts.require('ACL')
+const Oracle = artifacts.require('IACLOracle')
+const Redemptions = artifacts.require('Redemptions')
 
 const BN = require('bn.js')
-
 const ANY_ENTITY = '0x'.padEnd(42, 'f')
 
-const web3 = this.web3
-const { soliditySha3 } = require('web3-utils')
-
-// role
-const ROLE = soliditySha3('REDEEM_ROLE')
-
-// params
-const ID = 'ORACLE_PARAM_ID'
-const OP = 'EQ'
+const ORACLE_PARAM_ID = '203' // ORACLE_PARAM_ID
+const OP = '1' // EQ
 
 module.exports = async () => {
   const args = process.argv.slice(6)
   const [redemptionsAddress, oracleAddress, sender] = args
 
-  console.log('Redemptions:', redemptionsAddress, 'Oracle:', oracleAddress, 'Sender:', sender)
+  console.log(
+    'Args: Redemptions:',
+    redemptionsAddress,
+    'Oracle:',
+    oracleAddress,
+    'Sender:',
+    sender,
+    '\n'
+  )
 
   try {
+    // Contract Redemptions
     const redemptions = await Redemptions.at(redemptionsAddress)
+    const ROLE = await redemptions.REDEEM_ROLE()
 
-    console.log('Redemptions:')
-    const canPerform = await redemptions.canPerform(sender, ROLE, [sender])
-    console.log('(canPerform)', canPerform)
+    console.log('Contract: Redemptions \n')
 
-    console.log('ACL:')
+    console.log(`Calling canPerform(address _sender, bytes32 _role, uint256[] _params)`)
+    console.log(`Params: ${sender}, ${ROLE}, [${sender}]`)
+    const redemptionsCanPerform = await redemptions.canPerform(sender, ROLE, [sender])
+    console.log('Result: ', redemptionsCanPerform)
+    writeEnd()
+    // Contract Redemptions END
+
+    // Contract ACL
+    console.log('Contract ACL \n')
     const kernel = await Kernel.at(await redemptions.kernel())
     const acl = await ACL.at(await kernel.acl())
 
     // Check if permission params setted correctly
+    console.log('Checking if permission setted correctly with the right parameters.. \n')
     const permissionParamsLength = await acl.getPermissionParamsLength(
       ANY_ENTITY,
       redemptionsAddress,
       ROLE
     )
-    console.log('permission params length:', permissionParamsLength)
+
+    if (permissionParamsLength.toString() === '1')
+      console.log(`Permission parameters correct length (${permissionParamsLength})`)
 
     const permissionParams = await acl.getPermissionParam(
       ANY_ENTITY,
@@ -49,24 +60,48 @@ module.exports = async () => {
       ROLE,
       new BN('0')
     )
-    console.log('permission params:', permissionParams)
+    const permissionParamsArray = Object.values(permissionParams).map(paramBN => paramBN.toString())
+    const oracleAddressNumber = new BN(oracleAddress.slice(2), 16).toString()
+    if (
+      permissionParamsArray[0] === ORACLE_PARAM_ID &&
+      permissionParamsArray[1] === OP &&
+      permissionParamsArray[2] === oracleAddressNumber
+    )
+      console.log('Permission parameters setted correctly \n')
 
-    // get permission params hash
+    // get permission params hash (needed for evalParams ACL function)
     const paramHash = await getPermissionParamsHash(acl, redemptionsAddress, ROLE)
-    console.log('param hash', paramHash)
     // evauluate logic (performs the call to the oracle)
-    const evalparams = await acl.evalParams(paramHash, ANY_ENTITY, redemptionsAddress, ROLE, [
+    console.log(
+      'Calling  function evalParams(bytes32 _paramsHash, address _who, address _where, bytes32 _what, uint256[] _how)'
+    )
+    console.log(`Params: ${paramHash}, ${ANY_ENTITY}, ${redemptionsAddress}, ${ROLE}, [${sender}]`)
+    const aclEvalParams = await acl.evalParams(paramHash, ANY_ENTITY, redemptionsAddress, ROLE, [
       sender,
     ])
-    console.log('evalparams result', evalparams)
+    console.log('Result', aclEvalParams)
+    writeEnd()
+    // Contract ACL END
 
-    console.log('Oracle:')
-    const oracle = await IACLOracle.at(oracleAddress)
+    // Contract Oracle
+    console.log('Contract: Oracle \n')
+    const oracle = await Oracle.at(oracleAddress)
+
+    console.log('Calling  function canPerform(address, address, bytes32, uint256[] _how)')
+    console.log(`Params: ${ANY_ENTITY}, ${ANY_ENTITY}, '0x', [${sender}]`)
     const canPerformOracle = await oracle.canPerform(ANY_ENTITY, ANY_ENTITY, '0x', [sender])
-    console.log('canPerform', canPerformOracle)
+    console.log('Result: ', canPerformOracle)
+    writeEnd()
+    // Contract Oracle END
+
+    return
   } catch (err) {
     console.error(err)
   }
+}
+
+function writeEnd() {
+  console.log('-----------------------------------------------------------------------\n')
 }
 
 function getPermissionParamsHash(acl, where, what) {
@@ -76,7 +111,6 @@ function getPermissionParamsHash(acl, where, what) {
       { filter: { entity: ANY_ENTITY, app: where, role: what }, fromBlock: 0 },
       (error, events) => {
         if (error) console.log('Error getting events:', error)
-        console.log('events', events)
         resolve(events[0].returnValues.paramsHash)
       }
     )
