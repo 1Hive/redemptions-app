@@ -8,7 +8,8 @@ const path = require('path')
 const HDWalletProvider = require('truffle-hdwallet-provider')
 const HDWalletProviderPrivkey = require('truffle-hdwallet-provider-privkey')
 
-const DEFAULT_MNEMONIC = 'explain tackle mirror kit van hammer degree position ginger unfair soup bonus'
+const DEFAULT_MNEMONIC =
+  'explain tackle mirror kit van hammer degree position ginger unfair soup bonus'
 
 const defaultRPC = network => `https://${network}.eth.aragon.network`
 
@@ -78,7 +79,7 @@ module.exports = {
         // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
           enabled: true,
-          runs: 200,
+          runs: 10000,
         },
       },
     },
