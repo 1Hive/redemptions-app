@@ -1,11 +1,9 @@
 import React from 'react'
 import { Info, IconCross, useTheme, textStyle } from '@aragon/ui'
 
-export const InfoMessage = ({ title, text, background }) => (
+export const InfoMessage = ({ title, text }) => (
   <div style={{ marginBottom: '1rem' }}>
-    <Info.Action title={title} background={background}>
-      {text}
-    </Info.Action>
+    <Info title={title}>{text}</Info>
   </div>
 )
 

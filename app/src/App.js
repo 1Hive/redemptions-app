@@ -17,7 +17,7 @@ const App = React.memo(() => {
   const { appearance } = useGuiStyle()
 
   return (
-    <Main theme={appearance} assetsUrl="./aragon-ui">
+    <Main theme={appearance}>
       <SyncIndicator visible={isSyncing} />
       {tokens.length ? (
         <React.Fragment>
