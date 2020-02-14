@@ -5,7 +5,7 @@
   "dependencies": {
     "@aragon/api": "^2.0.0-beta.4",
     "@aragon/api-react": "^2.0.0-beta.4",
-    "@aragon/ui": "^1.0.0-alpha.19",
+    "@aragon/ui": "^1.3.0",
     "components": "^0.1.0",
     "core-js": "^3.1.4",
     "react": "^16.8.6",

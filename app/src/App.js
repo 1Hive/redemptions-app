@@ -9,14 +9,15 @@ import NoTokens from './screens/NoTokens'
 import UpdateTokens from './components/Panels/UpdateTokens'
 import RedeemTokens from './components/Panels/RedeemTokens'
 
-import { AppLogicProvider, useAppLogic } from './app-logic'
+import { AppLogicProvider, useAppLogic, useGuiStyle } from './app-logic'
 import { MODE } from './mode-types'
 
 const App = React.memo(() => {
   const { actions, requests, isSyncing, burnableToken, tokens, panelState, mode } = useAppLogic()
+  const { appearance } = useGuiStyle()
 
   return (
-    <Main>
+    <Main theme={appearance} assetsUrl="./aragon-ui">
       <SyncIndicator visible={isSyncing} />
       {tokens.length ? (
         <React.Fragment>
