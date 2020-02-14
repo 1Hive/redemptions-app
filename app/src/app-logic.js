@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { AragonApi, useAppState, useApi } from '@aragon/api-react'
+import { AragonApi, useAppState, useApi, useGuiStyle } from '@aragon/api-react'
 
 import { useSidePanel } from './hooks/utils-hooks'
 import appStateReducer from './app-state-reducer'
@@ -84,3 +84,5 @@ export function useAppLogic() {
 export function AppLogicProvider({ children }) {
   return <AragonApi reducer={appStateReducer}>{children}</AragonApi>
 }
+
+export { useGuiStyle }
