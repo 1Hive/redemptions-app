@@ -6,12 +6,12 @@ This guide will walk you though everything you need to add Redemptions to an exi
 
 ## TL;DR
 
-Redemptions has been published to APM on Rinkeby at `redemptions.open.aragonpm.eth`
+Redemptions has been published to APM on Mainnet and Rinkeby at `redemptions.aragonpm.eth`
 
 To deploy to an organization you can use the [Aragon CLI](https://hack.aragon.org/docs/cli-intro.html).
 
 ```sh
-aragon dao install <dao-address> redemptions.open.aragonpm.eth --app-init-args <vault-address> <token-manager-address> ["'<tokenAddress1>', '<tokenAddress2>', ..."].
+aragon dao install <dao-address> redemptions.aragonpm.eth --app-init-args <vault-address> <token-manager-address> ["'<tokenAddress1>', '<tokenAddress2>', ..."].
 ```
 
 The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`.
@@ -42,10 +42,10 @@ ANY_ADDRESS=0xffffffffffffffffffffffffffffffffffffffff
 
 ### 2. Install Redemptions App
 
-Redemptions has been published to APM on Rinkeby at `redemptions.open.aragonpm.eth`
+Redemptions has been published to APM on Mainnet and Rinkeby at `redemptions.aragonpm.eth`
 
 ```sh
-aragon dao install $dao redemptions.open.aragonpm.eth --app-init-args $vault $token --environment aragon:rinkeby
+aragon dao install $dao redemptions.aragonpm.eth --app-init-args $vault $token --environment aragon:rinkeby
 ```
 
 The default setup of the democracy DAO is for a vote of the token holders to take place before actions are executed. Head over to the voting app and you will see a new vote
