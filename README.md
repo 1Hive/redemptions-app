@@ -8,9 +8,9 @@
 
 #### 🐲 Project Stage: Mainnet
 
-The Redemptions app has been published to `aragonpm.eth` on the Rinkeby and Mainnet networks. If you experience any issues or are interested in contributing please see review our open [issues](https://github.com/1hive/redemptions/issues).
+The Redemptions app has been published to `aragonpm.eth` on Mainnet and Rinkeby networks. If you experience any issues or are interested in contributing please see review our open [issues](https://github.com/1hive/redemptions/issues).
 
-#### 🚨 Security Review Status: [Contract audited](https://diligence.consensys.net/audits/2019/12/dandelion-organizations/)
+#### 🚨 Security Review Status: [Contracts audited](https://diligence.consensys.net/audits/2019/12/dandelion-organizations/)
 
 ## How to try Redemptions immediately
 
