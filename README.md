@@ -6,13 +6,11 @@
 
 1Hive's Redemptions app allows Aragon organizations to grant their token holders the right to redeem tokens in exchange for a proportional share of the organizations treasury assets.
 
-#### 🐲 Project Stage: Rinkeby
+#### 🐲 Project Stage: Mainnet
 
-The Redemptions app has been published to `open.aragonpm.eth` on the Rinkeby test network. If you experience any issues or are interested in contributing please see review our open [issues](https://github.com/1hive/redemptions/issues).
+The Redemptions app has been published to `aragonpm.eth` on Mainnet and Rinkeby networks. If you experience any issues or are interested in contributing please see review our open [issues](https://github.com/1hive/redemptions/issues).
 
-#### 🚨 Security Review Status: Contracts updated for audit as of commit [d61a3b9b419e154894f3dc2ac2eae291612c6519](https://github.com/1Hive/redemptions-app/tree/d61a3b9b419e154894f3dc2ac2eae291612c6519/contracts)
-
-The code in this repo has not been audited.
+#### 🚨 Security Review Status: [Contracts audited](https://diligence.consensys.net/audits/2019/12/dandelion-organizations/)
 
 ## How to try Redemptions immediately
 
@@ -80,12 +78,12 @@ Now if you navigate back to your browser (http://localhost:3000/#/YOUR-DAO-ADDRE
 
 ## How to deploy Redemptions to an organization
 
-Redemptions has been published to APM on rinkeby at `redemptions.open.aragonpm.eth`
+Redemptions has been published to APM on Mainnet and Rinkeby at `redemptions.aragonpm.eth`
 
 To deploy to an organization you can use the [Aragon CLI](https://hack.aragon.org/docs/cli-intro.html).
 
 ```sh
-aragon dao install <dao-address> redemptions.open.aragonpm.eth --app-init-args <vault-address> <token-manager-address>
+aragon dao install <dao-address> redemptions.aragonpm.eth --app-init-args <vault-address> <token-manager-address> <redeemable-tokens>
 ```
 
 The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the `BURN_ROLE` permission on the `Token Manager`.
