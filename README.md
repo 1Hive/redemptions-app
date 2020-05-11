@@ -92,6 +92,6 @@ The Redemptions app must have the `TRANSFER_ROLE` permission on `Vault` and the 
 
 We welcome community contributions!
 
-Please check out our [open Issues]() to get started.
+Please check out our [open Issues](https://github.com/1Hive/redemptions-app/issues) to get started.
 
 If you discover something that could potentially impact security, please notify us immediately. The quickest way to reach us is via the #dev channel in our [team Keybase chat](https://keybase.io/team/1hive). Just say hi and that you discovered a potential security vulnerability and we'll DM you to discuss details.
