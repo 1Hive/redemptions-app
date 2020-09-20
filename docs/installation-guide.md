@@ -32,7 +32,7 @@ Once your Democracy DAO is deployed (the voting params don't matter as you'll be
 
 ```
 dao=0x6604f9fe9Db1D3F6a45d8F0ab79e8a4B05968816
-token=0x7F42cEB659B944cBB9F3D5ED637f66818C1bAcbf
+tokenManager=0x7F42cEB659B944cBB9F3D5ED637f66818C1bAcbf
 voting=0x41CA57d1e65Cdcd3A68A0e9f8E835F3a1FeDc655
 vault=0x04b46b9e0c1f893cA50Cb35F096d14dD946DEf95
 ANY_ADDRESS=0xffffffffffffffffffffffffffffffffffffffff
@@ -45,7 +45,7 @@ ANY_ADDRESS=0xffffffffffffffffffffffffffffffffffffffff
 Redemptions has been published to APM on Mainnet and Rinkeby at `redemptions.aragonpm.eth`
 
 ```sh
-aragon dao install $dao redemptions.aragonpm.eth --app-init-args $vault $token --environment aragon:rinkeby
+aragon dao install $dao redemptions.aragonpm.eth --app-init-args $vault $tokenManager --environment aragon:rinkeby
 ```
 
 The default setup of the democracy DAO is for a vote of the token holders to take place before actions are executed. Head over to the voting app and you will see a new vote
@@ -87,7 +87,7 @@ dao acl create $dao $redemptions ADD_TOKEN_ROLE $voting $voting --environment ar
 This grants the voting app the permission to remove tokens from the list of redeemable tokens and sets it as the controller
 
 ```sh
-dao acl create $dao $redemptions REMOVE_TOKEN_ROLE $token $voting --environment aragon:rinkeby
+dao acl create $dao $redemptions REMOVE_TOKEN_ROLE $voting $voting --environment aragon:rinkeby
 ```
 
 ---
@@ -99,7 +99,7 @@ dao acl create $dao $vault TRANSFER_ROLE $redemptions $voting --environment arag
 ```
 
 ```sh
-dao acl create $dao $token BURN_ROLE $redemptions $voting --environment aragon:rinkeby
+dao acl create $dao $tokenManager BURN_ROLE $redemptions $voting --environment aragon:rinkeby
 ```
 
 > Notes:
