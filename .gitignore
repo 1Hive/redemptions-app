@@ -7,3 +7,5 @@ package-lock.json
 coverage.json
 coverage
 .DS_Store
+artifacts
+cache

@@ -18,7 +18,7 @@
   ],
   "environments": {
     "default": {
-      "network": "development",
+      "network": "rpc",
       "appName": "redemptions.open.aragonpm.eth"
     },
     "staging": {
@@ -38,7 +38,14 @@
       "appName": "redemptions.aragonpm.eth",
       "wsRPC": "wss://mainnet.eth.aragon.network/ws",
       "network": "mainnet"
+    },
+    "xdai": {
+      "registry": "0xaafca6b0c89521752e559650206d7c925fd0e530",
+      "appName": "redemptions.open.aragonpm.eth",
+      "network": "xdai",
+      "wsRPC": "wss://xdai.poanetwork.dev/wss"
     }
   },
+  "appName": "redemptions.open.aragonpm.eth",
   "path": "contracts/Redemptions.sol"
 }
