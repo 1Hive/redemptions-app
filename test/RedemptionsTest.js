@@ -5,9 +5,15 @@ const MiniMeTokenFactory = artifacts.require('MiniMeTokenFactory')
 const MiniMeToken = artifacts.require('MiniMeToken')
 const Erc20 = artifacts.require('ERC20Token')
 
+const Agent = artifacts.require("Agent")
+const Voting = artifacts.require("Voting")
+const Issuance = artifacts.require("IIssuance")
+const DandelionVoting = artifacts.require("DandelionVoting")
+
 const deployDAO = require('./helpers/deployDAO')
 const { assertRevert, deployedContract, getSeconds, timeTravel } = require('./helpers/helpers')
 const { hash: nameHash } = require('eth-ens-namehash')
+const { encodeCallScript } = require('@aragon/test-helpers/evmScript')
 
 const ANY_ADDRESS = '0xffffffffffffffffffffffffffffffffffffffff'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -102,6 +108,82 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
       true
     )
 
+    // const agent = await Agent.new()
+    // const voting = await Voting.new()
+    //
+    // const agentCallData = agent.contract.methods.isForwarder().encodeABI()
+    // console.log("Agent call data", agentCallData)
+    //
+    // const agentAction = {
+    //   to: "0x56Cf85b6Ea9359c379C40fBDbF6A559354e54d21", // Agent app
+    //   calldata: agentCallData
+    // }
+    //
+    // const voteCallScript = encodeCallScript([agentAction])
+    // console.log("Vote call script", voteCallScript)
+
+    // redeemCallData = redemptions.contract.methods.redeem("400000000000000000000").encodeABI()
+    // console.log("Redeem call data", redeemCallData)
+    //
+    // const agentAction = {
+    //   to: "0x0466e612137bca50e524f25ac9f7b6f826ee15b7", // Agent app
+    //   calldata: agent.contract.methods.execute("0x9f4837e68ae9f9d129eb73cb023fde1f9c25ba30", 0, redeemCallData).encodeABI()
+    // }
+    //
+    // const voteCallScript = encodeCallScript([agentAction])
+    // console.log("Vote call script", voteCallScript)
+    //
+    // const voteAction = {
+    //   to: "0x709e31ba29fb84000f20045590ec664bfc3cdc1d", // Vote app
+    //   calldata: voting.contract.methods.newVote(voteCallScript, "Claim pilot ANT").encodeABI()
+    // }
+    //
+    // const tokensCallScript = encodeCallScript([voteAction])
+    // console.log("Tokens call script", tokensCallScript)
+
+    // const changeControllerCallData = burnableToken.contract.methods.changeController("0x00f9092e5806628d7a44e496c503cec608e64f1f").encodeABI()
+    // console.log("Change controller call data: ", changeControllerCallData)
+
+    // const changeControllerCallData = burnableToken.contract.methods.generateTokens("0x93889F441C03E6E8A662c9c60c750A9BfEcb00bd", 1).encodeABI()
+    // console.log("Generate tokens call data: ", changeControllerCallData)
+    //
+    // const tokensAction = {
+    //   to: "0x71850b7E9Ee3f13Ab46d67167341E4bDc905Eef9", // HNY Token
+    //   calldata: changeControllerCallData
+    // }
+    //
+    // console.log("Tokens call script: ", encodeCallScript([tokensAction]))
+
+
+    const issuance = await Issuance.at(vaultBase.address)
+    const dandelionVoting = await DandelionVoting.at(vaultBase.address)
+
+    const issuanceRemovePolicyCall = issuance.contract.methods.removePolicy(0).encodeABI()
+    const issuanceAddPolicyCall = issuance.contract.methods.addPolicy("0x05e42c4Ae51BA28d8aCF8c371009AD7138312CA4", 47532131721).encodeABI()
+    const issuanceRemovePolicyAction = {
+        to: "0xb9fb2ad5820ccd9fd7bd6a9e35f98b22914db58a", // Issuance App
+        calldata: issuanceRemovePolicyCall
+    }
+    const issuanceAddPolicyAction = {
+      to: "0xb9fb2ad5820ccd9fd7bd6a9e35f98b22914db58a", // Issuance App
+      calldata: issuanceAddPolicyCall
+    }
+    const issuanceVoteCallScript = encodeCallScript([issuanceRemovePolicyAction, issuanceAddPolicyAction])
+    console.log("Issuance call script", issuanceVoteCallScript)
+
+    // newVote(bytes _executionScript, string _metadata, bool _castVote)
+
+    const voteAction = {
+      to: "0x00f9092e5806628d7a44e496c503cec608e64f1f", // Dandelion Voting app
+      calldata: dandelionVoting.contract.methods.newVote(issuanceVoteCallScript, "0x", false).encodeABI()
+    }
+    const voteCallScript = encodeCallScript([voteAction])
+    console.log("Vote call script", voteCallScript)
+
+
+
+
+
     await burnableToken.changeController(tokenManager.address)
     token0 = await Erc20.new(rootAccount, '', '')
 
@@ -146,7 +228,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
     })
   })
 
-  context('initialize(Vault _vault, TokenManager _tokenManager)', () => {
+  context.skip('initialize(Vault _vault, TokenManager _tokenManager)', () => {
     beforeEach(async () => {
       await redemptions.initialize(vault.address, tokenManager.address, [token0.address])
     })
@@ -447,7 +529,7 @@ contract('Redemptions', ([rootAccount, redeemer, ...accounts]) => {
     it('reverts on removing token ', async () => {
       await assertRevert(redemptions.removeRedeemableToken(ANY_ADDRESS), 'APP_AUTH_FAILED')
     })
-    it('reverts on redeeming tokens ', async () => {
+    it.only('reverts on redeeming tokens ', async () => {
       await assertRevert(redemptions.redeem(1), 'APP_AUTH_FAILED')
     })
   })

@@ -33,6 +33,8 @@
   "keywords": [],
   "description": "",
   "devDependencies": {
+    "@1hive/apps-dandelion-voting": "2.0.0",
+    "@aragon/apps-agent": "^2.1.0",
     "@aragon/apps-voting": "2.1.0",
     "@aragon/cli": "^6.3.0",
     "@aragon/test-helpers": "^2.0.0",

@@ -8,6 +8,8 @@ import "@aragon/os/contracts/lib/math/SafeMath.sol";
 import "@aragon/os/contracts/common/EtherTokenConstant.sol";
 import "./lib/ArrayUtils.sol";
 
+import "@aragon/apps-agent/contracts/Agent.sol";
+import "@1hive/apps-dandelion-voting/contracts/DandelionVoting.sol";
 
 contract Redemptions is AragonApp {
     using SafeMath for uint256;
