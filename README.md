@@ -18,7 +18,7 @@ We have a [Redemptions demo DAO live on Rinkeby!](https://rinkeby.aragon.org/#/t
 
 ## How to run Redemptions locally
 
-First make sure that you have node, npm, and the Aragon CLI installed and working. Instructions on how to set that up can be found [here](https://hack.aragon.org/docs/cli-intro.html). You'll also need to have [Metamask](https://metamask.io) or some kind of web wallet enabled to sign transactions in the browser.
+First make sure that you have node and yarn installed and working. You'll also need to have [Metamask](https://metamask.io) or some kind of web wallet enabled to sign transactions in the browser.
 
 Git clone this repo.
 
@@ -35,13 +35,13 @@ cd redemptions-app
 Install npm dependencies.
 
 ```sh
-npm i
+yarn
 ```
 
 Deploy a dao with Redemptions installed on your local environment.
 
 ```sh
-npm run start:template
+yarn start
 ```
 
 If everything is working correctly, your new DAO will be deployed and your browser will open http://localhost:3000/#/YOUR-DAO-ADDRESS. It should look something like this:
@@ -51,19 +51,15 @@ If everything is working correctly, your new DAO will be deployed and your brows
 You will also see the configuration for your local deployment in the terminal. It should look something like this:
 
 ```sh
-    Ethereum Node: ws://localhost:8545
-    ENS registry: 0x5f6f7e8cc7346a11ca2def8f827b7a0b612c56a1
-    APM registry: aragonpm.eth
-    DAO address: YOUR-DAO-ADDRESS
+backend  | ENS deployed: 0x5f6F7E8cc7346a11ca2dEf8f827b7a0b612c56a1
+backend  | DAO factory deployed: 0x8EEaea23686c319133a7cC110b840d1591d9AeE0
+backend  | APM deployed: 0xA53dE0b8e08b798f975D57f48384C177D410d170
+backend  | Deploying DAO and app repository...
+backend  | DAO deployed: YOUR-DAO-ADDRESS
+
 ```
 
-Currently the only thing deployed on your local testnet is an Aragon DAO with the Redemptions app. In a new terminal navigate to the `redemptions-app` directory. Then run this script to deploy some token contracts on your local testnet to interact with.
-
-```sh
-npm run deploy-tokens YOUR-DAO-ADDRESS
-```
-
-If successful, you will have deployed contracts for ANT, DAI, OMG, and ETH to your local testnet. The terminal will then display the names of the tokens and their addresses on your local testnet. It should look something like this:
+You will also have deployed contracts for ANT, DAI, OMG, and ETH to your local testnet. The terminal will display the names of the tokens and their addresses on your local testnet. It should look something like this:
 
 ```sh
 Token  Address                                     Balance
@@ -78,7 +74,7 @@ Now if you navigate back to your browser (http://localhost:3000/#/YOUR-DAO-ADDRE
 
 ## How to deploy Redemptions to an organization
 
-Redemptions has been published to APM on Mainnet and Rinkeby at `redemptions.aragonpm.eth`
+Redemptions has been published to APM on Mainnet, Rinkeby, and xDAI at `redemptions.aragonpm.eth`
 
 To deploy to an organization you can use the [Aragon CLI](https://hack.aragon.org/docs/cli-intro.html).
 
@@ -94,4 +90,4 @@ We welcome community contributions!
 
 Please check out our [open Issues](https://github.com/1Hive/redemptions-app/issues) to get started.
 
-If you discover something that could potentially impact security, please notify us immediately. The quickest way to reach us is via the #dev channel in our [team Keybase chat](https://keybase.io/team/1hive). Just say hi and that you discovered a potential security vulnerability and we'll DM you to discuss details.
+If you discover something that could potentially impact security, please notify us immediately. The quickest way to reach us is via the #dev channel in our [Discord chat](https://discord.gg/mP75t4n). Just say hi and that you discovered a potential security vulnerability and we'll DM you to discuss details.
